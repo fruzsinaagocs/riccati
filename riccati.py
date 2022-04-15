@@ -31,7 +31,17 @@ def cheb(n):
         D = D - np.diag(D.sum(axis=1))
     return D, x
 
-def osc_step(x0, h, y0, dy0, n, o):
+#def choose_n_cheb(x0, h, eps_wg, n0 = 16, nmax = 128):
+#    """
+#    Chooses the number of Chebyshev nodes to represent the functions w(x), g(x)
+#    with over the interval (x0, x0+h). Doubles the number of points on every
+#    iteration starting from n0 until the maximum relative error in w, g
+#    (eps_wg) or nmax is reached. 
+#    """
+#    pass
+
+# TODO: make o adaptive
+def osc_step(w, x0, h, y0, dy0, o = 4, n = 16):
     """
     Advances the solution from x0 to x0+h, starting from the initial conditions
     y(x0) = y0, y'(x0) = dy0. It uses the Barnett series of order o (up to and
@@ -39,12 +49,35 @@ def osc_step(x0, h, y0, dy0, n, o):
     represented on an n-node Chebyshev grid.
 
     """
-    pass
+    D, x = cheb(n)
+    ws = w(h/2*x + x0 + h/2)
+    w2 = ws**2
+    y = 1j*ws
+    R = lambda y: 2/h*np.matmul(D, y) + y**2 + w2
+    Ry = 0
+    maxerr = 0
+    for i in range(1, o+1):
+        y = y - Ry/(2*y)
+        Ry = R(y)       
+        maxerr = max(np.abs(Ry))
+        #print("At iteration {}, max residual is Rx={}".format(i, maxerr))
+    du1 = y
+    du2 = np.conj(y)
+    u1 = h/2*np.linalg.solve(D, du1)
+    u1 -= u1[-1]
+    u2 = np.conj(u1)
+    f1 = np.exp(u1)
+    f2 = np.conj(f1)
+    C = np.array([[1, 1],[du1[-1], du2[-1]]])
+    ap, am = np.linalg.solve(C, np.array([y0, dy0]))
+    y1 = ap*f1 + am*f2
+    dy1 = ap*du1*f1 + am*du2*f2
+    return y1[0], dy1[0], maxerr 
 
-# May need n as arg
+
 def nonosc_step(x0, h, y0, dy0, o):
     """
-
+    May need n as arg
     """
     pass
 
@@ -60,12 +93,6 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-6, xeval = []):
     Returns:
     """
 
-    pass
-
-def choose_n():
-    """
-
-    """
     pass
 
 #def choose_o():
