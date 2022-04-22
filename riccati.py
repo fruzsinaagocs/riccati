@@ -139,7 +139,7 @@ def nonosc_step(x0, h, y0, dy0, o):
     """
     pass
 
-def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, xeval = []):
+def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     """
     Solves y'' + 2gy' + w^2y = 0 on the interval (xi, xf), starting from the
     initial conditions y(xi) = yi, y'(xi) = dyi. Keeps the residual of the ODE
@@ -151,7 +151,6 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, xeval = []):
     Returns:
     """
     # TODO: backwards integration
-    epsh = 1e-13
     xs = [xi]
     ys = [yi]
     dys = [dyi]
