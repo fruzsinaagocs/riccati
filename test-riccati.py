@@ -43,8 +43,8 @@ def test_solve():
     g = lambda x: 0
     xi = 1e2
     xf = 1e8
-    eps = 1e-10
-    epsh = 1e-12
+    eps = 1e-5
+    epsh = 1e-13
     yi = sp.airy(-xi)[0]
     dyi = -sp.airy(-xi)[1]
     xs, ys, dys, ss = riccati.solve(w, g, xi, xf, yi, dyi, eps = eps, epsh = epsh)
@@ -70,6 +70,7 @@ def test_solve():
     ax[1].loglog(xs[ss==True], yerr[ss==True], '.-', color='C0', label='Converged')
     ax[1].loglog(xs[ss==False], yerr[ss==False], '.', color='C1', label='Diverged before $\epsilon$ was hit')
     ax[1].loglog(xs, eps*np.ones_like(xs), color='black')
+#    ax[1].loglog(xs,xs*yerr[3]/xs[3], label='h^2', color='C2') 
     ax[1].set_ylabel('Relative error, $|\Delta y/y|$')
     ax[1].set_xlabel('$x$') 
     ax[0].set_title('Numerical solution of the Airy equation, $\epsilon = ${}, $\epsilon_h = ${}'.format(eps, epsh))

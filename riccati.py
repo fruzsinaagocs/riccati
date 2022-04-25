@@ -1,4 +1,5 @@
 import numpy as np
+import mpmath
 # import scipy.special 
 
 def cheb(n):
@@ -17,7 +18,7 @@ def cheb(n):
         x = 1
         D = 0
     else:
-        a = np.linspace(0.0, np.pi, n+1)
+        a = np.linspace(0.0, np.pi, n+1, dtype=np.longdouble)
         x = np.cos(a)
         b = np.ones_like(x)
         b[0] = 2
@@ -51,30 +52,24 @@ def choose_stepsize(w, x0, h, epsh = 1e-14, p = 32):
     exceeds epsh, h is halved.
     TODO: Actually add g, so far only have w
     """
-    q = p//2
-    t = np.random.uniform(low = x0, high = x0+h, size = q)
-    #print("Random nodes are: {}".format(t))
-    s = x0 + h/2 + h/2*cheb(p-1)[1]
-    V = np.ones((p, p))
-    R = np.ones((q, p))
-    for j in range(1, p):
-        V[:, j] = V[:, j-1]*s
-        R[:, j] = R[:, j-1]*t
-    L = np.linalg.solve(V.T, R.T).T
-    #print("L: ", L)
-    #print("R: ", R)
-    #print("R.T: ", R.T)
-    wana = w(t)
-    west = np.matmul(L, w(s))
-    #print("Analytic w: ", wana)
-    #print("Estimated w: ", west)
-    maxwerr = max(np.abs((west - wana)/west))
-    #print("Maximum interp error: ", maxwerr)
+    intw = lambda x: 2/3*np.sqrt(x)**3
+    D, b = cheb(p)
+    s = x0 + h/2 + h/2*b
+    # Check accuracy of integral instead
+    intwana = intw(s)
+    intwana -= intwana[-1]
+    west = w(s)
+    intwest = h/2*mpmath.lu_solve(D, west)
+    intwest -= intwest[-1]
+    print(intwest)
+    print(mpmath.mpf(np.ones(s)*intwana))
+    maxwerr = max(np.abs((intwest - intwana)/intwana))
     if maxwerr > epsh:
         print("Stepsize h = {} is too large with max error {}".format(h, maxwerr))
+        #something = input("press: ")
         return choose_stepsize(w, x0, 0.7*h, epsh = epsh, p = p)
     else:
-        print("Chose stepsize h = {}".format(h))
+        print("Chose stepsize h = {} with error {}".format(h, maxwerr))
         return h
     #TODO: what if h is too small to begin with?
 
@@ -97,39 +92,43 @@ def osc_step(w, x0, h, y0, dy0, epsres = 1e-12, n = 32):
     maxerr = 10*epsres
     prev_err = np.inf
     o = 0 # Keep track of number of terms
+    y_prev = y
     while maxerr > epsres:
         o += 1
+        print("correction term at o={}: {}".format(o, Ry/(2*y)))
+        print("y: ", y[0])
         y = y - Ry/(2*y)
         Ry = R(y)       
         maxerr = max(np.abs(Ry))
-        if maxerr >= prev_err:
+        print("Max Rx: ", max(np.abs(Ry)), ", max Ry: ", maxerr)
+        if maxerr >= prev_err: #or o > 10:
             print("Barnett series diverged after {} terms".format(o-1))
             success = False
             #TODO: Actually fail here
             break
-        prev_err = maxerr
-        #print("At iteration {}, max residual is Rx={}".format(o, maxerr))
+        else:
+            y_prev = y
+            prev_err = maxerr
     if success:
         print("Converged after {} terms".format(o))
-    print("Residue = {}".format(maxerr))
+    else:
+        y = y_prev
+    print("Residue = {}".format(prev_err))
     du1 = y
     du2 = np.conj(du1)
     ddu1 = 2/h*np.matmul(D, y)
     ddu2 = np.conj(ddu1)
-    u1 = h/2*np.linalg.solve(D, du1)
+    u1 = h/2*mpmath.lu_solve(D, du1)
     u1 -= u1[-1]
     u2 = np.conj(u1)
     f1 = np.exp(u1)
     f2 = np.conj(f1)
     ddf1 = ddu1 + du1**2
     ddf2 = np.conj(ddf1)
-    ap = (dy0 - du2[-1]*y0)/(du1[-1] - du2[-1])
-    am = (dy0 - du1[-1]*y0)/(du2[-1] - du1[-1])
-    bp = (ddy0*du2[-1] - dy0*ddf2[-1])/(ddf1[-1]*du2[-1] - ddf2[-1]*du1[-1])
-    bm = (ddy0*du1[-1] - dy0*ddf1[-1])/(ddf2[-1]*du1[-1] - ddf1[-1]*du2[-1])
+    C = np.array([[1, 1], [du1[-1], du2[-1]]])
+    ap, am = mpmath.lu_solve(C, np.array([y0, dy0]))
     y1 = ap*f1 + am*f2
-    dy1 = bp*du1*f1 + bm*du2*f2
-#    dy1 = ap*du1*f1 + am*du2*f2
+    dy1 = ap*du1*f1 + am*du2*f2
     return y1[0], dy1[0], maxerr, success
 
 
@@ -157,13 +156,14 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     successes = [True]
     y = yi
     dy = dyi
-    n = 32
+    n = 64 # How many points we use to calculate step
+    p = n // 2 # How many points we use to choose h
     D, x = cheb(n)
     wi = w(xi)
     dwi = 2*np.matmul(D, w(xi + 1/2 + 1/2*x))[-1] 
     hi = wi/dwi
     print("Initial step: ", hi)
-    h = choose_stepsize(w, xi, hi, epsh = epsh)
+    h = choose_stepsize(w, xi, hi, epsh = epsh, p = p)
     xcurrent = xi
     while xcurrent < xf:
         print("x = {}, h = {}".format(xcurrent, h))
@@ -171,7 +171,7 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
         #if xcurrent + h > xf:
         #    h = xf - xcurrent
         # Attempt osc step of size h (for now always successful)
-        y, dy, res, success = osc_step(w, xcurrent, h, y, dy, epsres = eps)
+        y, dy, res, success = osc_step(w, xcurrent, h, y, dy, epsres = eps, n = n)
         # Log step
         ys.append(y)
         dys.append(dy)
@@ -180,9 +180,10 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
         # Advance independent variable and choose next step
         wnext = w(xcurrent + h)
         dwnext = 2/h*np.matmul(D, w(xcurrent + h/2 + h/2*x))[0]
-        hnext = wnext/dwnext
+#        hnext = wnext/dwnext
+        hnext = wnext**3
         xcurrent += h
-        h = choose_stepsize(w, xcurrent, hnext, epsh = epsh)
+        h = choose_stepsize(w, xcurrent, hnext, epsh = epsh, p = p)
         # TODO: update stepsize
     return xs, ys, dys, successes
 
