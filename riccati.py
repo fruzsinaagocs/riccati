@@ -1,4 +1,5 @@
 import numpy as np
+import math
 # import scipy.special 
 
 def cheb(n):
@@ -30,7 +31,7 @@ def cheb(n):
         D = D - np.diag(D.sum(axis=1))
     return D, x
 
-def choose_stepsize(w, x0, h, epsh = 1e-14, p = 32):
+def choose_stepsize(w, g, x0, h, epsh = 1e-14, p = 32):
     """
     Chooses the stepsize h over which the functions w(x), g(x) can be
     represented sufficiently accurately. p/2 nodes are randomly chosen over the
@@ -54,16 +55,20 @@ def choose_stepsize(w, x0, h, epsh = 1e-14, p = 32):
     L = np.linalg.solve(V.T, R.T).T
     wana = w(t)
     west = np.matmul(L, w(s))
+    gana = g(t)
+    gest = np.matmul(L, g(s))
     maxwerr = max(np.abs((west - wana)/west))
-    if maxwerr > epsh:
+    maxgerr = max(np.abs((gest - gana)/gest))
+    maxerr = max(maxwerr, maxgerr)
+    if maxerr > epsh:
         print("Stepsize h = {} is too large with max error {}".format(h, maxwerr))
-        return choose_stepsize(w, x0, 0.7*h, epsh = epsh, p = p)
+        return choose_stepsize(w, g, x0, 0.7*h, epsh = epsh, p = p)
     else:
         print("Chose stepsize h = {}".format(h))
         return h
     #TODO: what if h is too small to begin with?
 
-def osc_step(w, x0, h, y0, dy0, epsres = 1e-12, n = 32):
+def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32):
     """
     Advances the solution from x0 to x0+h, starting from the initial conditions
     y(x0) = y0, y'(x0) = dy0. It uses the Barnett series of order o (up to and
@@ -74,17 +79,21 @@ def osc_step(w, x0, h, y0, dy0, epsres = 1e-12, n = 32):
     success = True
     ddy0 = -w(x0)**2*y0
     D, x = cheb(n)
-    ws = w(h/2*x + x0 + h/2)
+    xscaled = h/2*x + x0 + h/2
+    ws = w(xscaled)
+    gs = g(xscaled)
     w2 = ws**2
-    y = 1j*ws
-    R = lambda y: 2/h*np.matmul(D, y) + y**2 + w2
+    g2 = gs**2
+    y = -gs + np.lib.scimath.sqrt(g2 - w2) # Need to use complex sqrt
+    #y = 1j*ws
+    R = lambda y: 2/h*np.matmul(D, y) + y**2 + w2 + 2*gs*y
     Ry = 0
     maxerr = 10*epsres
     prev_err = np.inf
     o = 0 # Keep track of number of terms
     while maxerr > epsres:
         o += 1
-        y = y - Ry/(2*y)
+        y = y - Ry/(2*(y + gs))
         Ry = R(y)       
         maxerr = max(np.abs(Ry))
         if maxerr >= prev_err:
@@ -109,6 +118,7 @@ def osc_step(w, x0, h, y0, dy0, epsres = 1e-12, n = 32):
     y1 = ap*f1 + am*f2
     dy1 = ap*du1*f1 + am*du2*f2
     phase = np.imag(u1[0])
+    print("at x = {}, y = {}, u = {}, f = {}, y1 = {}".format(x0, y, u1, f1, y1))
     return y1[0], dy1[0], maxerr, success, phase
 
 def nonosc_step(x0, h, y0, dy0, o):
@@ -140,15 +150,20 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     p = n # How many points we use to choose h
     D, x = cheb(n)
     wi = w(xi)
+    gi = g(xi)
     dwi = 2*np.matmul(D, w(xi + 1/2 + 1/2*x))[-1] 
-    hi = wi/dwi
+    dgi = 2*np.matmul(D, g(xi + 1/2 + 1/2*x))[-1] 
+    #hi = 0.01
+    hi = min(wi/dwi, gi/dgi)
+    if hi < 1e-16 or math.isnan(hi):
+        hi = 0.01
     print("Initial step: ", hi)
-    h = choose_stepsize(w, xi, hi, epsh = epsh, p = p)
+    h = choose_stepsize(w, g, xi, hi, epsh = epsh, p = p)
     xcurrent = xi
     while xcurrent < xf:
         print("x = {}, h = {}".format(xcurrent, h))
         # Attempt osc step of size h (for now always successful)
-        y, dy, res, success, phase = osc_step(w, xcurrent, h, y, dy, epsres = eps, n = n)
+        y, dy, res, success, phase = osc_step(w, g, xcurrent, h, y, dy, epsres = eps, n = n)
         # Log step
         ys.append(y)
         dys.append(dy)
@@ -157,11 +172,14 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
         successes.append(success)
         # Advance independent variable and choose next step
         wnext = w(xcurrent + h)
+        gnext = g(xcurrent + h)
         dwnext = 2/h*np.matmul(D, w(xcurrent + h/2 + h/2*x))[0]
-        hnext = wnext/dwnext
+        dgnext = 2/h*np.matmul(D, g(xcurrent + h/2 + h/2*x))[0]
+        hnext = min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
 #        hnext = wnext**3
         xcurrent += h
-        h = choose_stepsize(w, xcurrent, hnext, epsh = epsh)
+        h = choose_stepsize(w, g, xcurrent, hnext, epsh = epsh)
+    print('Done')
     return xs, ys, dys, successes, phases
 
 
