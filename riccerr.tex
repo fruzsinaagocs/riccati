@@ -238,20 +238,20 @@ x_0(t) &=& +i\om(t)
 \label{init}
 \\
 x_{j+1}(t) &=& x_j(t) - \frac{R[x_j](t)}{2 x_j(t)}
-~,\qquad j=0,1,\dots,k-1~,
+~,\qquad j=0,1,\dots,k-1~.
 \label{iter}
 \eea
-with the functional $R$ defined as in \eqref{R}.
+%with the functional $R$ defined as in \eqref{R}.
 This may be justified heuristically as an approximate Newton
-iteration to reduce the residual %function $R[x]$
+iteration to reduce the residual function
 (noting that similar exact Newton iterations have been
 exploited for analysis \cite{Heit15}).
 Namely, since
 $$
 R[x_j + \delta] = x_j' + \delta' + x_j^2 + 2 x_j \delta + \delta^2 + \om(t)^2\\
-= R[x_j] + \delta' + 2x_j\delta + \bigO(\delta^2)
+= R[x_j] + \delta' + 2x_j\delta + \bigO(\delta^2)~,
 $$
-linearizing we get that $\delta$ solves the linear 1st-order ODE
+by linearizing we get that $\delta$ solves the linear 1st-order ODE
 $\delta' + 2x_j(t) \delta  = -R[x_j](t)$,
 which has an analytic solution.
 Solving this exact Newton update symbolically is the basis of the QML iteration
@@ -264,21 +264,68 @@ one might hope that by dropping it a useful reduction in residual might
 still result.
 This leads to the algebraic formula $2x_j(t) \delta(t) = -R[x_j](t)$
 which is solved pointwise for each $t$, and
-writing $x_{j+1} = x_j + \delta$ motivates \eqref{iter}.
+writing $x_{j+1} = x_j + \delta$ gives \eqref{iter}.
 This is a type of defect correction scheme (CITE book).
 
-The early algebraic iterates of \eqref{init}--\eqref{iter} illustrate
+The early iterates of \eqref{init}--\eqref{iter} illustrate
+algebraically
 the type of residual reduction that occurs:
 \bea
-x_0(t) &=&  i\om(t) \hspace{1in} R[x_0](t) \; = \; i\om'(t)
+x_0(t) &=&  i\om(t)~, \hspace{3.0in} R[x_0](t) \; = \; i\om'(t) = \bigO(\om)
+ \nonumber
 \\
-x_1(t) &=& i\om(t) - \frac{\om'(t)}{2\om(t)}
-\hspace{1in} R[x_1](t) \; = \; -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2}
+x_1(t) &=& i\om(t) - \frac{\om'(t)}{2\om(t)}~,
+\hspace{2.5in} R[x_1](t) \; = \; -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2}
+= \bigO(1)
+ \nonumber
 \\
+x_2(t) &=& i\om(t) - \frac{\om'(t)}{2\om(t)} + \delta_1(t),
+\mbox{ where }
+\delta_1(t):=\frac{\om''/2\om - 3\om'^2/4\om^2}{2i\om - \om'/\om}
+,
+\quad R[x_2](t) \; = \; \delta_1' + \delta_1^2 = \bigO(\om^{-1})
+\nonumber
 \eea
+Each iteration the residual drops by a factor $\bigO(\om)$,
+where we have used that $\om'$, $\om''$, etc, are
+of the same order as $\om$ because $\om(t)$ is smooth,
+and assumed that $\om$ is bounded from below also by $\bigO(\om)$.
+However, each iteration also results in terms with
+one higher time-derivative of $\om$.
+Despite the rapid growth in complexity, one can check that this
+pattern continues
+by defining the $j$th correction $\delta_j$,
+so that $x_{j+1} = x_j + \delta_j$, then using \eqref{R} to write
+\be
+R[x_{j+1}] \;=\;
+R[x_j] + 2x_j \delta_j + \delta_j^2 + \delta_j'
+\;=\;
+\delta_j^2 + \delta_j'
+~,
+\label{Rdelta}
+\ee
+where the first two terms cancelled by design due to \eqref{iter}.
+Then recalling that $\delta_j := -R[x_j]/2x_j$ proves the following.
+\begin{pro}\label{p:Riter}
+  Let $x_j$ be an arbitrary smooth function,
+  and let $x_{j+1}$ be given by the single iteration \eqref{iter}.
+  Then their associated residual functions are related by
+  \be
+  R[x_{j+1}] = \frac{1}{2x_j}\biggl(
+  R[x_j]' - \frac{x_j'}{x_j} R[x_j]
+    \biggr) + \biggl(\frac{R[x_j]}{2x_j}\biggr)^2~.
+  \label{Riter}
+  \ee
+\end{pro}
+Thus with the initialization \eqref{init},
+for each $j=0,1,\dots$,
+the residual $R[x_j] = \bigO(\om^{1-j})$ and involves up to $(j+1)$ derivatives
+of $\om(t)$.
+For $\om$ a general analytic function, eventually the
+growth in derivatives overcome the powers,
+leading to divergence: the series is asymptotic
+but not convergent.
 
-
-  
 \subsection{Direct spectral solution on nonoscillatory intervals}
 
 \subsection{Adaptive selection of interval size and type}
@@ -286,28 +333,12 @@ x_1(t) &=& i\om(t) - \frac{\om'(t)}{2\om(t)}
 
 \section{Error analysis}
 
-The following shows that, if $x$ is large at a point $t$,
-and the residual function \eqref{R} at that point sufficiently small,
-then each iteration step \eqref{iter} reduces $R$ by roughly a factor
-$x$, at the expensive of introducing one derivative.
-\begin{pro}
-  Let $\tilde x$ be the result of applying one step of
-  the iteration \eqref{iter} to the function $x$;
-  that is, $\tilde x(t) = x(t) - R[x](t)/2x(t)$.
-  Then the resulting residual function is
-  \be
-  R[\tilde x] = \frac{1}{2x}\biggl(
-  R[x]' - \frac{x'}{x} R[x]
-    \biggr) + \biggl(\frac{R[x]}{2x}\biggr)^2~.
-  \label{Riter}
-  \ee
-\end{pro}
-The proof is via simple algebra.
-
-Note that since $x'$ and $x$ are of order $\om$,
-that if $R$ and $R'$ are sufficiently small,
-the last term is negligible, and $R$ is reduced at each point $t$
-by roughly $x(t)$.
+Recall Prop.~\ref{p:Riter}.
+We use the abbreviation $R_j = R_j(t) := R[x_j](t)$.
+Note that since $x_j'$ and $x_j$ are of order $\om$,
+that if $R_j$ and $R_j'$ are sufficiently small,
+the last term is negligible, and $R_j$ is reduced at each point $t$
+by roughly $x_j(t)$.
 
 *** compare at least in a paragraph to Bremer's iteration
 \footnote{J. Bremer, private communication.}
