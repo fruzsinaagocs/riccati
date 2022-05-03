@@ -1,0 +1,285 @@
+\documentclass[10pt]{article}
+\oddsidemargin = 0.2in
+\topmargin = -0.5in
+\textwidth 6in
+\textheight 8.5in
+
+\usepackage{graphicx,bm,hyperref,amssymb,amsmath,amsthm}
+
+% -------------------------------------- macros --------------------------
+% general ...
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\ben}{\begin{enumerate}}
+\newcommand{\een}{\end{enumerate}}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\bea}{\begin{eqnarray}} 
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\ba}{\begin{align}} 
+\newcommand{\ea}{\end{align}}
+\newcommand{\bse}{\begin{subequations}} 
+\newcommand{\ese}{\end{subequations}}
+\newcommand{\bc}{\begin{center}}
+\newcommand{\ec}{\end{center}}
+\newcommand{\bfi}{\begin{figure}}
+\newcommand{\efi}{\end{figure}}
+\newcommand{\ca}[2]{\caption{#1 \label{#2}}}
+\newcommand{\ig}[2]{\includegraphics[#1]{#2}}
+\newcommand{\bmp}[1]{\begin{minipage}{#1}}
+\newcommand{\emp}{\end{minipage}}
+\newcommand{\pig}[2]{\bmp{#1}\includegraphics[width=#1]{#2}\emp} % mp-fig, nogap
+\newcommand{\bp}{\begin{proof}}
+\newcommand{\ep}{\end{proof}}
+\newcommand{\ie}{{\it i.e.\ }}
+\newcommand{\eg}{{\it e.g.\ }}
+\newcommand{\etal}{{\it et al.\ }}
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\pdc}[3]{\left. \frac{\partial #1}{\partial #2}\right|_{#3}}
+\newcommand{\infint}{\int_{-\infty}^{\infty} \!\!}      % infinite integral
+\newcommand{\tbox}[1]{{\mbox{\tiny #1}}}
+\newcommand{\mbf}[1]{{\mathbf #1}}
+\newcommand{\half}{\mbox{\small $\frac{1}{2}$}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\RR}{\mathbb{R}^2}
+\newcommand{\ve}[4]{\left[\begin{array}{r}#1\\#2\\#3\\#4\end{array}\right]}  % 4-col-vec
+\newcommand{\vt}[2]{\left[\begin{array}{r}#1\\#2\end{array}\right]} % 2-col-vec
+\newcommand{\bigO}{{\mathcal O}}
+\newcommand{\qqquad}{\qquad\qquad}
+\newcommand{\qqqquad}{\qqquad\qqquad}
+\newcommand{\eps}{\epsilon}
+\DeclareMathOperator{\Span}{Span}
+\DeclareMathOperator{\im}{Im}
+\DeclareMathOperator{\re}{Re}
+\DeclareMathOperator{\vol}{vol}
+\newtheorem{thm}{Theorem}
+\newtheorem{cnj}[thm]{Conjecture}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{pro}[thm]{Proposition}
+\newtheorem{rmk}[thm]{Remark}
+% this work...
+\newcommand{\om}{\omega}
+
+
+
+\begin{document}
+
+\title{Analysis of an iteration for non-oscillatory solutions to the Riccati form of the phase function for 2nd-order linear ODEs}
+
+\author{Fruszina Agocs and Alex H. Barnett}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+We gather basic definitions and error analysis.
+\end{abstract}
+
+\section{Introduction}
+
+We are interested in efficient numerical solution of
+the oscillatory linear 2nd-order ODE
+\be
+u''(t) +\gamma(t) u'(t) + \om^2(t)u(t) \;=\; 0
+~,
+\qquad t \in (0,T)~,
+\label{ode}
+\ee
+with initial conditions
+\bea
+u(0) &=& u_0 \\
+\label{ic0}
+u'(0) &=& u_1~.
+\label{ic1}
+\eea
+Here the frequency function is $\om: [0,T] \to \RR$.
+In regions where $\om$ is large, meaning
+$\om \gg 1$ (we will always take the solution interval $T=\bigO(1)$),
+then the solution $u$ is oscillatory, meaning that
+it is approximately of the form $a e^{i\om_0t} + b e^{-i\om_0t}$ where $\om_0$ is the local value of $\om(t)$.
+Conventional ODE integrators then require discretization at the
+time-scale $1/\om$, which can be prohibitively slow.
+This has led to the development of more efficient solvers for this
+high-frequency case.
+For now we consider only regions where $\om$ is real and positive;
+one may also consider $q(t):=\om^2(t)$ real and allow evanescent
+$q<0$ regions where the solution $u$ has rapid growth and decay.
+For now we ignore the real-valued damping function $\gamma(t)$,
+setting $\gamma \equiv =0$.
+
+Background. ***
+WKB blah.
+QML.
+oscode.
+Recently Bremer following Bremer--Rokhlin has proposed an efficient
+method
+which requires $\bigO(1)$ effort per $t$ evaluation for such an
+oscillatory solution, by solving for a nonoscillatory
+phase function for Kummer's equation.
+The existence of such a nonoscillatory phase function
+(meaning that its Fourier transform is exponentially small in $\om$ ***
+look up) is proven by Bremer--Rokhlin.
+Despite this, finding initial conditions on the phase function leading to
+a nonoscillatory solution is challenging.
+Those authors proposed a
+``windowing'' method to numerically find such a global phase function
+on an interval:
+the idea is to use a $C^\infty$ partition of unity near the upper end of the interval to smoothly ``blend'' $q$ to
+a constant function, then integrate backwards from the constant region
+down to the lower end,
+finally integrating forward using the original $q$ through to the upper end.
+This exploits that i) a nonoscillatory phase function for
+the constant $q(t) = \om_0^2$ is simple to write down, and
+ii) the smooth window allows
+the nonlinear Kummer oscillator to make a smooth (in physics
+terminology ``adiabatic'') transition which excites
+only exponentially small oscillation amplitude.
+ETC.
+
+Here we present an alternative approach using
+an asymptotic expansion for a nonoscillatory
+Riccati phase function, meaning simply that the
+phase function is the logarithmic derivative $x(t) = (\log u(t))'$.
+Our expansion is simpler than the traditional WKB expansion,
+although of similar accuracy.
+One novelty is that we
+implement the expansion iteratively
+using high-order numerical differentiation, rather
+than algebraically (as WKB is usually applied).
+A crucial difference from Bremer is that $x$ is solved for
+locally on an interval with adaptively-chosen length, rather than
+globally.
+Solutions to \eqref{ode}--\eqref{ic1} are then constructed by
+gluing intervals using Cauchy data.
+Another advantage is we include a damping term $\gamma(t)$,
+allowing direct
+solution of a variety of 2nd-order linear ODEs.
+
+Review recent WKB-based approaches using WKB as basis on intervals ***.
+*** solution orders.
+
+
+Like Bremer, our solver is arbitrarily high-order.
+One advantage over Bremer is that our method generates an explicit asymptotic
+expansion. A disadvantage is that its error is limited by the number
+of iterations, and by $\omega$ itself; however,
+we will show that close to machine accuracy is easily reached in
+intervals that contain many oscillations.
+
+*** better list of adv vs prior work.
+(Arb high-order compared to oscode $\bigO(h)$ and the $h^2$ guys.
+Local rather than QML or Bremer global.)
+
+
+
+\section{The method}
+
+\subsection{Phase function solution on a single interval}
+
+We will use prime to denote $d/dt$.
+We consider an interval $t\in[a,b]$ lying in $[0,T]$.
+Writing $u = e^z$ where $z'(t) = x(t)$ is the phase function,
+then any nonvanishing $u(t)$ satisfies \eqref{ode} if and only if
+its phase function $x(t)$ satisfies the nonlinear Riccati equation
+\be
+x' + x^2 + \om(t)^2 \;=\; 0~.
+\label{ricc}
+\ee
+As the presence of $\om(t)$ would suggest,
+almost all solutions to \eqref{ricc} are oscillatory.
+This is illustrated by the case of constant $\om(t) = \om_0^2$
+which has the family of analytic solutions
+$x(t) = \om_0 \tan(\alpha - \om_0t)$ parameterized by $\alpha\in\C$,
+where $\re \alpha$ is interpreted as a phase shift and $\im \alpha$
+controls the amplitude. Their oscillation frequency is $2\om_0$.
+However, the limit $\im \alpha \to \pm \infty$ produces
+the only two nonoscillatory solutions $x(t) = \pm i\om_0$.
+This general picture---the existence of a nonoscillatory
+phase function solution
+(in a precise sense involving exponential decay of the Fourier
+transform)--- has been proven \cite{Heit15,Brem16}
+for the related Kummer's equation
+
+
+
+
+
+
+
+
+
+
+
+
+When $\om\gg 1$, then there are two nonoscillatory solutions
+which take the approximate form
+$x_{\pm}(t) \approx \pm i\om(t)$, leading to a conjugate pair of basis
+functions $u_{\pm}(t) := e^{\int x_\pm(t) dt}$.
+Given any trial solution $x$ to \eqref{ricc}, its \textit{residual
+  function} is defined as the left-hand side of \eqref{ricc}, namely
+\be
+R[x](t) := x' + x^2 + \om(t)^2~.
+\label{R}
+\ee
+Our proposal takes the following \textit{functional iteration}
+to generate a sequence of functions $x_0, x_1, \dots, x_k$
+on $t\in(a,b)$,
+using the above positive (say) approximation as a starting point:
+\bea
+x_0(t) &=& +i\om(t)
+\label{init}
+\\
+x_{j+1}(t) &=& x_j(t) - \frac{R[x_j](t)}{2 x_j(t)}
+~,\qquad j=0,1,\dots,k-1~.
+\label{iter}
+\eea
+Note that $k$ iteration steps are performed.
+
+*** Size of terms,
+
+*** Approx to Newton method.
+
+This may be seen to be a defect correction scheme
+*** cite,
+
+\subsection{Direct spectral solution on nonoscillatory intervals}
+
+\subsection{Adaptive selection of interval size and type}
+
+
+\section{Error analysis}
+
+The following shows that, if $x$ is large at a point $t$,
+and the residual function \eqref{R} at that point sufficiently small,
+then each iteration step \eqref{iter} reduces $R$ by roughly a factor
+$x$, at the expensive of introducing one derivative.
+\begin{pro}
+  Let $\tilde x$ be the result of applying one step of
+  the iteration \eqref{iter} to the function $x$;
+  that is, $\tilde x(t) = x(t) - R[x](t)/2x(t)$.
+  Then the resulting residual function is
+  \be
+  R[\tilde x] = \frac{1}{2x}\biggl(
+  R[x]' - \frac{x'}{x} R[x]
+    \biggr) + \biggl(\frac{R[x]}{2x}\biggr)^2~.
+  \label{Riter}
+  \ee
+\end{pro}
+The proof is via simple algebra.
+
+Note that since $x'$ and $x$ are of order $\om$,
+that if $R$ and $R'$ are sufficiently small,
+the last term is negligible, and $R$ is reduced at each point $t$
+by roughly $x(t)$.
+
+
+
+
+% BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+\bibliographystyle{abbrv}
+\bibliography{refs}
+\end{document}
+
