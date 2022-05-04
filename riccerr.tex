@@ -63,6 +63,7 @@
 \newtheorem{rmk}[thm]{Remark}
 % this work...
 \newcommand{\om}{\omega}
+\newcommand{\te}{\tilde\eta}
 
 
 
@@ -148,7 +149,10 @@ One novelty is that we
 implement the expansion iteratively
 using high-order numerical differentiation, rather
 than algebraically (as WKB is usually applied).
-A crucial difference from Bremer is that $x$ is solved for
+The iteration does not introduce oscillatory contributions,
+hence finds a nonoscillatory approximate phase function without
+reference to initial conditions.
+Another crucial difference from Bremer is that $x$ is solved for
 locally on an interval with adaptively-chosen length, rather than
 globally.
 Solutions to \eqref{ode}--\eqref{ic1} are then constructed by
@@ -266,6 +270,8 @@ This leads to the algebraic formula $2x_j(t) \delta(t) = -R[x_j](t)$
 which is solved pointwise for each $t$, and
 writing $x_{j+1} = x_j + \delta$ gives \eqref{iter}.
 This is a type of defect correction scheme (CITE book).
+The result is nonoscillatory by construction, without explicit reference
+to initial conditions.
 
 The early iterates of \eqref{init}--\eqref{iter} illustrate
 algebraically
@@ -286,10 +292,10 @@ x_2(t) &=& i\om(t) - \frac{\om'(t)}{2\om(t)} + \delta_1(t),
 \quad R[x_2](t) \; = \; \delta_1' + \delta_1^2 = \bigO(\om^{-1})
 \nonumber
 \eea
-Each iteration the residual drops by a factor $\bigO(\om)$,
-where we have used that $\om'$, $\om''$, etc, are
-of the same order as $\om$ because $\om(t)$ is smooth,
-and assumed that $\om$ is bounded from below also by $\bigO(\om)$.
+To measure the size of term we assume that $\om'$, $\om''$, etc, are
+of the same order as $\om$, because $\om(t)$ is smooth,
+and also assume that $\om$ has a lower bound of the same order.
+Thus we see that each iteration the residual drops by a factor $\bigO(\om)$.
 However, each iteration also results in terms with
 one higher time-derivative of $\om$.
 Despite the rapid growth in complexity, one can check that this
@@ -305,7 +311,9 @@ R[x_j] + 2x_j \delta_j + \delta_j^2 + \delta_j'
 \label{Rdelta}
 \ee
 where the first two terms cancelled by design due to \eqref{iter}.
-Then recalling that $\delta_j := -R[x_j]/2x_j$ proves the following.
+The resulting evolution of the residual is then
+summarized by the following, which comes simply by
+substituting $\delta_j := -R[x_j]/2x_j$ into the above.
 \begin{pro}\label{p:Riter}
   Let $x_j$ be an arbitrary smooth function,
   and let $x_{j+1}$ be given by the single iteration \eqref{iter}.
@@ -328,17 +336,87 @@ but not convergent.
 
 \subsection{Direct spectral solution on nonoscillatory intervals}
 
+*** describe whatever spectral method
+
 \subsection{Adaptive selection of interval size and type}
 
+*** to do. No numerical results here.
 
+
+% EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 \section{Error analysis}
 
-Recall Prop.~\ref{p:Riter}.
-We use the abbreviation $R_j = R_j(t) := R[x_j](t)$.
-Note that since $x_j'$ and $x_j$ are of order $\om$,
-that if $R_j$ and $R_j'$ are sufficiently small,
-the last term is negligible, and $R_j$ is reduced at each point $t$
-by roughly $x_j(t)$.
+Proposition~\ref{p:Riter} described the evolution of
+the residual function under the proposed iteration.
+We now abbreviate $R_j = R_j(t) := R[x_j](t)$.
+Examining \eqref{Riter}, since $x_j'$ and $x_j$ are of order $\om$
+then if $R_j$ and $R_j'$ are sufficiently small
+the last term is negligible, so that $R_j$ is reduced at each point $t$
+by roughly $x_j(t)$, which is $\bigO(\om)$.
+However, because there is one extra derivative per iteration,
+this apparent geometric convergence is misleading---the series
+is merely asymptotic in the large parameter $\om$.
+Note that the iteration for $R_j$ is local in $t$.
+We now make this argument rigorous, when $\om$ is analytic
+and sufficiently large throughout some neighborhood of $t$.
+
+\begin{thm}\label{t:R}
+  For now fix $\rho=1$ ***.
+  Fix $t\in\R$ and let the frequency function $\om$ be analytic
+  in the closed ball $B_\rho(t) := \{z\in\C : |z-t| \le \rho\}$ and
+  \bea
+  \eta_1 \;\le\; |\om(z)| &\le& \eta_2~, \qquad \forall z\in B_\rho(t)
+  \\
+  |\om'(z)| &\le & \eta_3~, \qquad \forall z\in B_\rho(t)
+  \eea
+  Let $k\in\N$ be sufficiently small such that
+  \be
+  r := \frac{1}{2\te_1}
+  \biggl[ \biggl(1 + \frac{\te_2}{\te_1}\biggr) k + \frac{\eta_3}{2\te_1}\biggr]
+  \; \le \; \frac{4}{5}
+  \ee
+  where $\te_1:=\eta_1 - 3\eta_3/\eta_1$ and $\te_2:=\eta_2 + 3\eta_3/\eta_2$.
+  Then after $k$ iterations of \eqref{init}--\eqref{iter}, the residual
+  is bounded by
+  \be
+  |R_k(t)| \;\le\; \eta_3 r^k~.
+  \ee
+\end{thm}
+This guarantees temporary geometric convergence at a rate that deteriorates
+with $k$, the stopping iteration number.
+For any $k$ to exist satisfying the condition on $r$, $\om$ must have
+a sufficiently large lower bound $\eta_1$.
+Note that $[\te_1,\te_2]$ is a slight expansion of the interval containing
+the range of $|\om|$ in the ball.
+%
+\begin{proof}
+  Define the concentric nested set of balls $B_j := B_{\rho(1-j/k)}(t)$, such that
+  $B_0$ is the original ball in the statement of the theorem, while
+  $B_k = \{t\}$ is the single point of interest.
+  Consider the functional iteration for $x_j$
+  We use induction in $j$, and consider the iteration acting on the
+  functions
+  We take as the induction hypotheses that
+  \bea
+  \te_1 \;\le\; |x_j| &\le& \te_2  \mbox{ in } B_j~,
+  \label{hypx}
+  \\
+  |R_\ell| &\le& \eta_3 r^\ell \mbox{ for all } \ell = 0,1,\dots,j~.
+  \label{hypR}
+  \eea
+  %
+  ***
+  %
+  Finally, the base case $j=0$ satisfies \eqref{hypx}--\eqref{hypR}
+  by the conditions of the theorem,
+  since $x_0(t) = i\om(t)$, noting $[\eta_1,\eta_2] \subset [\te_1,\te_2]$,
+  while $R_0(t) = i\om'(t)$ is bounded in magnitude by $\eta_3$.
+\end{proof}
+
+
+
+
+
 
 *** compare at least in a paragraph to Bremer's iteration
 \footnote{J. Bremer, private communication.}
