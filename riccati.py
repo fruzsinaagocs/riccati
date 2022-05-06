@@ -77,7 +77,6 @@ def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32):
 
     """
     success = True
-    ddy0 = -w(x0)**2*y0
     D, x = cheb(n)
     xscaled = h/2*x + x0 + h/2
     ws = w(xscaled)
@@ -121,11 +120,35 @@ def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32):
     print("at x = {}, y = {}, u = {}, f = {}, y1 = {}".format(x0, y, u1, f1, y1))
     return y1[0], dy1[0], maxerr, success, phase
 
-def nonosc_step(x0, h, y0, dy0, o):
+def nonosc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 16):
+
     """
-    May need n as arg
+    Advances the solution from x0 to x0+h, starting from the initial conditions
+    y(x0) = y0, y'(x0) = dy0. It uses a Chebyshev spectral method with n nodes.
     """
-    pass
+    success = True
+    D, x = cheb(n)
+    xscaled = h/2*x + x0 + h/2
+    ws = w(xscaled)
+    gs = g(xscaled)
+    w2 = ws**2
+    D2 = 4/h**2*np.matmul(D, D) + 4/h*np.matmul(np.diag(gs), D) + np.diag(w2)
+    ic = np.zeros(n+1, dtype=complex)
+    ic[-1] = 1 # Because nodes are ordered backwards, [1, -1]
+    D2ic = np.zeros((n+3, n+1), dtype=complex)
+    D2ic[:n+1] = D2
+    D2ic[-2] = 2/h*D[-1] 
+    D2ic[-1] = ic
+    rhs = np.zeros(n+3, dtype=complex)
+    rhs[-2] = dy0
+    rhs[-1] = y0
+    y1, res, rank, sing = np.linalg.lstsq(D2ic, rhs) # NumPy solve only works for square matrices
+    dy1 = 2/h*np.matmul(D, y1)
+    # Find residual
+    err = np.matmul(D2, y1) 
+    maxerr = max(np.abs(err))
+    return y1, dy1, maxerr, success, res
+
 
 def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     """
