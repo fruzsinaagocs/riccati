@@ -300,7 +300,7 @@ However, each iteration also results in terms with
 one higher time-derivative of $\om$.
 Despite the rapid growth in complexity, one can check that this
 pattern continues
-by defining the $j$th correction $\delta_j$,
+by defining the $j$th correction function $\delta_j$,
 so that $x_{j+1} = x_j + \delta_j$, then using \eqref{R} to write
 \be
 R[x_{j+1}] \;=\;
@@ -312,27 +312,37 @@ R[x_j] + 2x_j \delta_j + \delta_j^2 + \delta_j'
 \ee
 where the first two terms cancelled by design due to \eqref{iter}.
 The resulting evolution of the residual is then
-summarized by the following, which comes simply by
-substituting $\delta_j := -R[x_j]/2x_j$ into the above.
+summarized as follows, which is proved simply by
+substituting $\delta_j := -R[x_j]/2x_j$ into \eqref{Rdelta} and using
+the quotient rule.
 \begin{pro}\label{p:Riter}
-  Let $x_j$ be an arbitrary smooth function,
+  Let $x_j \in C^2([a,b])$ be a function on an interval $[a,b]\subset \R$
+  % we may as well be pedantic about conditions
+  such that $x_j(t) \neq 0, \; \forall t\in [a,b]$,
+  let $\om\in C^1([a,b])$,
+  % *** add in gamma too
   and let $x_{j+1}$ be given by the single iteration \eqref{iter}.
-  Then their associated residual functions are related by
+  Then their associated residual functions \eqref{R} on $[a,b]$
+  are related pointwise by
   \be
   R[x_{j+1}] = \frac{1}{2x_j}\biggl(
-  R[x_j]' - \frac{x_j'}{x_j} R[x_j]
+  \frac{x_j'}{x_j} R[x_j]
+  - R[x_j]'
     \biggr) + \biggl(\frac{R[x_j]}{2x_j}\biggr)^2~.
   \label{Riter}
   \ee
 \end{pro}
-Thus with the initialization \eqref{init},
-for each $j=0,1,\dots$,
-the residual $R[x_j] = \bigO(\om^{1-j})$ and involves up to $(j+1)$ derivatives
-of $\om(t)$.
-For $\om$ a general analytic function, eventually the
-growth in derivatives overcome the powers,
-leading to divergence: the series is asymptotic
-but not convergent.
+Thus, with the initialization \eqref{init},
+assuming that the lower bound on each $x_j$ is no smaller than $\bigO(\om)$,
+and that the quadratic term in \eqref{Riter} is small,
+one might hope that
+the residual shrinks like $R[x_j] = \bigO(\om^{1-j})$ for each $j=0,1,\dots$.
+Unfortunately this will turn out not to be true, due to the increasing
+order of derivatives of $\om(t)$, which will lead to an
+asymptotic (but not convergent) series.
+However, we show that the iteration is numerically useful,
+and analyse its residual rigorously in Theorem~\ref{t:R}.
+
 
 \subsection{Direct spectral solution on nonoscillatory intervals}
 
@@ -346,19 +356,23 @@ but not convergent.
 % EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 \section{Error analysis}
 
-Proposition~\ref{p:Riter} described the evolution of
-the residual function under the proposed iteration.
-We now abbreviate $R_j = R_j(t) := R[x_j](t)$.
-Examining \eqref{Riter}, since $x_j'$ and $x_j$ are of order $\om$
-then if $R_j$ and $R_j'$ are sufficiently small
-the last term is negligible, so that $R_j$ is reduced at each point $t$
-by roughly $x_j(t)$, which is $\bigO(\om)$.
-However, because there is one extra derivative per iteration,
-this apparent geometric convergence is misleading---the series
-is merely asymptotic in the large parameter $\om$.
-Note that the iteration for $R_j$ is local in $t$.
-We now make this argument rigorous, when $\om$ is analytic
+From now on we abbreviate the residual function by $R_j = R_j(t) := R[x_j](t)$.
+Proposition~\ref{p:Riter} described the evolution of $R_j$
+under the proposed iteration, which is local in $t$.
+For smooth $x_j$ of size $\bigO(\om)$, and smooth $R_j$,
+it suggests geometric reduction in $R_j$ by a factor $\bigO(\om)$ per iteration;
+however, this is misleading in general because of
+growth of high-order $t$-derivatives.
+The series will turn out to be merely asymptotic in the large parameter $\om$.
+We now make this argument rigorous, for $\om$ analytic
 and sufficiently large throughout some neighborhood of $t$.
+
+%One might hope that, given $x_j'$ and $x_j$ of order $\om$,
+%and a lower bound on $x_j$ of the same order,
+%then $R_j$ is reduced at each point by a factor $\bigO(\om)$.
+%then the last term is negligible
+%then if $R_j$ and $R_j'$ are sufficiently small
+
 
 \begin{thm}\label{t:R}
   For now fix $\rho=1$ ***.
@@ -375,37 +389,53 @@ and sufficiently large throughout some neighborhood of $t$.
   \biggl[ \biggl(1 + \frac{\te_2}{\te_1}\biggr) k + \frac{\eta_3}{2\te_1}\biggr]
   \; \le \; \frac{4}{5}
   \ee
-  where $\te_1:=\eta_1 - 3\eta_3/\eta_1$ and $\te_2:=\eta_2 + 3\eta_3/\eta_2$.
-  Then after $k$ iterations of \eqref{init}--\eqref{iter}, the residual
-  is bounded by
+  where $\te_1:=\eta_1 - 3\eta_3/\eta_1$ and $\te_2:=\eta_2 + 3\eta_3/\eta_1$.
+  Then after any number $j\le k$ of iterations of \eqref{init}--\eqref{iter},
+  the function $x_j$ has residual \eqref{R} bounded at the point $t$ by
   \be
-  |R_k(t)| \;\le\; \eta_3 r^k~.
+  |R_j(t)| \;\le\; \eta_3 r^j~.
   \ee
 \end{thm}
-This guarantees temporary geometric convergence at a rate that deteriorates
-with $k$, the stopping iteration number.
-For any $k$ to exist satisfying the condition on $r$, $\om$ must have
-a sufficiently large lower bound $\eta_1$.
+This shows temporary geometric convergence up to $k$ iterations,
+but at a rate $r$ that deteriorates with $k$.
+And for any $k$ to exist satisfying the condition on $r$, $\om$ must have
+a sufficiently large lower bound $\eta_1$, i.e., $t$
+must be in a sufficiently oscillatory region for the original ODE.
 Note that $[\te_1,\te_2]$ is a slight expansion of the interval containing
 the range of $|\om|$ in the ball.
 %
 \begin{proof}
-  Define the concentric nested set of balls $B_j := B_{\rho(1-j/k)}(t)$, such that
+  Define the concentric nested set of closed balls $B_j := B_{\rho(1-j/k)}(t)$, $j=0,1,\dots,k$, such that
   $B_0$ is the original ball in the statement of the theorem, while
   $B_k = \{t\}$ is the single point of interest.
-  Consider the functional iteration for $x_j$
-  We use induction in $j$, and consider the iteration acting on the
-  functions
-  We take as the induction hypotheses that
+  %The functional iteration \eqref{init}--\eqref{iter},
+  We use induction in $j$.
+%  and consider the iteration acting on the functions
+  We take as the induction hypotheses that $x_j$ is analytic in $B_j$, with
   \bea
-  \te_1 \;\le\; |x_j| &\le& \te_2  \mbox{ in } B_j~,
+  \te_1 \;\le\; |x_j| &\le& \te_2  \quad \mbox{ in } B_j~,
   \label{hypx}
   \\
-  |R_\ell| &\le& \eta_3 r^\ell \mbox{ for all } \ell = 0,1,\dots,j~.
+  |R_\ell| &\le& \eta_3 r^\ell \quad \mbox{ in } B_j~, \mbox{ for all } \ell = 0,1,\dots,j~.
   \label{hypR}
   \eea
   %
-  ***
+  For an analytic function $y$ we use the notation
+  $\|y\|_j := \max_{z \in B_j}|y|$ for the $\infty$-norm on the $j$th ball.
+  Cauchy's theorem for derivatives states that if $y$ is analytic
+  and bounded in $B_j$, then for any $z$
+  $$
+  y'(z) = \frac{1}{2\pi} \int_{|\zeta-t| = (1-j/k)\rho} \frac{d\zeta}{(
+  $$
+  and thus for any $z\in B_{j+1}$
+  
+  \eqref{t:Riter} then implies
+$$
+  \|R_{j+1}\|_{j+1} = \frac{1}{2x_j}\biggl(
+  \frac{x_j'}{x_j} R[x_j]
+  - R[x_j]'
+    \biggr) + \biggl(\frac{R[x_j]}{2x_j}\biggr)^2~.
+$$
   %
   Finally, the base case $j=0$ satisfies \eqref{hypx}--\eqref{hypR}
   by the conditions of the theorem,
@@ -421,6 +451,11 @@ the range of $|\om|$ in the ball.
 *** compare at least in a paragraph to Bremer's iteration
 \footnote{J. Bremer, private communication.}
 
+
+*** Connect $R$ to error in sat the ODE,
+then from this sim to local discretization err
+in a more typical numerical solver.
+(check LeVeque, Tref, Hairer, etc).
 
 
 
