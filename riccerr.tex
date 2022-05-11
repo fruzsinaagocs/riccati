@@ -388,7 +388,7 @@ and sufficiently large throughout some neighborhood of $t$.
   \label{omder}
   \eea
   that is, its derivative should be sufficiently small.
-  Let $k\in\N$ be sufficiently small such that
+  Let $k\in\{0,1,\dots\}$ be sufficiently small such that
   \be
   r := \frac{1}{2\te_1 \rho}
   \biggl(1 + \frac{\te_2}{\te_1}\biggr) k + \frac{\eta_3}{4\te_1^2}
@@ -400,6 +400,7 @@ and sufficiently large throughout some neighborhood of $t$.
   the function $x_j$ has Riccati residual \eqref{R} bounded at the point $t$ by
   \be
   |R_j(t)| \;\le\; \eta_3 r^j~.
+  \label{Rjbnd}
   \ee
 \end{thm}
 This shows, for $\om$ of sufficiently small derivative
@@ -409,7 +410,8 @@ but at a rate $r$ that deteriorates with $k$.
 And for any $k$ to exist satisfying the condition on $r$, $\om$ must have
 a sufficiently large lower bound $\eta_1$, i.e., $t$
 must be in a sufficiently oscillatory region for the original ODE.
-\begin{rmk}
+
+\begin{rmk}\label{r:slight}
   By \eqref{omder}, $\te_1 \ge 5\eta_1/6$ and $\te_2 \le \eta_2 + \eta_1/6$,
   thus $[\te_1,\te_2]$ is only a slight
   expansion of the interval $[\eta_1,\eta_2]$ containing the range of
@@ -417,7 +419,7 @@ must be in a sufficiently oscillatory region for the original ODE.
   Applying this we see that the last term in \eqref{r}
   is no more than $1/50$, thus can cause only slight deterioration in the rate.
 \end{rmk}
-%
+
 \begin{rmk}
   In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small),
   then $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as
@@ -425,7 +427,7 @@ must be in a sufficiently oscillatory region for the original ODE.
   Then, for example, with 100 periods across the ball, $r$ satisfies \eqref{r}
   for $k\le 25$.
 \end{rmk}
-%
+
 \begin{proof}
   Define the concentric nested set of closed balls $B_j := B_{\rho_j}(t)$,
   with radii $\rho_j := (1-j/k)\rho$, $j=0,1,\dots,k$. Note that
@@ -509,9 +511,10 @@ Thus \eqref{hypR} is proven for $j+1$.
 It remains to verify that \eqref{hypx} also holds for $j+1$.
 By the functional iteration \eqref{init}--\eqref{iter},
 $$
-x_{j+1}(t) = i\om(t) - \sum_{\ell=0}^{j} \frac{R_\ell(t)}{2 x_\ell(t)}~.
+x_{j+1}(z) = i\om(z) - \sum_{\ell=0}^{j} \frac{R_\ell(z)}{2 x_\ell(z)}~,
+\qquad z\in B_{j+1}~.
 $$
-Using the hypothesis, the second term is pointwise bounded in magnitude
+Using the hypothesis, the sum is pointwise bounded in magnitude
 in $B_{j+1}$ by
 $$
 \left|\sum_{\ell=0}^{j} \frac{R_\ell}{2 x_\ell} \right|
@@ -537,20 +540,85 @@ since $x_0(t) = i\om(t)$, noting $[\eta_1,\eta_2] \subset [\te_1,\te_2]$,
 while $R_0(t) = i\om'(t)$ is bounded in magnitude by $\eta_3$.
 \end{proof}
 
-In the proof, the choice of $4/5$ in \eqref{r} was merely a convenient one,
-chosen so that the bounds $[\te_1,\te_2]$ on $|x_j|$
+In the above theorem, the choice of $4/5$ in \eqref{r} was merely a convenient one, chosen so that the bounds $[\te_1,\te_2]$ on $|x_j|$
 involving the geometric sum were
 not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
 %It is possible to write simpler but less tight formulae for $r$.
 
-*** Add in $\gamma$ !
+
+\subsection{Superconvergence}
+
+The fact that, as $k$ grows,
+the rate $r$ in Theorem~\ref{t:R} deteriorates
+we believe to be an inevitable consequence of
+the series being asymptotic in $1/\om$ but not convergent.
+We support this in numerical results in ***.
+
+However, given a function $\om(t)$ uniformly large enough
+in a ball,
+by choosing a roughly optimal stopping $k$ one can achieve
+exponential convergence with respect to the size of the frequency $\om$,
+as follows.
+*** insert Boyd and Berry reviews on superconvergence.
+
+\begin{cor}[Superconvergence]\label{super}
+  Suppose $\om$ satisfies the conditions \eqref{ommag}--\eqref{omder}
+  of Theorem~\ref{t:R}
+  about a point $t\in\R$,
+  and let $\alpha := (1+\te_2/\te_1)/2\te_1\rho$ be the
+  first term in the rate \eqref{r} arising from these conditions.
+  Then there is a $k\in\{0,1,\dots\}$ such that
+  $$
+  |R_k(t)| \; \le \; e \eta_3 e^{-1/3\alpha}~.
+  $$
+\end{cor}
+\begin{proof}
+  Set $k$ to be the integer in the interval $[1/3\alpha-1, \, 1/3\alpha)$.
+    Then since the final term in \eqref{r} is bounded by $1/50$
+    by Remark~\ref{r:slight}, and the
+    first term $k\alpha \le 1/3$, we get $r\le e^{-1}$, which
+    is also $\le 4/5$ so that \eqref{Rjbnd} holds.
+    Choosing $j=k$, and inserting a lower bound on $k$,
+    $|R_k(t)| \le \eta_3 r^k \le \eta_3 e^{-(1/3\alpha-1)}$, which
+    finishes the proof.
+  \end{proof}
+Recalling that $\alpha = \bigO(1/\om)$, this
+shows that an $\om$-dependent
+number of iterations can give, in exact arithmetic, an
+exponentially convergent pointwise residual
+$$
+|R(t)| \;=\; \bigO(e^{-c\om})
+$$
+for some constant $c>0$.
+In the limit where
+$\om$ tends to constant in the ball of radius $\rho$ about $t$, then
+this constant is roughly $c\approx \rho/3$.
+
+Since this optimal number of iterations grows as $k = \bigO(\om)$,
+for large $\om$ it is impractical.
+In practice we use an adaptive stopping criterion for $k$ based
+on user-defined tolerance.
+For large $\om$ this will have \textit{nearly} geometric convergence
+for the first few iterations, sufficient to reach
+machine accuracy efficiently.
+
+
+
+\subsection{TODO}
+
+*** Add in $\gamma$ throughout above!
 
 *** compare at least in a paragraph to Bremer's iteration
 \footnote{J. Bremer, private communication.}
 
+*** relate the ball in the theorem to the interval size that
+can be well-approximated by $p$th order Cheby,
+using Bernstein ellipse of Tref.
 
-*** Connect $R$ to error in sat the ODE,
-then from this sim to local discretization err
+
+*** Connect $R$ to residual error in sat the ODE (easy),
+then from this to solution error bounds, maybe?
+This is similar to local discretization err
 in a more typical numerical solver.
 (check LeVeque, Tref, Hairer, etc).
 
