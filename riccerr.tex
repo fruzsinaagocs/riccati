@@ -6,6 +6,8 @@
 
 \usepackage{graphicx,bm,hyperref,amssymb,amsmath,amsthm}
 
+\usepackage{showlabels}
+
 % -------------------------------------- macros --------------------------
 % general ...
 \newcommand{\bi}{\begin{itemize}}
@@ -375,78 +377,173 @@ and sufficiently large throughout some neighborhood of $t$.
 
 
 \begin{thm}\label{t:R}
-  For now fix $\rho=1$ ***.
-  Fix $t\in\R$ and let the frequency function $\om$ be analytic
-  in the closed ball $B_\rho(t) := \{z\in\C : |z-t| \le \rho\}$ and
+  Fix $t\in\R$, and let the frequency function $\om$ be analytic
+  in the closed ball $B_\rho(t) := \{z\in\C : |z-t| \le \rho\}$,
+  for some $\rho>0$, with bounds
   \bea
-  \eta_1 \;\le\; |\om(z)| &\le& \eta_2~, \qquad \forall z\in B_\rho(t)
-  \\
-  |\om'(z)| &\le & \eta_3~, \qquad \forall z\in B_\rho(t)
+  \eta_1 &\le& |\om(z)| \;\le\; \eta_2~, \qquad \forall z\in B_\rho(t)~,
+  \label{ommag} \\
+  |\om'(z)| &\le& \eta_3 \;\le\; \frac{\eta_1^2}{18}~,
+  \qquad \forall z\in B_\rho(t)~,
+  \label{omder}
   \eea
+  that is, its derivative should be sufficiently small.
   Let $k\in\N$ be sufficiently small such that
   \be
-  r := \frac{1}{2\te_1}
-  \biggl[ \biggl(1 + \frac{\te_2}{\te_1}\biggr) k + \frac{\eta_3}{2\te_1}\biggr]
+  r := \frac{1}{2\te_1 \rho}
+  \biggl(1 + \frac{\te_2}{\te_1}\biggr) k + \frac{\eta_3}{4\te_1^2}
   \; \le \; \frac{4}{5}
+  \label{r}
   \ee
   where $\te_1:=\eta_1 - 3\eta_3/\eta_1$ and $\te_2:=\eta_2 + 3\eta_3/\eta_1$.
   Then after any number $j\le k$ of iterations of \eqref{init}--\eqref{iter},
-  the function $x_j$ has residual \eqref{R} bounded at the point $t$ by
+  the function $x_j$ has Riccati residual \eqref{R} bounded at the point $t$ by
   \be
   |R_j(t)| \;\le\; \eta_3 r^j~.
   \ee
 \end{thm}
-This shows temporary geometric convergence up to $k$ iterations,
+This shows, for $\om$ of sufficiently small derivative
+relative to its magnitude,
+temporary geometric convergence up to $k$ iterations,
 but at a rate $r$ that deteriorates with $k$.
 And for any $k$ to exist satisfying the condition on $r$, $\om$ must have
 a sufficiently large lower bound $\eta_1$, i.e., $t$
 must be in a sufficiently oscillatory region for the original ODE.
-Note that $[\te_1,\te_2]$ is a slight expansion of the interval containing
-the range of $|\om|$ in the ball.
+\begin{rmk}
+  By \eqref{omder}, $\te_1 \ge 5\eta_1/6$ and $\te_2 \le \eta_2 + \eta_1/6$,
+  thus $[\te_1,\te_2]$ is only a slight
+  expansion of the interval $[\eta_1,\eta_2]$ containing the range of
+  $|\om|$ in the ball.
+  Applying this we see that the last term in \eqref{r}
+  is no more than $1/50$, thus can cause only slight deterioration in the rate.
+\end{rmk}
+%
+\begin{rmk}
+  In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small),
+  then $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as
+  the number of oscillation periods across the ball diameter divided by $\pi$.
+  Then, for example, with 100 periods across the ball, $r$ satisfies \eqref{r}
+  for $k\le 25$.
+\end{rmk}
 %
 \begin{proof}
-  Define the concentric nested set of closed balls $B_j := B_{\rho(1-j/k)}(t)$, $j=0,1,\dots,k$, such that
+  Define the concentric nested set of closed balls $B_j := B_{\rho_j}(t)$,
+  with radii $\rho_j := (1-j/k)\rho$, $j=0,1,\dots,k$. Note that
   $B_0$ is the original ball in the statement of the theorem, while
   $B_k = \{t\}$ is the single point of interest.
-  %The functional iteration \eqref{init}--\eqref{iter},
-  We use induction in $j$.
+  For any function $f$ analytic in $B_j$ we abbreviate the $\infty$-norm by
+  $\|f\|_j := \max_{z \in B_j}|f(z)|$.
+  We will need a bound for $f'$ in $B_{j+1}$ in terms of $\|f\|_j$ by
+  applying Cauchy's theorem for derivatives
+  \cite{steinshakarchi},
+  \be
+  f'(z) = \frac{1}{2\pi i} \int_{|\zeta-t|=\rho_j} \frac{f(\zeta)\, d\zeta}{(\zeta-z)^2}
+  ~, \qquad z \in B_{j+1}~.
+  \label{cauder}
+  \ee
+  Bounding the integrand, then using the cosine rule we get
+  $$
+  |f'(z)| \;\le \;
+  \frac{\|f\|_j}{2\pi} \int_{|\zeta-t| = \rho_j} \frac{|d\zeta|}{|\zeta-z|^2}
+  =
+  \frac{\|f\|_j}{2\pi} \int_0^{2\pi} \frac{\rho_j\, d\theta}{|z|^2 + \rho_j^2 - 2|z|\rho_j \cos \theta}~.
+  $$
+  We now use $\int_{0}^{2\pi} d\theta /(a + b \cos \theta)^2 = 2\pi/\sqrt{a^2-b^2}$
+  for $b<a$ \cite[Eq.~3.613.1]{GR8}, with
+  $a = |z|^2 + \rho_j^2$ and $b = -2|z|\rho_j$, so that
+  $\sqrt{a^2-b^2} = \rho_j^2-|z|^2$.
+  Noting that the case $|z| = \rho_{j+1}$ bounds the others,
+  and using $\rho_j=(1-j/k)\rho$, we compute, for any $0\le j < k$,
+  \be
+  \|f'\|_{j+1} \le
+  \frac{\|f\|_j}{2\pi} \frac{2\pi\rho_j}{\rho_j^2-\rho_{j+1}^2}
+  =
+  \frac{\|f\|_j}{2 \rho} \frac{k(k-j)}{2k-2j-1}
+  =
+  \frac{\|f\|_j}{2 \rho} k \left[ \frac{1}{2} + \frac{1}{2(2k-2j-1)}\right]
+  \le
+  \frac{k}{\rho}\|f\|_j~.
+  %~, \; 0\le j< k
+  \label{derbnd}
+  \ee
+  Note that this bound is a factor $\bigO(k)$ better than naively
+  lower bounding the denominator in \eqref{cauder}.
+  
+  %The 
+  We now use induction in iteration number $j$.
 %  and consider the iteration acting on the functions
-  We take as the induction hypotheses that $x_j$ is analytic in $B_j$, with
+  We take as the induction hypothesis that $x_\ell$ (and thus $R_\ell$)
+  is analytic in $B_j$, for all $0\le \ell \le j$, with
   \bea
-  \te_1 \;\le\; |x_j| &\le& \te_2  \quad \mbox{ in } B_j~,
+  \te_1 \;\le\; |x_\ell| &\le& \te_2
+  \qquad \mbox{ in } B_j~, \quad \mbox{ for all } \ell = 0,1,\dots,j~,
   \label{hypx}
   \\
-  |R_\ell| &\le& \eta_3 r^\ell \quad \mbox{ in } B_j~, \mbox{ for all } \ell = 0,1,\dots,j~.
+  |R_\ell| &\le& \eta_3 r^\ell \quad \mbox{ in } B_j~, \quad \mbox{ for all } \ell = 0,1,\dots,j~.
   \label{hypR}
   \eea
-  %
-  For an analytic function $y$ we use the notation
-  $\|y\|_j := \max_{z \in B_j}|y|$ for the $\infty$-norm on the $j$th ball.
-  Cauchy's theorem for derivatives states that if $y$ is analytic
-  and bounded in $B_j$, then for any $z$
+  Assuming for now the hypothesis for $j$, we apply simple bounds to the
+  residual iteration \eqref{Riter},
+  lower-bounding denominator magnitudes and upper-bounding numerators
+  via \eqref{hypx},
+  and applying \eqref{derbnd} to the two derivative terms, to get
   $$
-  y'(z) = \frac{1}{2\pi} \int_{|\zeta-t| = (1-j/k)\rho} \frac{d\zeta}{(
+  \|R_{j+1}\|_{j+1}
+  \;\le\;
+  \frac{1}{2\te_1}\biggl(
+  \frac{1}{\te_1} \frac{k}{\rho}\te_2 + \frac{k}{\rho}
+  \biggr)\|R_j\|_j
+  +\biggl(\frac{\|R_j\|_j}{2\te_1}\biggr)^2
+  \;\le\;
+  r \cdot \|R_j\|_j
+  \;\le\;
+  \eta_3 r^{j+1}~,
   $$
-  and thus for any $z\in B_{j+1}$
-  
-  \eqref{t:Riter} then implies
+where in the middle step we used the crude bound $\|R_j\| \le \eta_3$
+from \eqref{hypR}, then the definition of $r$ in \eqref{r}.
+%This handles the case $\ell=j+1$.
+The lower cases $\ell\le j$ follow trivially from the hypothesis since the balls
+are nested.
+Thus \eqref{hypR} is proven for $j+1$.
+
+It remains to verify that \eqref{hypx} also holds for $j+1$.
+By the functional iteration \eqref{init}--\eqref{iter},
 $$
-  \|R_{j+1}\|_{j+1} = \frac{1}{2x_j}\biggl(
-  \frac{x_j'}{x_j} R[x_j]
-  - R[x_j]'
-    \biggr) + \biggl(\frac{R[x_j]}{2x_j}\biggr)^2~.
+x_{j+1}(t) = i\om(t) - \sum_{\ell=0}^{j} \frac{R_\ell(t)}{2 x_\ell(t)}~.
 $$
-  %
-  Finally, the base case $j=0$ satisfies \eqref{hypx}--\eqref{hypR}
-  by the conditions of the theorem,
-  since $x_0(t) = i\om(t)$, noting $[\eta_1,\eta_2] \subset [\te_1,\te_2]$,
-  while $R_0(t) = i\om'(t)$ is bounded in magnitude by $\eta_3$.
+Using the hypothesis, the second term is pointwise bounded in magnitude
+in $B_{j+1}$ by
+$$
+\left|\sum_{\ell=0}^{j} \frac{R_\ell}{2 x_\ell} \right|
+\;\le\; \frac{\eta_3}{2\te_1} \cdot \sum_{\ell=0}^j r^{\ell}
+%\;\le\; \frac{\eta_3}{2\te_1} \frac{1}{1-r}
+\;\le\; \frac{\eta_3}{2\te_1} \cdot 5
+\;\le\; \frac{3\eta_3}{\eta_1}
+$$
+where the upper bound in \eqref{r} was used to bound the geometric series,
+and $\te_1 \ge 5\eta_1/6$.
+Combining this with $|\om| \le \eta_2$ gives
+$\|x_{j+1}\|_{j+1} \le \eta_2 + 3\eta_3/\eta_1 = \te_2$ which verifies
+the upper bound \eqref{hypx} for $j+1$.
+Instead combining with $|\om| \ge \eta_1$ gives
+$|x_{j+1}| \ge \eta_1 - 3\eta_3/\eta_1 = \te_1$ in $B_{j+1}$,
+which verifies the lower bound \eqref{hypx}.
+Again, the hypothesis is inherited for $\ell\le j$ by the nesting of the balls.
+
+Finally, the base case $j=0$ for induction
+satisfies \eqref{hypx}--\eqref{hypR}
+by the conditions of the theorem,
+since $x_0(t) = i\om(t)$, noting $[\eta_1,\eta_2] \subset [\te_1,\te_2]$,
+while $R_0(t) = i\om'(t)$ is bounded in magnitude by $\eta_3$.
 \end{proof}
 
+In the proof, the choice of $4/5$ in \eqref{r} was merely a convenient one,
+chosen so that the bounds $[\te_1,\te_2]$ on $|x_j|$
+involving the geometric sum were
+not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
+%It is possible to write simpler but less tight formulae for $r$.
 
-
-
-
+*** Add in $\gamma$ !
 
 *** compare at least in a paragraph to Bremer's iteration
 \footnote{J. Bremer, private communication.}
