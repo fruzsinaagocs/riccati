@@ -586,23 +586,28 @@ as follows.
 Recalling that $\alpha = \bigO(1/\om)$, this
 shows that an $\om$-dependent
 number of iterations can give, in exact arithmetic, an
-exponentially convergent pointwise residual
+exponentially convergent pointwise residual,
 $$
 |R(t)| \;=\; \bigO(e^{-c\om})
 $$
 for some constant $c>0$.
 In the limit where
 $\om$ tends to constant in the ball of radius $\rho$ about $t$, then
-this constant is roughly $c\approx \rho/3$.
-
+$\alpha$ tends to $1/\om\rho$, so the above
+constant is roughly $c\approx \rho/3$.
+Equivalently, roughly one decimal digit is achieved per
+$1.1$ periods of oscillation across the ball radius.
+% log(10)*3/(2*pi) = 1.099
 
 However, this optimal number of iterations grows as $k = \bigO(\om)$,
-so for large $\om$ is impractical.
+so for large $\om$ is impractical (and unnecessary).
 In practice we use an adaptive stopping criterion for $k$ based
 on user-defined tolerance.
 For large $\om$ this will have \textit{nearly} geometric convergence
 for the first few iterations, sufficient to reach
 machine accuracy efficiently.
+
+
 
 
 
