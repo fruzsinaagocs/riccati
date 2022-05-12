@@ -603,11 +603,19 @@ However, this optimal number of iterations grows as $k = \bigO(\om)$,
 so for large $\om$ is impractical (and unnecessary).
 In practice we use an adaptive stopping criterion for $k$ based
 on user-defined tolerance.
-For large $\om$ this will have \textit{nearly} geometric convergence
-for the first few iterations, sufficient to reach
-machine accuracy efficiently.
-
-
+By returning to Theorem~\ref{t:R} and dropping the small second term
+in \eqref{r} we get, in the limit of constant $\om$ in the ball,
+$$
+|R_k(t)| \; \approx \; \eta_3 \left( \frac{k}{\rho\om}\right)^k~.
+$$
+This shows \textit{nearly} geometric convergence in $k$,
+sufficient to reach machine accuracy efficiently with a few iterations
+when $\om$ is large.
+For large $\rho\om$ one may approximately invert this to predict the iteration number $k$ sufficient for $|R_k| \approx \eps$, to get
+$$
+k_\eps \approx \frac{\log \eps^{-1}}{\log \rho\om}~.
+$$
+*** compare to numerics.
 
 
 
@@ -618,10 +626,13 @@ machine accuracy efficiently.
 *** compare at least in a paragraph to Bremer's iteration
 \footnote{J. Bremer, private communication.}
 
+*** some comment that although theorem is pointwise convergence,
+uniform convergence over some interval is trivial by enclosing it in
+a larger ball.
+
 *** relate the ball in the theorem to the interval size that
 can be well-approximated by $p$th order Cheby,
 using Bernstein ellipse of Tref.
-
 
 *** Connect $R$ to residual error in sat the ODE (easy),
 then from this to solution error bounds, maybe?
