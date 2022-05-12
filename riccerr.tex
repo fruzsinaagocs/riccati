@@ -423,8 +423,8 @@ must be in a sufficiently oscillatory region for the original ODE.
 \begin{rmk}
   In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small),
   then $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as
-  the number of oscillation periods across the ball diameter divided by $\pi$.
-  Then, for example, with 100 periods across the ball, $r$ satisfies \eqref{r}
+  the number of oscillation periods across the ball radius divided by $2\pi$.
+  Then, for example, with a ball of radius 50 periods, $r$ satisfies \eqref{r}
   for $k\le 25$.
 \end{rmk}
 
@@ -546,7 +546,7 @@ not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
 %It is possible to write simpler but less tight formulae for $r$.
 
 
-\subsection{Superconvergence}
+\subsection{Practical aspects of residual reduction}
 
 The fact that, as $k$ grows,
 the rate $r$ in Theorem~\ref{t:R} deteriorates
@@ -556,17 +556,18 @@ We support this in numerical results in ***.
 
 However, given a function $\om(t)$ uniformly large enough
 in a ball,
-by choosing a roughly optimal stopping $k$ one can achieve
+by stopping at a roughly optimal $k$ (an idea
+called ``superasymptotics'' \cite{berrysuper,boydsuper})
+one can achieve
 exponential convergence with respect to the size of the frequency $\om$,
 as follows.
-*** insert Boyd and Berry reviews on superconvergence.
 
-\begin{cor}[Superconvergence]\label{super}
+\begin{cor}[Superasymptotic approximation]\label{super}
   Suppose $\om$ satisfies the conditions \eqref{ommag}--\eqref{omder}
   of Theorem~\ref{t:R}
   about a point $t\in\R$,
   and let $\alpha := (1+\te_2/\te_1)/2\te_1\rho$ be the
-  first term in the rate \eqref{r} arising from these conditions.
+  first term in the rate \eqref{r} arising from these bounds.
   Then there is a $k\in\{0,1,\dots\}$ such that
   $$
   |R_k(t)| \; \le \; e \eta_3 e^{-1/3\alpha}~.
@@ -594,8 +595,9 @@ In the limit where
 $\om$ tends to constant in the ball of radius $\rho$ about $t$, then
 this constant is roughly $c\approx \rho/3$.
 
-Since this optimal number of iterations grows as $k = \bigO(\om)$,
-for large $\om$ it is impractical.
+
+However, this optimal number of iterations grows as $k = \bigO(\om)$,
+so for large $\om$ is impractical.
 In practice we use an adaptive stopping criterion for $k$ based
 on user-defined tolerance.
 For large $\om$ this will have \textit{nearly} geometric convergence
