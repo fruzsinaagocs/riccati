@@ -9,8 +9,7 @@ import math
 import mpmath
 
 #def test_num_diff():
-#    x0 = 10.0
-#    n_h = 200 
+#    x0 = 10.0 #    n_h = 200 
 #    n_o = 5
 #    N = 16 # Cheb nodes
 #    hs = np.logspace(-5, np.log10(200), n_h)
