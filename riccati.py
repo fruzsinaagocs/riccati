@@ -46,7 +46,20 @@ def interp(s, t):
     L = np.linalg.solve(V.T, R.T).T
     return L
 
-def choose_stepsize(w, g, x0, h, epsh = 1e-14, p = 32):
+def choose_nonosc_stepsize(w, g, x0, h, p = 16):
+    """
+
+    """
+    x = cheb(p)[1]
+    xscaled = x0 + h/2 + h/2*x
+    ws = w(xscaled)
+    if max(ws) > 1.2/h:
+        print("Reducing stepsize for nonosc step")
+        return choose_nonosc_stepsize(w, g, x0, h/2)
+    else:
+        return h
+
+def choose_osc_stepsize(w, g, x0, h, epsh = 1e-14, p = 32):
     """
     Chooses the stepsize h over which the functions w(x), g(x) can be
     represented sufficiently accurately. p/2 nodes are randomly chosen over the
@@ -70,13 +83,13 @@ def choose_stepsize(w, g, x0, h, epsh = 1e-14, p = 32):
     maxerr = max(maxwerr, maxgerr)
     if maxerr > epsh:
         #print("Stepsize h = {} is too large with max error {}".format(h, maxwerr))
-        return choose_stepsize(w, g, x0, 0.7*h, epsh = epsh, p = p)
+        return choose_osc_stepsize(w, g, x0, 0.7*h, epsh = epsh, p = p)
     else:
         #print("Chose stepsize h = {}".format(h))
         return h
     #TODO: what if h is too small to begin with?
 
-def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32):
+def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32, plotting=False, k=0):
     """
     Advances the solution from x0 to x0+h, starting from the initial conditions
     y(x0) = y0, y'(x0) = dy0. It uses the Barnett series of order o (up to and
@@ -89,37 +102,40 @@ def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32):
     xscaled = h/2*x + x0 + h/2
     ws = w(xscaled)
     gs = g(xscaled)
-    w2 = ws**2
-    g2 = gs**2
-    y = -gs + np.lib.scimath.sqrt(g2 - w2) # Need to use complex sqrt
-    #y = 1j*ws
-    R = lambda y: 2/h*np.matmul(D, y) + y**2 + w2 + 2*gs*y
-    Ry = 0
-    maxerr = 10*epsres
+    #y = -gs + np.lib.scimath.sqrt(g2 - w2) # Need to use complex sqrt
+    y = 1j*ws
+    delta = lambda r, y: -r/(2*(y + gs))
+    R = lambda d: 2/h*np.matmul(D, d) + d**2
+    Ry = 1j*2*(1/h*np.matmul(D, ws) + gs*ws)
+    #maxerr = 10*epsres
+    maxerr = max(np.abs(Ry))
     prev_err = np.inf
     o = 0 # Keep track of number of terms
-    while maxerr > epsres:
-        o += 1
-        y = y - Ry/(2*(y + gs))
-        Ry = R(y)       
-        #uy = h/2*np.linalg.solve(D, y)
-        #fuy = np.exp(uy - uy[-1])
-        #print("fuy: ", fuy)
-        #scaledres = max(np.abs(y0*Ry*fuy))
-        #maxerr = scaledres
-        #maxerr2 = max(np.abs(Ry))
-        maxerr = max(np.abs(Ry))
-        if maxerr >= prev_err:
-            print("Barnett series diverged after {} terms".format(o-1))
-            success = False
-            #TODO: Actually fail here
-            break
-        prev_err = maxerr
-        print("At iteration {}, riccati y = {}, max residual is Rx={}".format(o, y[0], maxerr))
-        #print("At iteration {}, riccati y = {}, max residual is Rx={}, max scaled residual is {}".format(o, y[0], maxerr2, scaledres))
-    if success:
-        print("Converged after {} terms".format(o))
-    print("Residue = {}".format(maxerr))
+    if plotting == False:
+        while maxerr > epsres:
+            o += 1
+            deltay = delta(Ry, y)
+            y = y + deltay
+            Ry = R(deltay)       
+            maxerr = max(np.abs(Ry))
+            if maxerr >= prev_err:
+                print("Barnett series diverged after {} terms".format(o-1))
+                success = False
+                #TODO: Actually fail here
+                break
+            prev_err = maxerr
+            print("At iteration {}, riccati y = {}, max residual is Rx={}".format(o, y[0], maxerr))
+        if success:
+            print("Converged after {} terms".format(o))
+        print("Residue = {}".format(maxerr))
+    else:
+        while o < k:
+            o += 1
+            deltay = delta(Ry, y)
+            y = y + deltay
+            Ry = R(deltay)       
+            maxerr = max(np.abs(Ry))
+            print("At iteration {}, riccati y = {}, max residual is Rx={}".format(o, y[0], maxerr))
     du1 = y
     du2 = np.conj(du1)
     u1 = h/2*np.linalg.solve(D, du1)
@@ -134,7 +150,16 @@ def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32):
     phase = np.imag(u1[0])
     #print("at x = {}, y = {}, u = {}, f = {}, y1 = {}".format(x0, y, u1, f1, y1))
     print("y1:{}, dy1:{}".format(y1[0], dy1[0]))
-    return y1[0], dy1[0], maxerr, success, phase
+    if plotting:
+        xplot = np.linspace(x0, x0+h, 500)
+        L = interp(xscaled, xplot)
+        u1plot = np.matmul(L, u1)
+        f1plot = np.exp(u1plot)
+        f2plot = np.conj(f1plot)
+        yplot = ap*f1plot + am*f2plot
+        return xplot, yplot, xscaled, y1, maxerr
+    else:
+        return y1[0], dy1[0], maxerr, success, phase
 
 def nonosc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 16):
 
@@ -147,28 +172,28 @@ def nonosc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 16):
     success = True #TODO: this doesn't do anything in Cheb, can always add more nodes
     res = 0 #TODO: does nothing
     maxerr = 10*epsres
-    N = 4 # TODO
-    Nmax = 512 # TODO
+    N = 16 # TODO
+    Nmax = 64 # TODO
     #print("Nonoscillatory step from x0={} y0={}, dy0={}, h={}".format(x0, y0, dy0, h))
     yprev, dyprev, xprev = spectral_cheb(w, g, x0, h, y0, dy0, N)
     while maxerr > epsres:
-        #print("Trying n={} points".format(2*N))
+        print("Trying n={} points".format(2*N))
         N *= 2
         if N > Nmax:
-            #print("Chebyshev step didn't converge with n <= {}".format(Nmax))
+            print("Chebyshev step didn't converge with n <= {}".format(Nmax))
             success = False
             return 0, 0, maxerr, success, res
         y, dy, x = spectral_cheb(w, g, x0, h, y0, dy0, N) 
         #L = interp(x, xprev)
         #yest = np.matmul(L, y)
         maxerr = np.abs((yprev[0] - y[0]))
-        #print("Maxerr: ", maxerr, "y[0]: ", y[0])
+        print("Maxerr: ", maxerr, "y[0]: ", y[0])
         if np.isnan(maxerr):
             maxerr = np.inf
         yprev = y
         dyprev = dy
         xprev = x
-    #print("Converged at n={} points, success = {}, y[0], dy[0] = {}, {}".format(N, success, y[0], dy[0]))
+    print("Converged at n={} points, success = {}, y[0], dy[0] = {}, {}".format(N, success, y[0], dy[0]))
     return y[0], dy[0], maxerr, success, res
 
 def spectral_cheb(w, g, x0, h, y0, dy0, n):
@@ -220,7 +245,7 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     dy = dyi
     yprev = y
     dyprev = dy
-    n = 16 # How many points we use during Cheby interp
+    n = 32 # How many points we use during Cheby interp
     p = n # How many points we use to choose h
     D, x = cheb(n)
     wi = w(xi)
@@ -228,9 +253,10 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     dwi = 2*np.matmul(D, w(xi + 1/2 + 1/2*x))[-1] 
     dgi = 2*np.matmul(D, g(xi + 1/2 + 1/2*x))[-1] 
     # Choose initial stepsize
-    hslo = min(1, 1e8, np.abs(1/wi))
+    hslo_ini = min(1e8, np.abs(1/wi))
     hosc_ini = min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
-    hosc = choose_stepsize(w, g, xi, hosc_ini, epsh = epsh)  
+    hslo = choose_nonosc_stepsize(w, g, xi, hslo_ini)
+    hosc = choose_osc_stepsize(w, g, xi, hosc_ini, epsh = epsh)  
     xcurrent = xi
     wnext = wi
     dwnext = dwi
@@ -240,7 +266,7 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
         ty = np.abs(1/wnext)
         tw = np.abs(wnext/dwnext)
         tw_ty = tw/ty
-        print("Timescale ratio: {}".format(tw_ty))
+        #print("Timescale ratio: {}".format(tw_ty))
         success = False
         if tw_ty > 10 and hosc*wnext/(2*np.pi) > 1:
             print("Attempting oscillatory step")
@@ -283,9 +309,10 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
         dwnext = 2/h*np.matmul(D, w(xcurrent + h/2 + h/2*x))[0]
         dgnext = 2/h*np.matmul(D, g(xcurrent + h/2 + h/2*x))[0]
         xcurrent += h
-        hslo = min(1e8, np.abs(1/wnext))
+        hslo_ini = min(1e8, np.abs(1/wnext))
         hosc_ini = min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
-        hosc = choose_stepsize(w, g, xcurrent, hosc_ini, epsh = epsh)  
+        hosc = choose_osc_stepsize(w, g, xcurrent, hosc_ini, epsh = epsh)  
+        hslo = choose_nonosc_stepsize(w, g, xcurrent, hslo_ini)
         yprev = y
         dyprev = dy
     print('Done')

@@ -214,12 +214,12 @@ def test_solve_burst():
     bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
     burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
             + (-m + 1j*x)*np.sin(m*np.arctan(x)))
-    xi = 0
-    xf = 1.0
+    xi = -m
+    xf = m
     yi = bursty(xi)
     dyi = burstdy(xi)
 #    print(yi, dyi)
-    eps = 1e0
+    eps = 1e-4
     epsh = 1e-12
     xs, ys, dys, ss, ps, types = riccati.solve(w, g, xi, xf, yi, dyi, eps = eps, epsh = epsh)
     xs = np.array(xs)
