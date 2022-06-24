@@ -77,7 +77,7 @@
     \item{Therefore let zeroth order solutions be $x_0 = \pm i\omega$}
     \item{Define residual of \cref{ode} as
     \begin{equation}
-    R[x(t)] \equiv R[x] = x' + x^2 + \omega^2,
+    R[x](t) \equiv R[x] = x' + x^2 + \omega^2,
     \end{equation}
     then 
     \begin{equation}
@@ -117,7 +117,7 @@
 \end{noframe}
 
 \begin{noframe}
-    Examples IV: Ideas  \\
+    Examples IV: Ongoing applications \\
     \medskip
     {\footnotesize
     Cosmology: Mukhanov--Sasaki equation and primordial power spectra (PPS)
@@ -167,18 +167,19 @@
     %Nodes
     \node[squarednode]      (hsloini)   {$h_{\text{slo}}^{(0)} = \frac{1}{\omega(t_i)}$};
     \node[squarednode]      (hoscini)  [right=0.7cm of hsloini] {$h_{\text{osc}}^{(0)} = \frac{\omega(t_i)}{\omega'(t_i)}$};
-    \node[squarednode]      (hslo)  [below=0.7cm of hsloini] {$h_{\text{slo}}$};   
-    \node[squarednode]      (hosc)  [below=0.7cm of hoscini] {$h_{\text{osc}}$};    
-    \node[squarednode, align=center]      (switch) [below right=0.7cm and -0.6cm of hslo] {$h_{\text{osc}} > h_{\text{slo}}$ \\ and \\$\omega(t_i) h_{\text{osc}}/(2\pi) > 1$};
-    \node[squarednode]      (ricc)  [below =4cm of hoscini] {Riccati step};  
-    \node[squarednode]      (cheb)  [below left=2cm and -1.3cm of switch] {Chebyshev step}; 
-    \node[squarednode]      (conv)  [right=0.6cm of cheb] {Converged?};     
-    \node[squarednode]      (accept)  [below =3.3cm of switch] {Advance solution};    
+    \node[squarednode]      (hslo)  [below=0.4cm of hsloini] {$h_{\text{slo}}$};   
+    \node[squarednode]      (hosc)  [below=0.4cm of hoscini] {$h_{\text{osc}}$};    
+    \node[squarednode, align=center]      (switch) [below right=0.4cm and -0.4cm of hslo] {$h_{\text{osc}} > h_{\text{slo}}$ \\ and \\$\omega(t_i) h_{\text{osc}}/(2\pi) > 1$};
+    \node[squarednode]      (ricc)  [below right=3.1cm and -1.6cm of hoscini] {Riccati step in $x(t)$};  
+    \node[squarednode]      (conv)  [below=0.4cm of ricc] {Converged?};     
+    \node[squarednode, align=center]      (cheb)  [left =1.0 cm of conv] {Chebyshev step \\ in $u(t)$}; 
+    \node[squarednode, align=center]      (ic)  [below=0.4cm of conv] {Compute $x$ from $u$, \\ match $u(t_i), u'(t_i)$};     
+    \node[squarednode]      (accept)  [below =3.8cm of switch] {};    
     \node[inner sep=0, minimum size=0, below left=0.7cm and -0.15cm of switch] (k) {}; % invisible node
     \node[inner sep=0, minimum size=0, below=0.2cm  of accept] (l) {}; % invisible node
     \node[inner sep=0, minimum size=0, right=3cm of l] (m) {}; % invisible node
-    \node[inner sep=0, minimum size=0, above=8.27cm of m] (n) {}; % invisible node
-    \node[inner sep=0, minimum size=0, above=3cm of switch] (o) {}; % invisible node    
+    \node[inner sep=0, minimum size=0, above=7.87cm of m] (n) {}; % invisible node
+    \node[inner sep=0, minimum size=0, above=2.6cm of switch] (o) {}; % invisible node    
     
     %Lines
     \draw[->] (hsloini.south) -- (hslo.north);
@@ -188,7 +189,7 @@
     \draw[->] (switch.south) -- (ricc.north) node[midway, above=-0.5ex, sloped] {\tiny True};    
     \draw[-] (switch.south) -- (k) node[midway, above=-0.5ex, sloped] {\tiny False};  
     \draw[->] (k) -- (cheb.north) ;
-    \draw[->] (conv.south) -- (accept.north) node[midway, below=-0.5ex, sloped] {\tiny True};    
+    \draw[->] (conv.south) -- (ic.north) node[midway, below=-0.5ex] {\tiny True};    
     \draw[->] (conv.west) -- (cheb.east) node[midway, above=-0.5ex] {\tiny False};
     \draw[->] (cheb.south) -- (accept.north);    
     \draw[->] (ricc.south) -- (conv.north);
@@ -280,7 +281,7 @@
     \begin{itemize}
     \item{An efficient method for solving general, linear, 2nd order ODEs, with a frequency that may be large,}
     \item{No other existing method that can deal with $\gamma \neq 0$ and nonoscillatory regime other than oscode }
-    \item{oscode is anoher asymptotic solver, uses WKB expansion, but since WKB significantly more difficult to make adaptive (due to underlying recursion relation involving all previous terms, c.f.\ only 1 term here), only uses a fixed number of terms in the asymptotic expansion}
+    \item{oscode is another asymptotic solver, uses WKB expansion, but since WKB significantly more difficult to make adaptive (due to underlying recursion relation involving all previous terms, c.f.\ only 1 term here), only uses a fixed number of terms in the asymptotic expansion}
     \item{oscode is low-order, this method is arbitrarily high-order}
     \end{itemize}
    }
@@ -291,6 +292,17 @@
     \item{Method has potential to generalise to PDEs}
     \end{itemize}
    }
+\end{noframe}
+
+\begin{noframe}
+    Future outlook \\
+    \medskip
+    {\footnotesize
+    \begin{itemize}
+    \item{Can this method generalise to systems of oscillators?}
+    \item{Does it generalise to PDEs?}
+    \end{itemize}
+    }
 \end{noframe}
 
 %\begin{frame}[b]
