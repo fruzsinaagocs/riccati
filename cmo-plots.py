@@ -22,7 +22,7 @@ def airy():
     ps = np.array(ps)
     stypes = np.array(stypes)
 
-    xcts = np.logspace(np.log10(xi), np.log10(50), 2000)
+    xcts = np.logspace(np.log10(xi), np.log10(100), 10000)
     ycts = np.array([sp.airy(-x)[0] for x in xcts])
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
     yerr = np.abs((ytrue - ys)/ytrue)
@@ -34,47 +34,47 @@ def airy():
     blue2 = tab20c.colors[1]
     grey2 = tab20c.colors[-3]
     
-    plt.style.use('cmotalk') 
-    fig, ax = plt.subplots(2, 2)
-    plt.title('Numerical solution')
+    plt.style.use('sab') 
+#    fig, ax = plt.subplots(2, 2)
+    plt.figure()
+    plt.title('Numerical solution of $u'' + tu = 0$')
     # Numerical solution
-    ax[0,0].semilogx(xcts, ycts, color='black', label='analytic solution')
-    ax[0,0].semilogx(xs[stypes==0], ys[stypes==0], '.', color='C0', label='Chebyshev step')
-    ax[0,0].semilogx(xs[stypes==1], ys[stypes==1], '.', color='C1', label='Riccati step')
-    ax[0,0].set_title('Numerical solution')
-    ax[0,0].set_ylabel('$y(x)$')
-    ax[0,0].set_xlim((1, 50))
-    ax[0,0].legend()
-    # Stepsize
-    ax[0,1].loglog(xs[:-1], hs, color=blue1)
-    ax[0,1].loglog(np.logspace(0,8,10), np.logspace(0,8,10), '--', color=blue2)
-    ax[0,1].set_title('Stepsize')
-    ax[0,1].set_ylabel('Stepsize, $h$')
-    ax[0,1].annotate('$\propto x$', (5e3, 1e4), rotation=30)
-    ax[0,1].set_xlim((1e0, 1e8))
-    # Error
-    ax[1,0].loglog(xs[ss==True], yerr[ss==True], color=blue1)
-    ax[1,0].loglog(xs, eps*np.ones_like(xs), '--', color=grey2, label='$\epsilon$')
-    ax[1,0].loglog(xs[1:], wiggles*np.finfo(float).eps, '--', color=blue2,\
-            label='$K\cdot \epsilon_{\mathrm{mach}}$')
-    ax[1,0].annotate('minimum error $=K\cdot \epsilon_{\mathrm{mach}}$', (3e3, 5e-14))
-    ax[1,0].annotate('$K=$ condition number (# of wiggles)', (3e3, 5e-15))
-    ax[1,0].annotate('$\epsilon_{\mathrm{mach}}=$ machine precision', (3e3, 5e-16))
-    ax[1,0].set_title('Numerical error')
-    ax[1,0].set_xlabel('$x$')
-    ax[1,0].set_ylabel('Relative error, $|\Delta y/y|$')
-    ax[1,0].set_xlim((xi, xf))
-    ax[1,0].legend()
-    # Wiggles
-    ax[1,1].loglog(xs[1:], ps/(2*np.pi))
-    ax[1,1].set_ylabel('Wiggles traversed per step') 
-    ax[1,1].set_xlabel('$x$') 
-    ax[1,1].set_title('Oscillations per step')
-    ax[1,1].loglog(np.logspace(0,8,10), np.logspace(0,8*3/2,10), '--', color=blue2)
-    ax[1,1].annotate('$\propto x^{\\frac{3}{2}}$', (5e3, 1.1e6), rotation=35)
-    ax[1,1].set_xlim((1e0, 1e8))
-#    plt.show()
-    plt.savefig("airy-numsol.pdf")
+    plt.semilogx(xcts, ycts, color='black', label='analytic solution')
+    plt.semilogx(xs[stypes==0], ys[stypes==0], '.', color='C0', label='Chebyshev step')
+    plt.semilogx(xs[stypes==1], ys[stypes==1], '.', color='C1', label='Riccati step')
+    plt.ylabel('$u(t)$')
+    plt.xlim((1, 100))
+    plt.legend()
+#     # Stepsize
+#     ax[0,1].loglog(xs[:-1], hs, color=blue1)
+#     ax[0,1].loglog(np.logspace(0,8,10), np.logspace(0,8,10), '--', color=blue2)
+#     ax[0,1].set_title('Stepsize')
+#     ax[0,1].set_ylabel('Stepsize, $h$')
+#     ax[0,1].annotate('$\propto t$', (5e3, 1e4), rotation=30)
+#     ax[0,1].set_xlim((1e0, 1e8))
+#     # Error
+#     ax[1,0].loglog(xs[ss==True], yerr[ss==True], color=blue1)
+#     ax[1,0].loglog(xs, eps*np.ones_like(xs), '--', color=grey2, label='$\epsilon$')
+#     ax[1,0].loglog(xs[1:], wiggles*np.finfo(float).eps, '--', color=blue2,\
+#             label='$K\cdot \epsilon_{\mathrm{mach}}$')
+#     ax[1,0].annotate('minimum error $=K\cdot \epsilon_{\mathrm{mach}}$', (3e3, 5e-14))
+#     ax[1,0].annotate('$K=$ condition number (# of periods)', (3e3, 5e-15))
+#     ax[1,0].annotate('$\epsilon_{\mathrm{mach}}=$ machine precision', (3e3, 5e-16))
+#     ax[1,0].set_title('Numerical error')
+#     ax[1,0].set_xlabel('$t$')
+#     ax[1,0].set_ylabel('Relative error, $|\Delta y/y|$')
+#     ax[1,0].set_xlim((xi, xf))
+#     ax[1,0].legend()
+#     # Wiggles
+#     ax[1,1].loglog(xs[1:], ps/(2*np.pi))
+#     ax[1,1].set_ylabel('Periods traversed per step') 
+#     ax[1,1].set_xlabel('$t$') 
+#     ax[1,1].set_title('Oscillations per step')
+#     ax[1,1].loglog(np.logspace(0,8,10), np.logspace(0,8*3/2,10), '--', color=blue2)
+#     ax[1,1].annotate('$\propto t^{\\frac{3}{2}}$', (5e3, 1.1e6), rotation=35)
+#     ax[1,1].set_xlim((1e0, 1e8))
+# #    plt.show()
+    plt.savefig("SAB-airy-numsol.pdf")
 
 def burst():
     m = int(40)
@@ -114,7 +114,7 @@ def burst():
     ax[0,0].plot(xs[stypes==0], ys[stypes==0], '.', color='C0', label='Chebyshev step')
     ax[0,0].plot(xs[stypes==1], ys[stypes==1], '.', color='C1', label='Riccati step')
     ax[0,0].set_title('Numerical solution')
-    ax[0,0].set_ylabel('$y(x)$')
+    ax[0,0].set_ylabel('$y(t)$')
     ax[0,0].set_xlim((-m/2, m/2))
     ax[0,0].set_ylim((-0.4, 0.2))
     ax[0,0].legend()
@@ -166,16 +166,17 @@ def burst():
 #        ax[1,0].annotate('$K=$ condition number (# of wiggles)', (3e3, 5e-15))
 #        ax[1,0].annotate('$\epsilon_{\mathrm{mach}}=$ machine precision', (3e3, 5e-16))
         ax[1,0].set_title('Numerical error')
-        ax[1,0].set_xlabel('$x/n$')
+        ax[1,0].set_xlabel('$t/n$')
         ax[1,0].set_ylabel('Relative error, $|\Delta y/y|$')
+        #ax[1,0].set_xscale('symlog', linthresh=1e-5)
         ax[1,0].set_xlim((-1, 1))
         ax[1,0].set_ylim((1e-13, 1e-6))
     #    ax[1,0].legend()
         # Wiggles
         ax[1,1].semilogy(xs[1:], ps/(2*np.pi), color=c[i])
         ax[1,1].set_xscale('symlog', linthresh=1e-5)
-        ax[1,1].set_ylabel('Wiggles traversed per step') 
-        ax[1,1].set_xlabel('$x/n$') 
+        ax[1,1].set_ylabel('Periods traversed per step') 
+        ax[1,1].set_xlabel('$t/n$') 
         ax[1,1].set_title('Oscillations per step')
     #    ax[1,1].semilogy(np.logspace(0,8,10), np.logspace(0,8*3/2,10), '--', color=blue2)
     #    ax[1,1].annotate('$\propto x^{\\frac{3}{2}}$', (5e3, 1.1e6), rotation=35)
@@ -200,29 +201,31 @@ def residual():
     blue2 = tab20c.colors[1]
     grey2 = tab20c.colors[-3]
     orange1 = tab20c.colors[4]
+    c = tab20c.colors
+    cols = [c[0], c[2], c[8], c[10]]
 
-    plt.style.use('cmotalk') 
-    fig, ax = plt.subplots(len(ks), 1, figsize=(2.3, 3.3), sharex=True)
+    plt.style.use('sab') 
+    #fig, ax = plt.subplots(len(ks), 1, figsize=(2.3, 3.3), sharex=True)
 
     # Visualisation of num sol
-    for i, k in enumerate(ks):
-        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, epsres = eps, plotting = True, k=k)
-        if i==0:
-            ax[i].plot(xcts, ycts, color='black', label='analytic solution')
-            ax[i].plot(xs, ys, '--', color=orange1, label='Riccati series')
-            ax[i].legend(prop={'size': 3}, loc='upper left')
-            ax[i].set_title("Solution of the Airy equation after $k$ Riccati iterations")
-        else:
-            ax[i].plot(xcts, ycts, color='black')
-            ax[i].plot(xs, ys, '--', color=orange1)
-        if i==len(ks)-1:
-            ax[i].set_xlabel('$x$')
-        ax[i].set_xlim((x0, 12))
-        ax[i].set_ylim((-0.55, 0.55))
-        ax[i].annotate('$k={}$'.format(k), (11, -0.5))
-    fig.text(0.0, 0.5, '$y(x)$', va='center', rotation='vertical')
-    plt.subplots_adjust(wspace=0, hspace=0)
-    plt.savefig('residual.pdf')
+    # for i, k in enumerate(ks):
+    #     xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, epsres = eps, plotting = True, k=k)
+    #     if i==0:
+    #         ax[i].plot(xcts, ycts, color='black', label='analytic solution')
+    #         ax[i].plot(xs, ys, '--', color=orange1, label='Riccati series')
+    #         ax[i].legend(prop={'size': 3}, loc='upper left')
+    #         ax[i].set_title("Solution of the Airy equation after $k$ Riccati iterations")
+    #     else:
+    #         ax[i].plot(xcts, ycts, color='black')
+    #         ax[i].plot(xs, ys, '--', color=orange1)
+    #     if i==len(ks)-1:
+    #         ax[i].set_xlabel('$t$')
+    #     ax[i].set_xlim((x0, 12))
+    #     ax[i].set_ylim((-0.55, 0.55))
+    #     ax[i].annotate('$k={}$'.format(k), (11, -0.5))
+    # fig.text(0.0, 0.5, '$y(t)$', va='center', rotation='vertical')
+    # plt.subplots_adjust(wspace=0, hspace=0)
+    # plt.savefig('residual.pdf')
     
     # Just residual 
     N = 16
@@ -234,12 +237,12 @@ def residual():
     eps = 1e-12
     epsh = 1e-13
     errs = np.zeros(N+1)
-    xcoords = [10.83, 5.65, 3.94, 3.17]
-    angles = [-45, -65, -70, -80]
+    xcoords = [10.82, 5.65, 3.97, 3.22]
+    angles = [-45, -63, -68, -75]
 
-    plt.figure(figsize = (2.3, 3.3))
+    plt.figure()
     plt.xlabel("$k$")
-    plt.ylabel("$R\left[x^{(k)}\\right]$")
+    plt.ylabel("$\max_{t \in (t_i, t_i+h)} R\left[x_k(t)\\right]$")
     for j, m, xc, angle in zip(range(len(ms)), ms, xcoords, angles):
         m = m
         w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
@@ -253,17 +256,17 @@ def residual():
             y0 = bursty(x0)
             dy0 = burstdy(x0)   
 
-        plt.semilogy(ks, errs, '.-', label='$m={}$'.format(m), color=tab20c.colors[j])
-        plt.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[j+4])
-        plt.annotate('$\propto \omega^{-{%s}}$' % (str(m)), (xc, 1e-11), rotation=angle, color=tab20c.colors[j+4])
+        plt.semilogy(ks, errs, '.-', label='$\omega(t_i)={}$'.format(m), color=cols[j])
+        #plt.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=c[j+4])
+        #plt.annotate('$\propto \omega(t_i)^{-k}$', (xc, 1e-11), rotation=angle, color=tab20c.colors[j+4])
     
     plt.title('Maximum residual after $k$ Riccati iterations')
     plt.xlim((0,16))
-    plt.ylim((1e-16, 1e8))
+    plt.ylim((1e-16, 9e7))
     plt.legend()
-    plt.savefig("residual-k.pdf")
+    plt.savefig("SAB-residual-k.pdf")
 
 
-#airy()
+airy()
 #burst()
-residual()
+#residual()
