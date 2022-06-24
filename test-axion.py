@@ -4,6 +4,8 @@ import numpy as np
 import riccati
 import matplotlib.pyplot as plt
 
+from tqdm import tqdm
+
 from scipy.integrate import ode
 
 script_path = os.path.dirname(os.path.realpath(__file__))
@@ -76,7 +78,7 @@ def test_solve_harmonic_qcd(thetai = 2.0):
     types = np.flip(np.array(types))
 
     cond = -np.array(xs) > 0.3
-    num_sol = np.array([[-t_new]+list(sol.integrate(t_new)) for t_new in -np.array(xs)[cond]])
+    num_sol = np.array([[-t_new]+list(sol.integrate(t_new)) for t_new in tqdm(-np.array(xs)[cond])])
     yerr = np.abs((num_sol[:,1] - ys[cond]))/np.abs(num_sol[:,1])
 
     fig, ax = plt.subplots(2, 1, sharex=True)
