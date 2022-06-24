@@ -52,7 +52,7 @@ def test_solve_harmonic_qcd(thetai = 2.0):
     g = lambda tau: -0.5*v_aux_f2(-tau_osc*tau)/tau
 
     ti = -50.0
-    tf = -0.15
+    tf = -0.1
     yi = thetai
     dyi = 0
 
@@ -81,14 +81,22 @@ def test_solve_harmonic_qcd(thetai = 2.0):
     num_sol = np.array([[-t_new]+list(sol.integrate(t_new)) for t_new in tqdm(-np.array(xs)[cond])])
     yerr = np.abs((num_sol[:,1] - ys[cond]))/np.abs(num_sol[:,1])
 
-    fig, ax = plt.subplots(2, 1, sharex=True)
+    fig, ax = plt.subplots(3, 1, sharex=True)
     ax[0].plot(np.flip(np.log10(-num_sol[:,0])), np.flip(num_sol[:,1]), 'k-', lw=2, label='scipy')
     ax[0].plot(xs_fl[types==0], ys_fl[types==0], '.', color='C1', label='Nonosc step')
     ax[0].plot(xs_fl[types==1], ys_fl[types==1], '.', color='C0', label='Osc step')
     ax[1].semilogy(np.flip(np.log10(-xs)[cond]), np.flip(yerr), '.-', color='black')
+    ax[2].semilogy(xs_fl, np.flip(v_ma(-xs*tau_osc)), label=r'$m$', c='b')
+    ax[2].semilogy(xs_fl, np.flip(3.0*v_hubble(-xs*tau_osc)), label=r'$H$', c='b', ls='--')
+    ax[2].semilogy(xs_fl, np.flip(-6.0*g(xs)), label=r'$\gamma$', c='r', ls='--')
+    ax[2].semilogy(xs_fl, np.flip(w(xs)), label=r'$\omega$', c='r')
+    ax[2].axvline(np.log10(143.7e6/tau_osc), c='k')
+    ax[2].axvline(np.log10(143.7e6/tau_osc), c='k', ls='--')
+    ax[2].legend()
     ax[0].set_ylabel("$y(x)$")
     ax[1].set_ylabel("Relative error")
-    ax[1].set_xlabel("$x$")
+    ax[2].set_ylabel(r"$\gamma$, $\omega$, $m$")
+    ax[2].set_xlabel("$x$")
     ax[0].legend()
     ax[0].set_xlim([np.amin(xs_fl),1])
     plt.show()
