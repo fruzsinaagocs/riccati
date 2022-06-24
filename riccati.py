@@ -53,7 +53,7 @@ def choose_nonosc_stepsize(w, g, x0, h, p = 16):
     x = cheb(p)[1]
     xscaled = x0 + h/2 + h/2*x
     ws = w(xscaled)
-    if max(ws) > 1.2/h:
+    if max(ws) > 1.3/h:
         print("Reducing stepsize for nonosc step")
         return choose_nonosc_stepsize(w, g, x0, h/2)
     else:
@@ -245,7 +245,7 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     dy = dyi
     yprev = y
     dyprev = dy
-    n = 32 # How many points we use during Cheby interp
+    n = 16 # How many points we use during Cheby interp # 16 for Airy, 32 for burst
     p = n # How many points we use to choose h
     D, x = cheb(n)
     wi = w(xi)
@@ -263,12 +263,13 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     while xcurrent < xf:
         print("x = {}, hosc = {}, hslo = {}".format(xcurrent, hosc, hslo))
         # Check how oscillatory the solution is
-        ty = np.abs(1/wnext)
-        tw = np.abs(wnext/dwnext)
-        tw_ty = tw/ty
+        #ty = np.abs(1/wnext)
+        #tw = np.abs(wnext/dwnext)
+        #tw_ty = tw/ty
         #print("Timescale ratio: {}".format(tw_ty))
         success = False
-        if tw_ty > 10 and hosc*wnext/(2*np.pi) > 1:
+        #if tw_ty > 10 and hosc*wnext/(2*np.pi) > 1:
+        if hosc > 10*hslo and hosc*wnext/(2*np.pi) > 1:
             print("Attempting oscillatory step")
             # Solution is oscillatory
             # Attempt osc step of size hosc
