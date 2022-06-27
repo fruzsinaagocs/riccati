@@ -4,7 +4,9 @@
 \textwidth 6in
 \textheight 8.5in
 
-\usepackage{graphicx,bm,hyperref,amssymb,amsmath,amsthm}
+\usepackage{graphicx,bm,amssymb,amsmath,amsthm}
+\usepackage[colorlinks]{hyperref}
+\usepackage[capitalise, nameinlink]{cleveref}
 
 \usepackage{showlabels}
 
@@ -36,6 +38,7 @@
 \newcommand{\ie}{{\it i.e.\ }}
 \newcommand{\eg}{{\it e.g.\ }}
 \newcommand{\etal}{{\it et al.\ }}
+\newcommand{\etc}{{\it etc.\ }}
 \newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
 \newcommand{\pdc}[3]{\left. \frac{\partial #1}{\partial #2}\right|_{#3}}
 \newcommand{\infint}{\int_{-\infty}^{\infty} \!\!}      % infinite integral
@@ -47,6 +50,7 @@
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\Z}{\mathbb{Z}}
 \newcommand{\RR}{\mathbb{R}^2}
+\renewcommand{\d}{\mathrm{d}} % Upright differential
 \newcommand{\ve}[4]{\left[\begin{array}{r}#1\\#2\\#3\\#4\end{array}\right]}  % 4-col-vec
 \newcommand{\vt}[2]{\left[\begin{array}{r}#1\\#2\end{array}\right]} % 2-col-vec
 \newcommand{\bigO}{{\mathcal O}}
@@ -65,15 +69,18 @@
 \newtheorem{rmk}[thm]{Remark}
 % this work...
 \newcommand{\om}{\omega}
+\newcommand{\g}{\gamma}
 \newcommand{\te}{\tilde\eta}
-
-
+\crefalias{prop}{Proposition}
+% Review
+\newcommand{\Alex}[1]{{\color{orange}#1}}
+\newcommand{\Fruzsi}[1]{{\color{blue}#1}}
 
 \begin{document}
 
 \title{Analysis of an iteration for non-oscillatory solutions to the Riccati form of the phase function for 2nd-order linear ODEs}
 
-\author{Fruszina Agocs and Alex H. Barnett}
+\author{Fruzsina J.\ Agocs and Alex H.\ Barnett}
 \date{\today}
 \maketitle
 
@@ -84,33 +91,28 @@ We gather basic definitions and error analysis.
 \section{Introduction}
 
 We are interested in efficient numerical solution of
-the oscillatory linear 2nd-order ODE
+the oscillatory linear 2nd-order ordinary differential equation (ODE)
 \be
-u''(t) +\gamma(t) u'(t) + \om^2(t)u(t) \;=\; 0
-~,
-\qquad t \in (0,1)~,
+u''(t) + 2\g(t) u'(t) + \om^2(t)u(t) = 0, \qquad t \in (0,1),
 \label{ode}
 \ee
-with initial conditions
-\bea
-u(0) &=& u_0 \\
-\label{ic0}
-u'(0) &=& u_1~.
-\label{ic1}
-\eea
+subject to the initial conditions
+\begin{align} % \ba, \ea doesn't work here, LaTeX complains
+    u(0) &= u_0 \label{ic0} \\
+    u'(0) &= u_1. \label{ic1}
+\end{align}
 %Here the local frequency function $\om(t)$ is purely real or purely imaginary.
-In regions where $\om \gg 1$
-then the solution $u$ is oscillatory, meaning that on some local
+In regions where $\om \gg 1$, the solution $u$ is oscillatory, meaning that on some local
 scale it is approximately $a e^{i\om_0t} + b e^{-i\om_0t}$ where $\om_0$ is the local value of $\om(t)$.
 Conventional ODE integrators then require discretization with several
 time-points per local period $2\pi/\om$, which can be prohibitively slow.
 This has led to the development of more efficient solvers for this
 high-frequency case.
-For now we consider only regions where $\om$ is real and positive;
+For now we consider only regions where $\om(t)$ and $\g(t)$ are real-valued and $\om(t)$ is positive, but 
 one may also consider $q(t):=\om^2(t)$ real and allow evanescent
 $q<0$ regions, where the solution $u$ has rapid growth and decay.
-For now we ignore the real-valued damping function $\gamma(t)$,
-setting $\gamma \equiv =0$. *** to include.
+%For now we ignore the real-valued damping function $\g(t)$,
+%setting $\g \equiv =0$. *** to include.
 
 Background. ***
 WKB blah.
@@ -157,9 +159,9 @@ reference to initial conditions.
 Another crucial difference from Bremer is that $x$ is solved for
 locally on an interval with adaptively-chosen length, rather than
 globally.
-Solutions to \eqref{ode}--\eqref{ic1} are then constructed by
+Solutions to \cref{ode,ic0,ic1} are then constructed by
 gluing intervals using Cauchy data.
-Another advantage is we include a damping term $\gamma(t)$,
+Another advantage is we include a damping term $\g(t)$,
 allowing direct
 solution of a variety of 2nd-order linear ODEs.
 
@@ -183,18 +185,20 @@ Local rather than QML or Bremer global.)
 
 \subsection{Phase function solution on a single interval}
 
-We will use prime to denote $d/dt$.
-We consider an interval $t\in[a,b]$ lying in $[0,1]$.
+We will use prime to denote differentiation with respect to time $t$.
+We consider an interval $t\in[a,b]$ lying in $[0,1]$.  
 Writing $u = e^z$ where $z'(t) = x(t)$ is the phase function,
-then any nonvanishing $u(t)$ satisfies \eqref{ode} if and only if
+then any nonvanishing $u(t)$ satisfies \cref{ode} if and only if
 its complex phase function $x(t)$ satisfies the nonlinear Riccati equation
+\Fruzsi{[Probably can't call this Riccati anymore due to the presence of $\g(t)$].}
 \be
-x' + x^2 + \om(t)^2 \;=\; 0~.
+x' + x^2 + 2\g(t)x + \om(t)^2 = 0.
 \label{ricc}
 \ee
-Almost all solutions to \eqref{ricc} are oscillatory,
+\Fruzsi{For the sake of simplicity, let us set $\g(t)$ for the time being.}
+Almost all solutions to \cref{ricc} are oscillatory,
 as the presence of $\om(t)$ would suggest.
-This is illustrated by the case of constant $\om(t) = \om_0^2$
+This is illustrated by the case of constant $\om(t) = \om_0^2$ 
 which has the family of analytic solutions
 $x(t) = \om_0 \tan(\alpha - \om_0t)$ parameterized by $\alpha\in\C$,
 where $\re \alpha$ is interpreted as a phase shift and $\im \alpha$
@@ -210,55 +214,58 @@ In fact this result was proven
 for the related real-valued Kummer's equation
 \be
 \frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
-\om(t)^2 \; = \; 0~,
+\om(t)^2 = 0,
 \label{kummer}
 \ee
-corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) dt}$,
+corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
 but the existence of a nonoscillatory Kummer's solution implies the same for
 a Riccati solution \footnote{We thank Jim Bremer for explaining this argument.}.
-The latter is easy to show, since if $\alpha(t)$ satisfies \eqref{kummer},
-then defining $\beta = -\alpha'/2\alpha$ allows \eqref{kummer}
+The latter is easy to show, since if $\alpha(t)$ satisfies \cref{kummer},
+then defining $\beta = -\alpha'/2\alpha$ allows \cref{kummer}
 to be written
 $\beta' - \alpha^2 + \beta^2 + \om(t)^2 = 0$, and these last two equations
-are the real and imaginary parts of \eqref{ricc}
+are the real and imaginary parts of \cref{ricc}
 for $x = i\alpha + \beta$.
 
-We now turn to our numerical method to find nonoscillatory
-solutions to \eqref{ricc}.
-When $\om\gg 1$, there are two nonoscillatory solutions
+\Fruzsi{We now turn to our numerical method to find nonoscillatory
+solutions to \cref{ricc} (in its most general form, \ie without imposing $\g(t) = 0$).
+When $\om\gg 1, \g$, there are two nonoscillatory solutions
 which take the approximate form
 $x_{\pm}(t) \approx \pm i\om(t)$, leading to a conjugate pair of basis
-counter-rotating functions $u_{\pm}(t) := e^{\int x_\pm(t) dt}$.
-Given any trial solution $x$ to \eqref{ricc}, its \textit{residual
-  function} is defined as the left-hand side of \eqref{ricc}, namely
+counter-rotating functions $u_{\pm}(t) := e^{\int x_\pm(t) \d t}$.
+Given any trial solution $x$ to \cref{ricc}, its \textit{residual
+  function} is defined as the left-hand side of \cref{ricc}, namely
+\Fruzsi{[Is $\equiv$ allowed here as denoting a definition?]
 \be
-R[x](t) := x' + x^2 + \om(t)^2~.
 \label{R}
+R[x](t) \equiv x' + x^2 + 2\g(t)x + \om(t)^2.
 \ee
+}
 Our proposal takes the following \textit{functional iteration}
 to generate a sequence of functions $x_0, x_1, \dots, x_k$
 on $t\in(a,b)$,
 using the above positive (say) approximation as a starting point:
-\bea
-x_0(t) &=& +i\om(t)
+\begin{align}
+x_0(t) &= +i\om(t)
 \label{init}
 \\
-x_{j+1}(t) &=& x_j(t) - \frac{R[x_j](t)}{2 x_j(t)}
-~,\qquad j=0,1,\dots,k-1~.
+    x_{j+1}(t) &= x_j(t) - \frac{R[x_j](t)}{2 \left( x_j(t) + \g(t) \right)}, \qquad j=0,1,\dots,k-1.
 \label{iter}
-\eea
-%with the functional $R$ defined as in \eqref{R}.
+\end{align}
+
+%with the functional $R$ defined as in \cref{R}.
 This may be justified heuristically as an approximate Newton
 iteration to reduce the residual function
 (noting that similar exact Newton iterations have been
 exploited for analysis \cite{Heit15}).
 Namely, since
-$$
-R[x_j + \delta] = x_j' + \delta' + x_j^2 + 2 x_j \delta + \delta^2 + \om(t)^2\\
-= R[x_j] + \delta' + 2x_j\delta + \bigO(\delta^2)~,
-$$
+\begin{align}
+    R[x_j + \delta] &= x_j' + \delta' + x_j^2 + 2 x_j \delta + \delta^2 
+    + 2\g x_j + 2\g\delta + \om(t)^2 \nonumber \\
+    &= R[x_j] + \delta' + 2x_j\delta + 2\g\delta + \bigO(\delta^2), \nonumber
+\end{align}
 by linearizing we get that $\delta$ solves the linear 1st-order ODE
-$\delta' + 2x_j(t) \delta  = -R[x_j](t)$,
+$\delta' + 2x_j(t) \delta + 2\g \delta  = -R[x_j](t)$,
 which has an analytic solution.
 Solving this exact Newton update symbolically is the basis of the QML iteration
 (*** CITE + check).
@@ -267,84 +274,71 @@ with unknown initial condition needed for a nonoscillatory solution $\delta$.
 Yet if $\delta$ is nonoscillatory the first term $\delta'$ is
 a factor $x_j = \bigO(\om)$ smaller than the second term, thus
 one might hope that by dropping it a useful reduction in residual might
-still result.
-This leads to the algebraic formula $2x_j(t) \delta(t) = -R[x_j](t)$
+still result\footnote{\Fruzsi{[Strictly speaking, we should then be dropping the $\g$ term as well, since it's also an order of magnitude smaller...]}}. 
+This leads to the algebraic formula $2\left(x_j(t) + \g(t)\right) \delta(t) = -R[x_j](t)$
 which is solved pointwise for each $t$, and
-writing $x_{j+1} = x_j + \delta$ gives \eqref{iter}.
+writing $x_{j+1} = x_j + \delta$ gives \cref{iter}.
 This is a type of defect correction scheme (CITE book).
 The result is nonoscillatory by construction, without explicit reference
 to initial conditions.
 
-The early iterates of \eqref{init}--\eqref{iter} illustrate
+The early iterates of \cref{init}--\cref{iter} illustrate
 algebraically
-the type of residual reduction that occurs:
-\bea
-x_0(t) &=&  i\om(t)~, \hspace{3.0in} R[x_0](t) \; = \; i\om'(t) = \bigO(\om)
- \nonumber
-\\
-x_1(t) &=& i\om(t) - \frac{\om'(t)}{2\om(t)}~,
-\hspace{2.5in} R[x_1](t) \; = \; -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2}
-= \bigO(1)
- \nonumber
-\\
-x_2(t) &=& i\om(t) - \frac{\om'(t)}{2\om(t)} + \delta_1(t),
-\mbox{ where }
-\delta_1(t):=\frac{\om''/2\om - 3\om'^2/4\om^2}{2i\om - \om'/\om}
-,
-\quad R[x_2](t) \; = \; \delta_1' + \delta_1^2 = \bigO(\om^{-1})
-\nonumber
-\eea
-To measure the size of term we assume that $\om'$, $\om''$, etc, are
+the type of residual reduction that occurs. We take $\g(t) = 0$ below for the
+sake of simplicity, but the results hold for the case of $\g(t) \neq 0$. The first few iterates and residuals are
+\begin{align}
+    x_0 &=  i\om, &&R[x_0] = i\om' = \bigO(\om), \nonumber \\
+x_1 &= i\om - \frac{\om'}{2\om}, 
+    &&R[x_1] = -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2} = \bigO(1), \nonumber \\
+x_2 &= i\om - \frac{\om'}{2\om} + \delta_1, \mbox{ where }
+    \delta_1 \equiv \frac{\om''/2\om - 3\om'^2/4\om^2}{2i\om - \om'/\om}, \quad
+    &&R[x_2] = \delta_1' + \delta_1^2 = \bigO(\om^{-1}). \nonumber
+\end{align}
+To measure the size of term we assume that $\om'$, $\om''$, \etc, are
 of the same order as $\om$, because $\om(t)$ is smooth,
-and also assume that $\om$ has a lower bound of the same order.
+and also assume that $\om$ has a lower bound of the same order. If we were to include $\g$, we would assume $\g = \bigO(1) $ in terms of $\om$, and that its derivatives are of the same order as $\g$ itself by the same reasoning as with $\om$. 
 Thus we see that each iteration the residual drops by a factor $\bigO(\om)$.
 However, each iteration also results in terms with
-one higher time-derivative of $\om$.
+one higher time-derivative of $\om$ (and $\g$).
 Despite the rapid growth in complexity, one can check that this
 pattern continues
 by defining the $j$th correction function $\delta_j$,
-so that $x_{j+1} = x_j + \delta_j$, then using \eqref{R} to write
+so that $x_{j+1} = x_j + \delta_j$, then using \cref{R} to write
 \be
-R[x_{j+1}] \;=\;
-R[x_j] + 2x_j \delta_j + \delta_j^2 + \delta_j'
-\;=\;
-\delta_j^2 + \delta_j'
-~,
+R[x_{j+1}] = R[x_j] + 2\left(x_j + \g \right)\delta_j  + \delta_j^2 + \delta_j' = \delta_j^2 + \delta_j',
 \label{Rdelta}
 \ee
-where the first two terms cancelled by design due to \eqref{iter}.
+where the first two terms cancel by design due to \cref{iter}.
 The resulting evolution of the residual is then
 summarized as follows, which is proved simply by
-substituting $\delta_j := -R[x_j]/2x_j$ into \eqref{Rdelta} and using
+substituting $\delta_j \equiv -R[x_j]/2(x_j + \g)$ into \cref{Rdelta} and using
 the quotient rule.
-\begin{pro}\label{p:Riter}
+\begin{pro}\label{PRiter}
   Let $x_j \in C^2([a,b])$ be a function on an interval $[a,b]\subset \R$
   % we may as well be pedantic about conditions
-  such that $x_j(t) \neq 0, \; \forall t\in [a,b]$,
+  such that $x_j(t) \neq 0 \; \forall t\in [a,b]$,
   let $\om\in C^1([a,b])$,
-  % *** add in gamma too
-  and let $x_{j+1}$ be given by the single iteration \eqref{iter}.
-  Then their associated residual functions \eqref{R} on $[a,b]$
+  $\g\in C^1([a,b])$,
+  and let $x_{j+1}$ be given by the single iteration \cref{iter}.
+  Then their associated residual functions \cref{R} on $[a,b]$
   are related pointwise by
   \be
-  R[x_{j+1}] = \frac{1}{2x_j}\biggl(
-  \frac{x_j'}{x_j} R[x_j]
-  - R[x_j]'
-    \biggr) + \biggl(\frac{R[x_j]}{2x_j}\biggr)^2~.
   \label{Riter}
+    R[x_{j+1}] = \frac{1}{2(x_j + \g)}\left( \frac{(x_j + \g)'}{x_j + \g} R[x_j] - R[x_j]' \right) 
+    + \left(\frac{R[x_j]}{2(x_j + \g)}\right)^2. 
   \ee
 \end{pro}
-Thus, with the initialization \eqref{init},
+Thus, with the initialization \cref{init},
 assuming that the lower bound on each $x_j$ is no smaller than $\bigO(\om)$,
-and that the quadratic term in \eqref{Riter} is small,
+and that the quadratic term in \cref{Riter} is small,
 one might hope that
 the residual shrinks like $R[x_j] = \bigO(\om^{1-j})$ for each $j=0,1,\dots$.
 Unfortunately this will turn out not to be true, due to the increasing
 order of derivatives of $\om(t)$, which will lead to an
 asymptotic (but not convergent) series.
 However, we show that the iteration is numerically useful,
-and analyse its residual rigorously in Theorem~\ref{t:R}.
-
+and analyse its residual rigorously in \cref{TR}.
+}
 
 \subsection{Direct spectral solution on nonoscillatory intervals}
 
@@ -354,12 +348,14 @@ and analyse its residual rigorously in Theorem~\ref{t:R}.
 
 *** to do. No numerical results here.
 
+\subsection{Notes on implementation}
+
 
 % EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 \section{Error analysis}
 
 From now on we abbreviate the residual function by $R_j = R_j(t) := R[x_j](t)$.
-Proposition~\ref{p:Riter} described the evolution of $R_j$
+\cref{PRiter} described the evolution of $R_j$
 under the proposed iteration, which is local in $t$.
 For smooth $x_j$ of size $\bigO(\om)$, and smooth $R_j$,
 it suggests geometric reduction in $R_j$ by a factor $\bigO(\om)$ per iteration;
@@ -376,7 +372,7 @@ and sufficiently large throughout some neighborhood of $t$.
 %then if $R_j$ and $R_j'$ are sufficiently small
 
 
-\begin{thm}\label{t:R}
+\begin{thm}\label{TR}
   Fix $t\in\R$, and let the frequency function $\om$ be analytic
   in the closed ball $B_\rho(t) := \{z\in\C : |z-t| \le \rho\}$,
   for some $\rho>0$, with bounds
@@ -396,8 +392,8 @@ and sufficiently large throughout some neighborhood of $t$.
   \label{r}
   \ee
   where $\te_1:=\eta_1 - 3\eta_3/\eta_1$ and $\te_2:=\eta_2 + 3\eta_3/\eta_1$.
-  Then after any number $j\le k$ of iterations of \eqref{init}--\eqref{iter},
-  the function $x_j$ has Riccati residual \eqref{R} bounded at the point $t$ by
+  Then after any number $j\le k$ of iterations of \cref{init}--\cref{iter},
+  the function $x_j$ has Riccati residual \cref{R} bounded at the point $t$ by
   \be
   |R_j(t)| \;\le\; \eta_3 r^j~.
   \label{Rjbnd}
@@ -411,12 +407,12 @@ And for any $k$ to exist satisfying the condition on $r$, $\om$ must have
 a sufficiently large lower bound $\eta_1$, i.e., $t$
 must be in a sufficiently oscillatory region for the original ODE.
 
-\begin{rmk}\label{r:slight}
-  By \eqref{omder}, $\te_1 \ge 5\eta_1/6$ and $\te_2 \le \eta_2 + \eta_1/6$,
+\begin{rmk}\label{slight}
+  By \cref{omder}, $\te_1 \ge 5\eta_1/6$ and $\te_2 \le \eta_2 + \eta_1/6$,
   thus $[\te_1,\te_2]$ is only a slight
   expansion of the interval $[\eta_1,\eta_2]$ containing the range of
   $|\om|$ in the ball.
-  Applying this we see that the last term in \eqref{r}
+  Applying this we see that the last term in \cref{r}
   is no more than $1/50$, thus can cause only slight deterioration in the rate.
 \end{rmk}
 
@@ -424,7 +420,7 @@ must be in a sufficiently oscillatory region for the original ODE.
   In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small),
   then $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as
   the number of oscillation periods across the ball radius divided by $2\pi$.
-  Then, for example, with a ball of radius 50 periods, $r$ satisfies \eqref{r}
+  Then, for example, with a ball of radius 50 periods, $r$ satisfies \cref{r}
   for $k\le 25$.
 \end{rmk}
 
@@ -469,7 +465,7 @@ must be in a sufficiently oscillatory region for the original ODE.
   \label{derbnd}
   \ee
   Note that this bound is a factor $\bigO(k)$ better than naively
-  lower bounding the denominator in \eqref{cauder}.
+  lower bounding the denominator in \cref{cauder}.
   
   %The 
   We now use induction in iteration number $j$.
@@ -485,10 +481,10 @@ must be in a sufficiently oscillatory region for the original ODE.
   \label{hypR}
   \eea
   Assuming for now the hypothesis for $j$, we apply simple bounds to the
-  residual iteration \eqref{Riter},
+  residual iteration \cref{Riter},
   lower-bounding denominator magnitudes and upper-bounding numerators
-  via \eqref{hypx},
-  and applying \eqref{derbnd} to the two derivative terms, to get
+  via \cref{hypx},
+  and applying \cref{derbnd} to the two derivative terms, to get
   $$
   \|R_{j+1}\|_{j+1}
   \;\le\;
@@ -502,14 +498,14 @@ must be in a sufficiently oscillatory region for the original ODE.
   \eta_3 r^{j+1}~,
   $$
 where in the middle step we used the crude bound $\|R_j\| \le \eta_3$
-from \eqref{hypR}, then the definition of $r$ in \eqref{r}.
+from \cref{hypR}, then the definition of $r$ in \cref{r}.
 %This handles the case $\ell=j+1$.
 The lower cases $\ell\le j$ follow trivially from the hypothesis since the balls
 are nested.
-Thus \eqref{hypR} is proven for $j+1$.
+Thus \cref{hypR} is proven for $j+1$.
 
-It remains to verify that \eqref{hypx} also holds for $j+1$.
-By the functional iteration \eqref{init}--\eqref{iter},
+It remains to verify that \cref{hypx} also holds for $j+1$.
+By the functional iteration \cref{init}--\cref{iter},
 $$
 x_{j+1}(z) = i\om(z) - \sum_{\ell=0}^{j} \frac{R_\ell(z)}{2 x_\ell(z)}~,
 \qquad z\in B_{j+1}~.
@@ -523,24 +519,24 @@ $$
 \;\le\; \frac{\eta_3}{2\te_1} \cdot 5
 \;\le\; \frac{3\eta_3}{\eta_1}
 $$
-where the upper bound in \eqref{r} was used to bound the geometric series,
+where the upper bound in \cref{r} was used to bound the geometric series,
 and $\te_1 \ge 5\eta_1/6$.
 Combining this with $|\om| \le \eta_2$ gives
 $\|x_{j+1}\|_{j+1} \le \eta_2 + 3\eta_3/\eta_1 = \te_2$ which verifies
-the upper bound \eqref{hypx} for $j+1$.
+the upper bound \cref{hypx} for $j+1$.
 Instead combining with $|\om| \ge \eta_1$ gives
 $|x_{j+1}| \ge \eta_1 - 3\eta_3/\eta_1 = \te_1$ in $B_{j+1}$,
-which verifies the lower bound \eqref{hypx}.
+which verifies the lower bound \cref{hypx}.
 Again, the hypothesis is inherited for $\ell\le j$ by the nesting of the balls.
 
 Finally, the base case $j=0$ for induction
-satisfies \eqref{hypx}--\eqref{hypR}
+satisfies \cref{hypx}--\cref{hypR}
 by the conditions of the theorem,
 since $x_0(t) = i\om(t)$, noting $[\eta_1,\eta_2] \subset [\te_1,\te_2]$,
 while $R_0(t) = i\om'(t)$ is bounded in magnitude by $\eta_3$.
 \end{proof}
 
-In the above theorem, the choice of $4/5$ in \eqref{r} was merely a convenient one, chosen so that the bounds $[\te_1,\te_2]$ on $|x_j|$
+In the above theorem, the choice of $4/5$ in \cref{r} was merely a convenient one, chosen so that the bounds $[\te_1,\te_2]$ on $|x_j|$
 involving the geometric sum were
 not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
 %It is possible to write simpler but less tight formulae for $r$.
@@ -549,7 +545,7 @@ not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
 \subsection{Practical aspects of residual reduction}
 
 The fact that, as $k$ grows,
-the rate $r$ in Theorem~\ref{t:R} deteriorates
+the rate $r$ in \cref{R} deteriorates
 we believe to be an inevitable consequence of
 the series being asymptotic in $1/\om$ but not convergent.
 We support this in numerical results in ***.
@@ -563,11 +559,11 @@ exponential convergence with respect to the size of the frequency $\om$,
 as follows.
 
 \begin{cor}[Superasymptotic approximation]\label{super}
-  Suppose $\om$ satisfies the conditions \eqref{ommag}--\eqref{omder}
-  of Theorem~\ref{t:R}
+  Suppose $\om$ satisfies the conditions \cref{ommag}--\cref{omder}
+  of \cref{R}
   about a point $t\in\R$,
   and let $\alpha := (1+\te_2/\te_1)/2\te_1\rho$ be the
-  first term in the rate \eqref{r} arising from these bounds.
+  first term in the rate \cref{r} arising from these bounds.
   Then there is a $k\in\{0,1,\dots\}$ such that
   $$
   |R_k(t)| \; \le \; e \eta_3 e^{-1/3\alpha}~.
@@ -575,10 +571,10 @@ as follows.
 \end{cor}
 \begin{proof}
   Set $k$ to be the integer in the interval $[1/3\alpha-1, \, 1/3\alpha)$.
-    Then since the final term in \eqref{r} is bounded by $1/50$
-    by Remark~\ref{r:slight}, and the
+    Then since the final term in \cref{r} is bounded by $1/50$
+    by \cref{slight}, and the
     first term $k\alpha \le 1/3$, we get $r\le e^{-1}$, which
-    is also $\le 4/5$ so that \eqref{Rjbnd} holds.
+    is also $\le 4/5$ so that \cref{Rjbnd} holds.
     Choosing $j=k$, and inserting a lower bound on $k$,
     $|R_k(t)| \le \eta_3 r^k \le \eta_3 e^{-(1/3\alpha-1)}$, which
     finishes the proof.
@@ -603,8 +599,8 @@ However, this optimal number of iterations grows as $k = \bigO(\om)$,
 so for large $\om$ is impractical (and unnecessary).
 In practice we use an adaptive stopping criterion for $k$ based
 on user-defined tolerance.
-By returning to Theorem~\ref{t:R} and dropping the small second term
-in \eqref{r} we get, in the limit of constant $\om$ in the ball,
+By returning to \cref{R} and dropping the small second term
+in \cref{r} we get, in the limit of constant $\om$ in the ball,
 $$
 |R_k(t)| \; \approx \; \eta_3 \left( \frac{k}{\rho\om}\right)^k~.
 $$
