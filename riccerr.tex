@@ -195,7 +195,7 @@ its complex phase function $x(t)$ satisfies the nonlinear Riccati equation
 x' + x^2 + 2\g(t)x + \om(t)^2 = 0.
 \label{ricc}
 \ee
-\Fruzsi{For the sake of simplicity, let us set $\g(t)$ for the time being.}
+\Fruzsi{For the sake of simplicity, let us set $\g(t) = 0$ for the time being.}
 Almost all solutions to \cref{ricc} are oscillatory,
 as the presence of $\om(t)$ would suggest.
 This is illustrated by the case of constant $\om(t) = \om_0^2$ 
@@ -545,7 +545,7 @@ not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
 \subsection{Practical aspects of residual reduction}
 
 The fact that, as $k$ grows,
-the rate $r$ in \cref{R} deteriorates
+the rate $r$ in \cref{TR} deteriorates
 we believe to be an inevitable consequence of
 the series being asymptotic in $1/\om$ but not convergent.
 We support this in numerical results in ***.
@@ -560,7 +560,7 @@ as follows.
 
 \begin{cor}[Superasymptotic approximation]\label{super}
   Suppose $\om$ satisfies the conditions \cref{ommag}--\cref{omder}
-  of \cref{R}
+  of \cref{TR}
   about a point $t\in\R$,
   and let $\alpha := (1+\te_2/\te_1)/2\te_1\rho$ be the
   first term in the rate \cref{r} arising from these bounds.
@@ -599,7 +599,7 @@ However, this optimal number of iterations grows as $k = \bigO(\om)$,
 so for large $\om$ is impractical (and unnecessary).
 In practice we use an adaptive stopping criterion for $k$ based
 on user-defined tolerance.
-By returning to \cref{R} and dropping the small second term
+By returning to \cref{TR} and dropping the small second term
 in \cref{r} we get, in the limit of constant $\om$ in the ball,
 $$
 |R_k(t)| \; \approx \; \eta_3 \left( \frac{k}{\rho\om}\right)^k~.
