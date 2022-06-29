@@ -50,6 +50,7 @@ def choose_nonosc_stepsize(w, g, x0, h, p = 16):
     """
 
     """
+    print("choosing nonosc stepsize")
     x = cheb(p)[1]
     xscaled = x0 + h/2 + h/2*x
     ws = w(xscaled)
@@ -57,6 +58,7 @@ def choose_nonosc_stepsize(w, g, x0, h, p = 16):
         print("Reducing stepsize for nonosc step")
         return choose_nonosc_stepsize(w, g, x0, h/2)
     else:
+        print("Chose stepsize h=",h)
         return h
 
 def choose_osc_stepsize(w, g, x0, h, epsh = 1e-14, p = 32):
@@ -70,6 +72,7 @@ def choose_osc_stepsize(w, g, x0, h, epsh = 1e-14, p = 32):
     exceeds epsh, h is halved.
     TODO: Actually add g, so far only have w
     """
+    print("choosing osc stepsize")
     a = np.linspace(np.pi/(2*p), np.pi*(1 - 1/(2*p)), p)
     t = x0 + h/2 + h/2*np.cos(a)
     s = x0 + h/2 + h/2*cheb(p)[1]
@@ -82,10 +85,10 @@ def choose_osc_stepsize(w, g, x0, h, epsh = 1e-14, p = 32):
     maxgerr = max(np.abs((gest - gana)/gest))
     maxerr = max(maxwerr, maxgerr)
     if maxerr > epsh:
-        #print("Stepsize h = {} is too large with max error {}".format(h, maxwerr))
+        print("Stepsize h = {} is too large with max error {}".format(h, maxwerr))
         return choose_osc_stepsize(w, g, x0, 0.7*h, epsh = epsh, p = p)
     else:
-        #print("Chose stepsize h = {}".format(h))
+        print("Chose stepsize h = {}".format(h))
         return h
     #TODO: what if h is too small to begin with?
 
@@ -148,7 +151,10 @@ def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32, plotting=False, k=0):
     y1 = ap*f1 + am*f2
     dy1 = ap*du1*f1 + am*du2*f2
     phase = np.imag(u1[0])
-    #print("at x = {}, y = {}, u = {}, f = {}, y1 = {}".format(x0, y, u1, f1, y1))
+    print("at x = {}, y = {}, u = {}, f = {}, y1 = {}".format(x0, y, u1, f1, y1))
+    print("C matrix: ", C)
+    print("y0, dy0: ", y0, dy0)
+    print("ap, am: ", ap, am)
     print("y1:{}, dy1:{}".format(y1[0], dy1[0]))
     if plotting:
         xplot = np.linspace(x0, x0+h, 500)
@@ -161,7 +167,7 @@ def osc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 32, plotting=False, k=0):
     else:
         return y1[0], dy1[0], maxerr, success, phase
 
-def nonosc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 16):
+def nonosc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, nmax = 64, nini = 16):
 
     """
     Advances the solution from x0 to x0+h, starting from the initial conditions
@@ -172,8 +178,8 @@ def nonosc_step(w, g, x0, h, y0, dy0, epsres = 1e-12, n = 16):
     success = True #TODO: this doesn't do anything in Cheb, can always add more nodes
     res = 0 #TODO: does nothing
     maxerr = 10*epsres
-    N = 16 # TODO
-    Nmax = 64 # TODO
+    N = nini
+    Nmax = nmax
     #print("Nonoscillatory step from x0={} y0={}, dy0={}, h={}".format(x0, y0, dy0, h))
     yprev, dyprev, xprev = spectral_cheb(w, g, x0, h, y0, dy0, N)
     while maxerr > epsres:
@@ -223,7 +229,7 @@ def spectral_cheb(w, g, x0, h, y0, dy0, n):
     return y1, dy1, xscaled
 
 
-def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
+def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = [], n = 16):
     """
     Solves y'' + 2gy' + w^2y = 0 on the interval (xi, xf), starting from the
     initial conditions y(xi) = yi, y'(xi) = dyi. Keeps the residual of the ODE
@@ -245,16 +251,20 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     dy = dyi
     yprev = y
     dyprev = dy
-    n = 32 # How many points we use during Cheby interp
+    print('yprev, dyprev:', yprev, dyprev)
+    n = n # How many points we use during Cheby interp, 16 for Airy, 32 for burst
     p = n # How many points we use to choose h
     D, x = cheb(n)
     wi = w(xi)
     gi = g(xi)
-    dwi = 2*np.matmul(D, w(xi + 1/2 + 1/2*x))[-1] 
-    dgi = 2*np.matmul(D, g(xi + 1/2 + 1/2*x))[-1] 
+    hi = 0.1
+    dwi = 2/hi*np.matmul(D, w(xi + hi/2 + hi/2*x))[-1] 
+    dgi = 2/hi*np.matmul(D, g(xi + hi/2 + hi/2*x))[-1] 
     # Choose initial stepsize
     hslo_ini = min(1e8, np.abs(1/wi))
     hosc_ini = min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
+    print("g/dg: ", gi/dgi, "w/dw: ", wi/dwi, "dw: ", dwi)
+    print("Initial step guesses (slo, osc): ", hslo_ini, hosc_ini)
     hslo = choose_nonosc_stepsize(w, g, xi, hslo_ini)
     hosc = choose_osc_stepsize(w, g, xi, hosc_ini, epsh = epsh)  
     xcurrent = xi
@@ -263,12 +273,12 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
     while xcurrent < xf:
         print("x = {}, hosc = {}, hslo = {}".format(xcurrent, hosc, hslo))
         # Check how oscillatory the solution is
-        ty = np.abs(1/wnext)
-        tw = np.abs(wnext/dwnext)
-        tw_ty = tw/ty
+        #ty = np.abs(1/wnext)
+        #tw = np.abs(wnext/dwnext)
+        #tw_ty = tw/ty
         #print("Timescale ratio: {}".format(tw_ty))
         success = False
-        if tw_ty > 10 and hosc*wnext/(2*np.pi) > 1:
+        if hosc > hslo*5 and hosc*wnext/(2*np.pi) > 1:
             print("Attempting oscillatory step")
             # Solution is oscillatory
             # Attempt osc step of size hosc
@@ -282,7 +292,7 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-13, xeval = []):
             print("Attempting nonoscillatory step with h = {}".format(hslo)) 
             # Solution is not oscillatory, or previous step failed
             # Attempt Cheby step of size hslo
-            y, dy, err, success, res = nonosc_step(w, g, xcurrent, hslo, yprev, dyprev, epsres = eps, n = n)
+            y, dy, err, success, res = nonosc_step(w, g, xcurrent, hslo, yprev, dyprev, epsres = eps)
             phase = 0
             steptype = 0
             # If step still unsuccessful, halve stepsize
