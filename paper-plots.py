@@ -27,7 +27,7 @@ class counter:
 
 
 def legendre():
-    m = int(1e6)
+    m = int(1e9)
 #    global w_count
 #    w_count = 0
     w = lambda x: np.sqrt(m*(m+1)/(1-x**2))
@@ -36,7 +36,7 @@ def legendre():
 #    def w(x):
 #        global w_count
 #        try:
-##            print(x.shape)
+#            print(x.shape)
 #            w_count += x.shape[0]
 #        except:
 #            w_count += 1
@@ -67,31 +67,32 @@ def legendre():
 #    plt.tight_layout()
 #    plt.show()
 
-    eps = 1e-12
+    eps = 1e-12 #, n = p = 16
     epsh = 1e-13
     yi = sp.eval_legendre(m, xi)
     Pmm1_xi = sp.eval_legendre(m-1, xi)
     dyi = m/(xi**2 - 1)*(xi*yi - Pmm1_xi)
-    N = 1000
+    N = 10000
 
     # Time this process
     start = time.time_ns()
-    profiler = cProfile.Profile()
-    profiler.enable()
+#    profiler = cProfile.Profile()
+#    profiler.enable()
     for i in range(N):
-        xs, ys, dys, ss, ps, stypes, statdict = riccati.solve(w_counted, g, xi, xf, yi, dyi, eps = eps, epsh = epsh, n = 16, p = 16)
-    profiler.disable()
+        xs, ys, dys, ss, ps, stypes, statdict = riccati.solve(w_counted, g_counted, xi, xf, yi, dyi, eps = eps, epsh = epsh, n = 16, p = 16)
+#    profiler.disable()
     end = time.time_ns()
 
-    stats = pstats.Stats(profiler).sort_stats('cumtime')
-    stats.print_stats()
+#    stats = pstats.Stats(profiler).sort_stats('tottime')
+#    stats.print_stats()
+#    stats.dump_stats('output.pstats')
 
     xs = np.array(xs)
     ys = np.array(ys)
     ss = np.array(ss)
     ps = np.array(ps)
     stypes = np.array(stypes)
-    print("Function evals: ", w_counted.count, g_counted.count)
+#    print("Function evals: ", w_counted.count, g_counted.count)
 #    print("Function evals (direct):", w_count)
     print(statdict)
     ytrue = sp.eval_legendre(m, xs)
@@ -110,10 +111,11 @@ def legendre():
     # Write LaTeX table to file
     round_to_n = lambda n, x: x if x == 0 else round(x, - int(math.floor(math.log10(abs(x)))) + (n-1))
     steps = statdict["cheb steps"][1] + statdict["ricc steps"][1]
+    n_fevals = 0
 #    n_fevals = w_counted.count/N
     n_fevals = (w_counted.count + g_counted.count)/N
     n_LS = statdict["linear solves"] + statdict["linear solves 2x2"]
-    outputf = "riccati/tables/legendre-fast.tex"
+    outputf = "riccati/tables/legendre-fastest.tex"
     outputpath = Path(outputf)
     outputpath.touch(exist_ok = True)
     print("time/s: ", (end - start)*1e-9)
