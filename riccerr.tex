@@ -385,17 +385,18 @@ and sufficiently large throughout some neighborhood of $t$.
   that is, its derivative should be sufficiently small.
   Let $k\in\{0,1,\dots\}$ be sufficiently small such that
   \be
-    r := \frac{1}{2\te_1 \rho} \left(1 + \frac{\te_2}{\te_1}\right) k + \frac{\Fruzsi{\te_3}}{4\te_1^2} \leq \frac{4}{5}
+    r := \frac{1}{2\te_1 \rho} \left(1 + \frac{\te_2}{\te_1}\right) k + \frac{\Fruzsi{\te_3}}{4\te_1^2} \leq \frac{4}{5}  **** change to 3/4.
   \label{r}
   \ee
   where
-  \Fruzsi{
+  % *** note attempt at new consts:
   \begin{align}
-      \te_1 &:= \eta_1 - \eta_4 - \frac{99\eta_3}{19\eta_1} - \frac{198\eta_2\eta_4}{99\eta_1},  \label{eta1} \\ 
-      \te_2 &:= \eta_2 + \eta_4 + \frac{99\eta_3}{19\eta_1} + \frac{198\eta_2\eta_4}{99\eta_1},  \label{eta2} \\
-      \te_3 &:= \eta_3 + 2\eta_2\eta_4. \label{eta3}
+    \te_3 &:= \eta_3 + 2\eta_2\eta_4, \label{eta3}
+    \\
+    \te_1 &:= \eta_1 - \eta_4 - \frac{17 \te_3}{4 \eta_1},  \label{eta1}
+    \\ 
+    \te_2 &:= \eta_2 + \eta_4 + \frac{17 \te_3}{4 \eta_1}. \label{eta2}
   \end{align}
-  }
   Then after any number $j\le k$ of iterations of \cref{init}--\cref{iter},
   the function $x_j$ has Riccati residual \cref{R} bounded at the point $t$ by
   \Fruzsi{
@@ -415,7 +416,7 @@ must be in a sufficiently oscillatory region for the original ODE.
 
 \begin{rmk}\label{slight}
     By \cref{omder}, \Fruzsi{$\te_1 \ge 95\eta_1/198$} and \Fruzsi{$\te_2 \le \eta_2 + 103\eta_1/198$},
-  thus $[\te_1,\te_2]$ is only a slight
+  thus $[\te_1,\te_2]$ ***DEBUG FRACTIONS*** is only a slight
   expansion of the interval $[\eta_1,\eta_2]$ containing the range of
     $|\om|$ in the ball\footnote{\Fruzsi{Can't really claim this anymore unfortunately.}}.
   Applying this we see that the last term in \cref{r}
@@ -424,9 +425,9 @@ must be in a sufficiently oscillatory region for the original ODE.
 
 \begin{rmk}
     In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small) \Fruzsi{and the damping term is small ($\eta_4$ small)},
-  then $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as
-    the number of oscillation periods across the ball radius \Fruzsi{times} $2\pi$.
-    Then, for example, with a ball of radius \Fruzsi{5 periods}, $r$ satisfies \cref{r}
+  then $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as $2\pi$
+    time the number of oscillation periods across the ball radius.
+    Then, for example, with a ball of radius of only \Fruzsi{5 periods}, $r$ satisfies \cref{r}
     for $k\le 25$.
 \end{rmk}
 
@@ -476,17 +477,18 @@ must be in a sufficiently oscillatory region for the original ODE.
   %The 
   We now use induction in iteration number $j$.
 %  and consider the iteration acting on the functions
-    We take as the induction hypothesis that \Fruzsi{$x_\ell + \g$} (and thus $R_\ell$)
+    We take as the induction hypothesis that $x_\ell$ (and thus $R_\ell$)
   is analytic in $B_j$, for all $0\le \ell \le j$, with
   \Fruzsi{
   \begin{align}
       \te_1 \leq |x_\ell + \g| &\leq \te_2
   \qquad \mbox{ in } B_j, \quad \mbox{ for all } \ell = 0,1,\dots,j,
   \label{hypx} \\
-      |R_\ell| &\leq \Fruzsi{\te_3} r^\ell \quad \mbox{ in } B_j, \quad \mbox{ for all } \ell = 0,1,\dots,j.
+      |R_\ell| &\leq \Fruzsi{\te_3} r^\ell \quad \mbox{ in } B_j, \quad \mbox{ for all } \ell = 0,1,\dots,j,
   \label{hypR}
   \end{align}
   }
+  where $r$ is defined by \cref{r}.
   Assuming for now the hypothesis for $j$, we apply simple bounds to the
   residual iteration \cref{Riter},
   lower-bounding denominator magnitudes and upper-bounding numerators
@@ -505,7 +507,7 @@ must be in a sufficiently oscillatory region for the original ODE.
   \Fruzsi{\te_3} r^{j+1},
   $$
 where in the middle step we used the crude bound $\|R_j\| \le \te_3$
-from \cref{hypR}, then the definition of $r$ in \cref{r}.
+following from \cref{hypR} and that $r\le1$, and then the definition of $r$ in \cref{r}.
 %This handles the case $\ell=j+1$.
 The lower cases $\ell\le j$ follow trivially from the hypothesis since the balls
 are nested.
@@ -533,13 +535,13 @@ where the upper bound in \cref{r} was used to bound the geometric series.
 $$
 \left|\sum_{\ell=0}^{j} \frac{R_\ell}{2\left( x_\ell + \g \right)} \right|
 \leq
-\frac{5}{2}\frac{\eta_3 + 2\eta_2\eta_4}{\eta_1 - \eta_4 - \frac{99\eta_3}{19\eta_1} - \frac{198\eta_2\eta_4}{99\eta_1}},
+\frac{5}{2}\frac{\eta_3 + 2\eta_2\eta_4}{\eta_1 - \eta_4 - \frac{99\eta_3}{19\eta_1} - \frac{198\eta_2\eta_4}{19\eta_1}},
 $$
 then extend it by lower-bounding the denominator via \cref{omder} and the crude bound ${\eta_4 \leq 2\eta_1/99}$ from \cref{gammaupper}. This gives
 $$
 \left|\sum_{\ell=0}^{j} \frac{R_\ell}{2\left( x_\ell + \g \right)} \right| 
 \leq
-\frac{99\eta_3}{19\eta_1} + \frac{198\eta_2\eta_4}{198\eta_1},
+\frac{99\eta_3}{19\eta_1} + \frac{198\eta_2\eta_4}{19\eta_1},
 $$
 which, when combined with $|\om| \leq \eta_2$ and $|\g| \leq \eta_4$ yields
 $$\|x_{j+1} + \g\|_{j+1} \le \eta_2 + \eta_4 + \frac{99\eta_3}{19\eta_1} + \frac{198\eta_2\eta_4}{99\eta_1} = \te_2,$$
