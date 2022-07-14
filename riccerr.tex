@@ -172,7 +172,7 @@ Review recent WKB-based approaches using WKB as basis on intervals ***.
 Like Bremer, our solver is arbitrarily high-order.
 One advantage over Bremer is that our method generates an explicit asymptotic
 expansion. A disadvantage is that its error is limited by the number
-of iterations, and by $\omega$ itself; however,
+of iterations, and by $\om$ itself; however,
 we will show that close to machine accuracy is easily reached in
 intervals that contain many oscillations.
 
@@ -281,7 +281,7 @@ This is a type of defect correction scheme (CITE book).
 The result is nonoscillatory by construction, without explicit reference
 to initial conditions.
 
-The early iterates of \cref{init}--\cref{iter} illustrate
+The early iterates of \cref{init,iter} illustrate
 algebraically
 the type of residual reduction that occurs. We take $\g(t) = 0$ below for the
 sake of simplicity, but the results hold for the case of $\g(t) \neq 0$. The first few iterates and residuals are
@@ -338,6 +338,42 @@ asymptotic (but not convergent) series.
 However, we show that the iteration is numerically useful,
 and analyse its residual rigorously in \cref{TR}.
 
+The numerical evaluation of the asymptotic solution $x(t)$, and the solution of
+the original ODE $u(t)$ requires repeated differentiation (as part of each
+correction term) and quadrature (since $u(t) = \exp \int^t x(\sigma)
+\mathrm{d}\sigma$). 
+Since our solver is a stepper, we are not attempting to find a global solution
+$u(t)$ for the entire integration range, and only need to compute the
+asymptotic solution over a timestep, $t \in [t_i, t_i+h]$ at a time. At each 
+timestep, we choose to perform differentiation and quadrature by discretizing
+time on a Chebyshev grid of $n + 1$ nodes.  
+Over the standard interval $t \in [-1, 1]$, the $n+1$ Chebyshev nodes are given by 
+\be\label{chebnodes}
+\tilde{t}_n := \{\tilde{t}_j\}, \quad \tilde{t}_j = \cos\left( j\pi/n\right), \quad j = 0, 1, \ldots, n,
+\ee
+where the parameter $n$ can be set by the user with a default value of $n = 16$, and is fixed throughout integration. 
+One may then define an $(n+1) \times (n+1)$ differentiation matrix $\tilde{D}_n$ which, given a vector of function
+values $\tilde{v}_n$ defined on the Chebyshev nodes $\tilde{t}_j$, returns $\tilde{w}_n$, the function's
+derivative evaluated at the nodes,
+\be\label{diffmat}
+\tilde{w}_n = \tilde{D}_n\tilde{v}_n, \quad \tilde{f}_n := f(\tilde{t}_n),
+\ee
+The timestep $t \in [t_i, t_i+h]$ can always be scaled up or down to the standard interval via
+\be\label{scaledt}
+t_n := \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
+\ee
+Under the scaling, the differentiation matrix transforms as
+\begin{align}
+    w_n &= D_nv_n, \quad f_n := f(t_n) \label{scaledDdef}\\
+    D_n &= \frac{2}{h}\tilde{D}_n. \label{scaledD}
+\end{align}
+$D_n$ can then be used to compute antiderivatives (\eg $v_n$ given $w_n$), by
+solving the matrix equation \cref{scaledDdef}. 
+
+% Initial conditions
+
+We ensure continuity of the solution and its derivative across timestep boundaries, 
+
 \subsection{Direct spectral solution on nonoscillatory intervals}
 
 In case the solution is nonoscillatory or the asymptotic expansion fails to
@@ -354,39 +390,30 @@ switching are not predetermined, we opt to break the integration range up into
 smaller timesteps, applying the spectral method over a single timestep at a
 time.
 
-Consider $n+1$ Chebyshev nodes over the standard interval $t \in [-1, 1]$, 
-\be\label{chebnodes}
-\tilde{t}_j = \cos\left( j\pi/n\right), \quad j = 0, 1, \ldots, n.
-\ee
-One may define an $n+1 \times n+1$ differentiation matrix $D_n$ which, given a vector of function
-values $v_n$ defined on the Chebyshev nodes, returns $w_n$, the function's
-derivative evaluated at the nodes,
-\be\label{diffmatrix}
-w_n = D_nv_n.
-\ee
-Using this differentiation matrix \cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
+Using the differentiation matrix from \cref{scaledD}, \cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
 \begin{align}\label{discreteode}
-    \tilde{D}_n u_n = \left(\left(\frac{2}{h}\right)^2D_n^2 + 2\frac{2}{h}\text{diag}(\g_n)D_n + \text{diag}(\om_n) \right)u_n = 0, 
+    F_n u_n = \left(D_n^2 + 2\text{diag}(\g_n)D_n + \text{diag}(\om_n) \right)u_n = 0, 
 \end{align}
-where the subscript $n$ denotes a vector of function values at the $n+1$ Chebyshev nodes
-\be\label{scaledt}
-t_n = \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
-\ee
+where the subscript $n$ denotes a vector of function values at the $n+1$ (scaled) Chebyshev nodes $t_n$.
+%\be\label{scaledt}
+%t_n = \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
+%\ee
 A spectral method based on Chebyshev nodes finds $u_n$ by solving the system of
 equations defined by \cref{discreteode}, subject to auxiliary conditions that
 ensure the uniqueness of the solution. In our case these conditions encode
 continuity across the lower timestep-boundary, \ie are the initial conditions
 \be\label{discreteic}
-u_n[0] = u(t_i), \quad D_nu_n[0] = u'(t_i).
+(u_n)_n = u(t_i), \quad \left(D_nu_n\right)_0 = u'(t_i),
 \ee
-The initial conditions may be encoded as two rows appended to $\tilde{D}_n$,
+where a lower index outside brackets denotes a given vector element.
+The initial conditions may be encoded as two rows appended to $F_n$,
 \be\label{discreteodeic}
 \renewcommand*{\arraystretch}{1.25}
 \begin{bmatrix}
-    \tilde{D}_{n, 00} & \ldots & \tilde{D}_{n, 0n} \\
+    (F_n)_{00} & \ldots & (F_n)_{0n} \\
     \vdots & \ddots & \vdots \\
-    \tilde{D}_{n, n0} & \ldots & \tilde{D}_{n, nn} \\
-    \frac{2}{h}D_{n, 00} & \ldots & \frac{2}{h}D_{n, 0n} \\
+    (F_n)_{n0} & \ldots & (F_n)_{nn} \\
+    (D_n)_{00} & \ldots & (D_n)_{0n} \\
     1 & \ldots & 0
 \end{bmatrix}
 u_n =  
@@ -398,17 +425,72 @@ u'(t_i) \\
 u(t_i)
 \end{bmatrix},
 \ee
-where the last two lower indices specify a given element of a matrix.
-After solving the $n+3 \times n+1$ system in \cref{discreteodeic}, the value of the solution
+where lower indices outside a bracket specify a given matrix element.
+After solving the $(n+3) \times (n+1)$ system in \cref{discreteodeic}, the value of the solution
 $u(t)$ at the end of the interval can be read off as the last element of the
-solution vector $u_n$, and its derivative as the last element of $2/hD_nu_n$.
-% Solution of rectangular systems slower
-% Overdetermined, can kill 2 rows to make system square
+solution vector $u_n$, and its derivative as the last element of $D_nu_n$.
+These then serve as the initial conditions for the subsequent time-step.
+Note that the system has now become rectangular but also overdetermined. The
+matrix on the right-hand-side of \cref{discreteodeic} may be replaced with a
+square one by removing the last two rows and incorporating the initial
+conditions directly, \eg the last row can be removed by solving only for
+$(u_n)_1, \ldots, (u_n)_n$ and setting $(u_n)_0 = u(t_i)$.
 
+The error on steps taken with the spectral method above is estimated by
+doubling the number of nodes $n$, attempting the step with the same stepsize
+$h$ again, and comparing results. If the error falls below the user-specified
+threshold $\eps$, the spectral method is considered to have converged and the
+step is accepted. If the error does not reach $\eps$ by $n=n_{\text{max}}$, $h$
+is halved and the iteration in $n$ begins again starting with
+$n=n_{\text{min}}$. The parameters $n_{\text{min, max}}$ can be chosen by the
+user, but their default values are set to $n_{\text{min}} = 16$,
+$n_{\text{max}} = 64$. Computation time spent in failed steps is lost, making
+it imperative that the initial stepsize estimate $h$ is chosen carefully. We
+describe the procedure for choosing $h$ for both spectral and asymptotic steps
+in detail in the next section.
+
+% Error analysis? Just briefly about order of error...
+% Argue why Chebyshev nodes are a good choice here, citing Tref
 
 \subsection{Adaptive selection of interval size and type}
 
-*** to do. No numerical results here.
+\subsubsection{Initial stepsize estimates}
+
+At each timestep $t_i$, a decision needs to be made about whether to attempt a
+step using the spectral method or the asymptotic exansion. The two types of
+steps could be attempted simultaneously and the decision could be made based on
+their estimated error (as done in ... TODO), but in order to minimise
+computation time, we estimate whether the asymptotic expansion would
+converge quickly enough first. Inspecting the first few iterates of the asymptotic
+method from \cref{init,iter}, and noting that the convergence rate is
+determined by the size of the correction term added in each iteration, a rough
+upper bound on the first correction term is $\om'/\om$, giving the
+approximate timescale 
+\be\label{hoscini}
+h_{\text{osc}} = \frac{\om(t_i)}{\om'(t_i)}.
+\ee
+\cref{TR} to follow justifies this initial stepsize-estimate by showing that
+the ratio of bounds on $\om'$ and $\om$ appears in the rate of
+convergence of successive Riccati residuals. 
+
+A similar estimate for the spectral method should depend on two things: how
+oscillatory the solution is, and what timescales the terms in \cref{ode} change
+on, \ie their smoothness. If the solution is highly oscillatory, we wish to
+avoid taking a step with a Chebyshev spectral method. A measure of the rate of
+oscillations is simply the frequency, giving the timescale
+\be\label{hsloini}
+h_{\text{slo}} = \frac{1}{\om(t_i)}.
+\ee
+
+These initial stepsize estimates are too crude to attempt a step with in
+practice, since over $h_{\text{osc, slo}}$, $\om$, $\om'$, and $\g$ may change significantly. 
+Nonetheless they provide a useful starting point for the algorithm that computes
+finer estimates.
+
+\subsubsection{Refining the stepsize estimates}
+
+Starting from $h_{\text{osc}}$, we wish to determine 
+
 
 \subsection{Notes on implementation}
 
@@ -712,8 +794,6 @@ $$
 
 
 \section{TODO}
-
-*** Add in $\gamma$ throughout above!
 
 *** compare at least in a paragraph to Bremer's iteration
 \footnote{J. Bremer, private communication.}
