@@ -196,7 +196,7 @@ its complex phase function $x(t)$ satisfies the nonlinear Riccati equation
 x' + x^2 + 2\g(t)x + \om(t)^2 = 0.
 \label{ricc}
 \ee
-\Fruzsi{For the sake of simplicity, let us set $\g(t) = 0$ for the time being.}
+For the sake of simplicity, let us set $\g(t) = 0$ for the time being.
 Almost all solutions to \cref{ricc} are oscillatory,
 as the presence of $\om(t)$ would suggest.
 This is illustrated by the case of constant $\om(t) = \om_0^2$ 
@@ -228,7 +228,7 @@ $\beta' - \alpha^2 + \beta^2 + \om(t)^2 = 0$, and these last two equations
 are the real and imaginary parts of \cref{ricc}
 for $x = i\alpha + \beta$.
 
-\Fruzsi{We now turn to our numerical method to find nonoscillatory
+We now turn to our numerical method to find nonoscillatory
 solutions to \cref{ricc} (in its most general form, \ie without imposing $\g(t) = 0$).
 When $\om\gg 1, \g$, there are two nonoscillatory solutions
 which take the approximate form
@@ -236,12 +236,10 @@ $x_{\pm}(t) \approx \pm i\om(t)$, leading to a conjugate pair of basis
 counter-rotating functions $u_{\pm}(t) := e^{\int x_\pm(t) \d t}$.
 Given any trial solution $x$ to \cref{ricc}, its \textit{residual
   function} is defined as the left-hand side of \cref{ricc}, namely
-\Fruzsi{[Is $\equiv$ allowed here as denoting a definition?]
 \be
 \label{R}
-R[x](t) \equiv x' + x^2 + 2\g(t)x + \om(t)^2.
+R[x](t) := x' + x^2 + 2\g(t)x + \om(t)^2.
 \ee
-}
 Our proposal takes the following \textit{functional iteration}
 to generate a sequence of functions $x_0, x_1, \dots, x_k$
 on $t\in(a,b)$,
@@ -339,11 +337,74 @@ order of derivatives of $\om(t)$, which will lead to an
 asymptotic (but not convergent) series.
 However, we show that the iteration is numerically useful,
 and analyse its residual rigorously in \cref{TR}.
-}
 
 \subsection{Direct spectral solution on nonoscillatory intervals}
 
-*** describe whatever spectral method
+In case the solution is nonoscillatory or the asymptotic expansion fails to
+converge before the residual reaches a user-specified tolerance $\eps$, we
+employ a spectral method based on Chebyshev nodes instead. The motivation
+behind this choice is that by adjusting the number of nodes, an arbitrarily
+high order can be achieved. Although spectral methods are usually used for
+solving boundary value problems whereby the nodes are laid out over the entire
+integration range, there is no reason one could not apply them over one timestep at a
+time in a time-stepper setting. Since the present algorithm was constructed to
+switch between two methods -- one based on the asymptotic expansion of the
+Riccati equation and a spectral method -- on the fly and the points of
+switching are not predetermined, we opt to break the integration range up into
+smaller timesteps, applying the spectral method over a single timestep at a
+time.
+
+Consider $n+1$ Chebyshev nodes over the standard interval $t \in [-1, 1]$, 
+\be\label{chebnodes}
+\tilde{t}_j = \cos\left( j\pi/n\right), \quad j = 0, 1, \ldots, n.
+\ee
+One may define an $n+1 \times n+1$ differentiation matrix $D_n$ which, given a vector of function
+values $v_n$ defined on the Chebyshev nodes, returns $w_n$, the function's
+derivative evaluated at the nodes,
+\be\label{diffmatrix}
+w_n = D_nv_n.
+\ee
+Using this differentiation matrix \cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
+\begin{align}\label{discreteode}
+    \tilde{D}_n u_n = \left(\left(\frac{2}{h}\right)^2D_n^2 + 2\frac{2}{h}\text{diag}(\g_n)D_n + \text{diag}(\om_n) \right)u_n = 0, 
+\end{align}
+where the subscript $n$ denotes a vector of function values at the $n+1$ Chebyshev nodes
+\be\label{scaledt}
+t_n = \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
+\ee
+A spectral method based on Chebyshev nodes finds $u_n$ by solving the system of
+equations defined by \cref{discreteode}, subject to auxiliary conditions that
+ensure the uniqueness of the solution. In our case these conditions encode
+continuity across the lower timestep-boundary, \ie are the initial conditions
+\be\label{discreteic}
+u_n[0] = u(t_i), \quad D_nu_n[0] = u'(t_i).
+\ee
+The initial conditions may be encoded as two rows appended to $\tilde{D}_n$,
+\be\label{discreteodeic}
+\renewcommand*{\arraystretch}{1.25}
+\begin{bmatrix}
+    \tilde{D}_{n, 00} & \ldots & \tilde{D}_{n, 0n} \\
+    \vdots & \ddots & \vdots \\
+    \tilde{D}_{n, n0} & \ldots & \tilde{D}_{n, nn} \\
+    \frac{2}{h}D_{n, 00} & \ldots & \frac{2}{h}D_{n, 0n} \\
+    1 & \ldots & 0
+\end{bmatrix}
+u_n =  
+\begin{bmatrix}
+0 \\
+\vdots \\
+0 \\
+u'(t_i) \\
+u(t_i)
+\end{bmatrix},
+\ee
+where the last two lower indices specify a given element of a matrix.
+After solving the $n+3 \times n+1$ system in \cref{discreteodeic}, the value of the solution
+$u(t)$ at the end of the interval can be read off as the last element of the
+solution vector $u_n$, and its derivative as the last element of $2/hD_nu_n$.
+% Solution of rectangular systems slower
+% Overdetermined, can kill 2 rows to make system square
+
 
 \subsection{Adaptive selection of interval size and type}
 
@@ -379,13 +440,13 @@ and sufficiently large throughout some neighborhood of $t$.
   for some $\rho>0$, with bounds
     \begin{alignat}{4}
         \eta_1 &\leq |\om&&(z)| &&\leq \eta_2, \qquad &&\forall z\in B_\rho(t), \label{ommag} \\
-        |\om'(z)| &\leq &&\eta_3 &&\leq \frac{\eta_1^2}{18}, &&\forall z\in B_\rho(t), \label{omder} \\
-        \Fruzsi{|\g(z)|} &\Fruzsi{\leq} &&\Fruzsi{\eta_4} &&\Fruzsi{\leq \frac{2\eta_1^2}{99\eta_2},} \qquad &&\Fruzsi{\forall z\in B_\rho(t),} \label{gammaupper}
+        |\om'(z)| &\leq &&\eta_3 &&\leq \frac{\eta_1^2}{17}, &&\forall z\in B_\rho(t), \label{omder} \\
+        |\g(z)| &\leq &&\eta_4 &&\leq \frac{\eta_1^2}{34\eta_2}, \qquad &&\forall z\in B_\rho(t), \label{gammaupper}
   \end{alignat}
   that is, its derivative should be sufficiently small.
   Let $k\in\{0,1,\dots\}$ be sufficiently small such that
   \be
-    r := \frac{1}{2\te_1 \rho} \left(1 + \frac{\te_2}{\te_1}\right) k + \frac{\Fruzsi{\te_3}}{4\te_1^2} \leq \frac{4}{5}  **** change to 3/4.
+    r := \frac{1}{2\te_1 \rho} \left(1 + \frac{\te_2}{\te_1}\right) k + \frac{\te_3}{4\te_1^2} \leq \frac{3}{4},
   \label{r}
   \ee
   where
@@ -399,12 +460,10 @@ and sufficiently large throughout some neighborhood of $t$.
   \end{align}
   Then after any number $j\le k$ of iterations of \cref{init}--\cref{iter},
   the function $x_j$ has Riccati residual \cref{R} bounded at the point $t$ by
-  \Fruzsi{
   \be
   |R_j(t)| \le \te_3 r^j.
   \label{Rjbnd}
   \ee
-  }
 \end{thm}
 This shows, for $\om$ of sufficiently small derivative
 relative to its magnitude,
@@ -415,19 +474,19 @@ a sufficiently large lower bound $\eta_1$, i.e., $t$
 must be in a sufficiently oscillatory region for the original ODE.
 
 \begin{rmk}\label{slight}
-    By \cref{omder}, \Fruzsi{$\te_1 \ge 95\eta_1/198$} and \Fruzsi{$\te_2 \le \eta_2 + 103\eta_1/198$},
-  thus $[\te_1,\te_2]$ ***DEBUG FRACTIONS*** is only a slight
+    By \cref{omder}, $\te_1 \ge 8\eta_1/17$ and $\te_2 \le \eta_2 + 9\eta_1/17$,
+  thus $[\te_1,\te_2]$ is only a slight
   expansion of the interval $[\eta_1,\eta_2]$ containing the range of
-    $|\om|$ in the ball\footnote{\Fruzsi{Can't really claim this anymore unfortunately.}}.
+    $|\om|$ in the ball.
   Applying this we see that the last term in \cref{r}
-    is no more than \Fruzsi{about 0.07}, thus can cause only slight deterioration in the rate.
+    is no more than $17/128 \leq 0.14$, thus can cause only slight deterioration in the rate.
 \end{rmk}
 
 \begin{rmk}
-    In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small) \Fruzsi{and the damping term is small ($\eta_4$ small)},
+    In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small) and the damping term is small ($\eta_4$ small),
   then $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as $2\pi$
     time the number of oscillation periods across the ball radius.
-    Then, for example, with a ball of radius of only \Fruzsi{5 periods}, $r$ satisfies \cref{r}
+    Then, for example, with a ball of radius of only 5 periods, $r$ satisfies \cref{r}
     for $k\le 25$.
 \end{rmk}
 
@@ -479,15 +538,13 @@ must be in a sufficiently oscillatory region for the original ODE.
 %  and consider the iteration acting on the functions
     We take as the induction hypothesis that $x_\ell$ (and thus $R_\ell$)
   is analytic in $B_j$, for all $0\le \ell \le j$, with
-  \Fruzsi{
   \begin{align}
       \te_1 \leq |x_\ell + \g| &\leq \te_2
   \qquad \mbox{ in } B_j, \quad \mbox{ for all } \ell = 0,1,\dots,j,
   \label{hypx} \\
-      |R_\ell| &\leq \Fruzsi{\te_3} r^\ell \quad \mbox{ in } B_j, \quad \mbox{ for all } \ell = 0,1,\dots,j,
+      |R_\ell| &\leq \te_3 r^\ell \quad \mbox{ in } B_j, \quad \mbox{ for all } \ell = 0,1,\dots,j,
   \label{hypR}
   \end{align}
-  }
   where $r$ is defined by \cref{r}.
   Assuming for now the hypothesis for $j$, we apply simple bounds to the
   residual iteration \cref{Riter},
@@ -504,7 +561,7 @@ must be in a sufficiently oscillatory region for the original ODE.
   \leq
   r \cdot \|R_j\|_j
   \leq
-  \Fruzsi{\te_3} r^{j+1},
+  \te_3 r^{j+1},
   $$
 where in the middle step we used the crude bound $\|R_j\| \le \te_3$
 following from \cref{hypR} and that $r\le1$, and then the definition of $r$ in \cref{r}.
@@ -516,40 +573,37 @@ Thus \cref{hypR} is proven for $j+1$.
 It remains to verify that \cref{hypx} also holds for $j+1$.
 By the functional iteration \cref{init}--\cref{iter},
 $$
-x_{j+1}(z) + \g(z) = i\om(z) + \g(z) - \Fruzsi{\sum_{\ell=0}^{j} \frac{R_\ell(z)}{2 \left(x_\ell(z) + \g(z)\right)},
-\qquad z\in B_{j+1}}.
+x_{j+1}(z) + \g(z) = i\om(z) + \g(z) - \sum_{\ell=0}^{j} \frac{R_\ell(z)}{2 \left(x_\ell(z) + \g(z)\right)},
+\qquad z\in B_{j+1}.
 $$
 Using the hypothesis, the sum is pointwise bounded in magnitude
 in $B_{j+1}$ by
-\Fruzsi{
 $$
 \left|\sum_{\ell=0}^{j} \frac{R_\ell}{2\left( x_\ell + \g \right)} \right|
 \leq \frac{\te_3}{2\te_1} \cdot \sum_{\ell=0}^j r^{\ell}
 %\;\le\; \frac{\eta_3}{2\te_1} \frac{1}{1-r}
-\leq \frac{\te_3}{2\te_1} \cdot 5,
+\leq \frac{\te_3}{2\te_1} \cdot 4,
 %\leq \frac{95\eta_3}{198\eta_1}
 $$
-}
+
 where the upper bound in \cref{r} was used to bound the geometric series.
-\Fruzsi{Using \cref{eta1,eta3} for $\te_1$ and $\te_3$ we write this upper bound as
+Using \cref{eta1,eta3} for $\te_1$ and $\te_3$ we write this upper bound as
 $$
 \left|\sum_{\ell=0}^{j} \frac{R_\ell}{2\left( x_\ell + \g \right)} \right|
 \leq
-\frac{5}{2}\frac{\eta_3 + 2\eta_2\eta_4}{\eta_1 - \eta_4 - \frac{99\eta_3}{19\eta_1} - \frac{198\eta_2\eta_4}{19\eta_1}},
+2\frac{\eta_3 + 2\eta_2\eta_4}{\eta_1 - \eta_4 - \frac{17\eta_3}{4\eta_1} - \frac{17\eta_2\eta_4}{2\eta_1}},
 $$
-then extend it by lower-bounding the denominator via \cref{omder} and the crude bound ${\eta_4 \leq 2\eta_1/99}$ from \cref{gammaupper}. This gives
+then extend it by lower-bounding the denominator via \cref{omder} and the crude bound ${\eta_4 \leq \eta_1/34}$ from \cref{gammaupper}. This gives
 $$
 \left|\sum_{\ell=0}^{j} \frac{R_\ell}{2\left( x_\ell + \g \right)} \right| 
 \leq
-\frac{99\eta_3}{19\eta_1} + \frac{198\eta_2\eta_4}{19\eta_1},
+\frac{17\eta_3}{4\eta_1} + \frac{17\eta_2\eta_4}{2\eta_1},
 $$
 which, when combined with $|\om| \leq \eta_2$ and $|\g| \leq \eta_4$ yields
-$$\|x_{j+1} + \g\|_{j+1} \le \eta_2 + \eta_4 + \frac{99\eta_3}{19\eta_1} + \frac{198\eta_2\eta_4}{99\eta_1} = \te_2,$$
-verifying the upper bound \cref{hypx} for $j+1$.}
+$$\|x_{j+1} + \g\|_{j+1} \le \eta_2 + \eta_4 + \frac{17\eta_3}{4\eta_1} + \frac{17\eta_2\eta_4}{2\eta_1} = \te_2,$$
+verifying the upper bound \cref{hypx} for $j+1$.
 Instead combining with $|\om| \ge \eta_1$ gives
-\Fruzsi{
-$$ |x_{j+1}| \ge \eta_1 - \eta_4 - \frac{99\eta_3}{19\eta_1} - \frac{198\eta_2\eta_4}{99\eta_1} = \te_1 $$
-} 
+$$ |x_{j+1}| \ge \eta_1 - \eta_4 - \frac{17\eta_3}{4\eta_1} - \frac{17\eta_2\eta_4}{2\eta_1} = \te_1 $$
 in $B_{j+1}$, which verifies the lower bound \cref{hypx}.
 Again, the hypothesis is inherited for $\ell\le j$ by the nesting of the balls.
 
@@ -557,7 +611,7 @@ Finally, the base case $j=0$ for induction
 satisfies \cref{hypx}--\cref{hypR}
 by the conditions of the theorem,
 since $x_0(t) = i\om(t)$, noting $[\eta_1,\eta_2] \subset [\te_1,\te_2]$,
-while \Fruzsi{$R_0(t) = i\left(\om'(t) + 2\g\om \right)$} is bounded in magnitude by \Fruzsi{$\te_3$}.
+while $R_0(t) = i\left(\om'(t) + 2\g\om \right)$ is bounded in magnitude by $\te_3$.
 \end{proof}
 
 In the above theorem, the choice of $4/5$ in \cref{r} was merely a convenient one, chosen so that the bounds $[\te_1,\te_2]$ on $|x_j|$
@@ -583,24 +637,24 @@ exponential convergence with respect to the size of the frequency $\om$,
 as follows.
 
 \begin{cor}[Superasymptotic approximation]\label{super}
-  Suppose $\om$ satisfies the conditions \cref{ommag}--\cref{omder}
+  Suppose $\om$ and $\g$ satisfy the conditions \cref{ommag,omder,gammaupper}
   of \cref{TR}
   about a point $t\in\R$,
   and let $\alpha := (1+\te_2/\te_1)/2\te_1\rho$ be the
   first term in the rate \cref{r} arising from these bounds.
   Then there is a $k\in\{0,1,\dots\}$ such that
   $$
-  |R_k(t)| \; \le \; e \eta_3 e^{-1/3\alpha}~.
+  |R_k(t)| \; \le \; e \te_3 e^{-1/5\alpha}~.
   $$
 \end{cor}
 \begin{proof}
-  Set $k$ to be the integer in the interval $[1/3\alpha-1, \, 1/3\alpha)$.
-    Then since the final term in \cref{r} is bounded by $1/50$
+  Set $k$ to be the integer in the interval $[1/5\alpha-1, \, 1/5\alpha)$.
+    Then since the final term in \cref{r} is bounded by $17/128 \leq 0.14$
     by \cref{slight}, and the
-    first term $k\alpha \le 1/3$, we get $r\le e^{-1}$, which
-    is also $\le 4/5$ so that \cref{Rjbnd} holds.
+    first term $k\alpha \le 1/5$, we get $r\le e^{-1}$, which
+    is also $\le 3/4$ so that \cref{Rjbnd} holds.
     Choosing $j=k$, and inserting a lower bound on $k$,
-    $|R_k(t)| \le \eta_3 r^k \le \eta_3 e^{-(1/3\alpha-1)}$, which
+    $|R_k(t)| \le \te_3 r^k \le \te_3 e^{-(1/5\alpha-1)}$, which
     finishes the proof.
   \end{proof}
 Recalling that $\alpha = \bigO(1/\om)$, this
@@ -626,7 +680,7 @@ on user-defined tolerance.
 By returning to \cref{TR} and dropping the small second term
 in \cref{r} we get, in the limit of constant $\om$ in the ball,
 $$
-|R_k(t)| \; \approx \; \eta_3 \left( \frac{k}{\rho\om}\right)^k~.
+|R_k(t)| \; \approx \; \te_3 \left( \frac{k}{\rho\om}\right)^k~.
 $$
 This shows \textit{nearly} geometric convergence in $k$,
 sufficient to reach machine accuracy efficiently with a few iterations
@@ -641,9 +695,19 @@ $$
 
 \begin{table*}
     \renewcommand{\arraystretch}{1.2}
-    \Fruzsi{
     \input{tables/legendre-fastest}
-    \caption{Accuracy, runtime and evaluation statistics of the algorithm when applied to Legendre's differential equation, $(1-t^2)u'' - 2tu' + n(n+1)u = 0.$ The ODE is solved from $t_i = 0.1$ to $t_f = 0.9$, with tolerance settings $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$. $t_{\text{solve}}$ measures the solution time of the ODE, while $t_{\text{eval}}$ is the time subsequently needed to evaluate $u$ at any given intermediate point $t_i \leq t \leq t_f$. We measure the total number of steps taken by the solver, the number of calls to $\om$ and $\g$, and the number of times the algorithm has to solve a system of equations expressed as $Ax = b$. Note that in some of the linear solve calls the LU decomposition of $A$ is already available, making these calls significantly faster. }}
+    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+    applied to Legendre's differential equation, $(1-t^2)u'' - 2tu' + n(n+1)u =
+    0.$ The ODE is solved from $t_i = 0.1$ to $t_f = 0.9$, with tolerance
+    settings $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$.
+    $t_{\text{solve}}$ measures the solution time of the ODE, while
+    $t_{\text{eval}}$ is the time subsequently needed to evaluate $u$ at any
+    given intermediate point $t_i \leq t \leq t_f$. We measure the total number
+    of steps taken by the solver, the number of calls to $\om$ and $\g$, and
+    the number of times the algorithm has to solve a system of equations
+    expressed as $Ax = b$. Note that in some of the linear solve calls the LU
+    decomposition of $A$ is already available, making these calls significantly
+    faster. }
 \end{table*}
 
 
