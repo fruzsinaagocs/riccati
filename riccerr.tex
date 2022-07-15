@@ -184,7 +184,7 @@ Local rather than QML or Bremer global.)
 
 \section{The method}
 
-\subsection{Phase function solution on a single interval}
+\subsection{Phase function solution on a single interval \label{phasefun}}
 
 We will use prime to denote differentiation with respect to time $t$.
 We consider an interval $t\in[a,b]$ lying in $[0,1]$.  
@@ -367,14 +367,47 @@ Under the scaling, the differentiation matrix transforms as
     w_n &= D_nv_n, \quad f_n := f(t_n) \label{scaledDdef}\\
     D_n &= \frac{2}{h}\tilde{D}_n. \label{scaledD}
 \end{align}
-$D_n$ can then be used to compute antiderivatives (\eg $v_n$ given $w_n$), by
+We then use $D_n$ to compute antiderivatives (\eg $v_n$ given $w_n$), by
 solving the matrix equation \cref{scaledDdef}. 
 
 % Initial conditions
 
-We ensure continuity of the solution and its derivative across timestep boundaries, 
+We ensure continuity of the solution and its derivative across timestep
+boundaries by treating $u(t_i)$ and $u'(t_i)$ as initial conditions in the step
+from $t_i$ to  $t_i+h$. Noting that the asymptotic iteration \cref{iter} can be
+initialised with $x_0(t) = +i\om(t)$ as is done in \cref{init}, or with $x_0(t)
+= -i\om(t)$, the resulting asymptotic solutions, $x_{\pm}(t)$, approximate the
+nonlinear Riccati equation, but the associated 
+\be
+u_{\pm} = e^{\int_{t_i}^{t_i+h}x_{\pm}(\sigma)\mathrm{d}\sigma}
+\ee
+are two, linearly independent approximate solutions of the linear ODE \cref{ode}. They may therefore be linearly combined to match any set of initial conditions,
+\begin{align}
+    u(t) &= A_{+}u_{+}(t) + A_{-}u_{-}(t), \qquad t \in [t_i, t_i + h],\\
+    u'(t) &= A_{+}u'_{+}(t) + A_{-}u'_{-}(t), \qquad t \in [t_i, t_i + h],
+\end{align}
+with 
+\be
+\begin{bmatrix}
+    1 & 1 \\
+    x_{+}(t_i) & x_{-}(t_i)
+\end{bmatrix}
+\begin{bmatrix}
+    A_{+} \\
+    A_{-}
+\end{bmatrix}
+= 
+\begin{bmatrix}
+    u(t_i) \\
+    u'(t_i)
+\end{bmatrix}, 
+\ee
+where we used that $u_{\pm}(t_i) = 1$ and $u'_{\pm}(t_i) = x_{\pm}(t_i)$ by construction.
 
-\subsection{Direct spectral solution on nonoscillatory intervals}
+
+% +/- solutions complex conjugates
+
+\subsection{Direct spectral solution on nonoscillatory intervals \label{chebysteps}}
 
 In case the solution is nonoscillatory or the asymptotic expansion fails to
 converge before the residual reaches a user-specified tolerance $\eps$, we
@@ -459,7 +492,7 @@ in detail in the next section.
 At each timestep $t_i$, a decision needs to be made about whether to attempt a
 step using the spectral method or the asymptotic exansion. The two types of
 steps could be attempted simultaneously and the decision could be made based on
-their estimated error (as done in ... TODO), but in order to minimise
+their estimated error (as done in ... *** CITE), but in order to minimise
 computation time, we estimate whether the asymptotic expansion would
 converge quickly enough first. Inspecting the first few iterates of the asymptotic
 method from \cref{init,iter}, and noting that the convergence rate is
@@ -483,16 +516,90 @@ h_{\text{slo}} = \frac{1}{\om(t_i)}.
 \ee
 
 These initial stepsize estimates are too crude to attempt a step with in
-practice, since over $h_{\text{osc, slo}}$, $\om$, $\om'$, and $\g$ may change significantly. 
+practice, since over $h_{\text{osc}}$ or  $h_{\text{slo}}$, $\om$, $\om'$, and $\g$ may change significantly. 
 Nonetheless they provide a useful starting point for the algorithm that computes
 finer estimates.
 
 \subsubsection{Refining the stepsize estimates}
 
-Starting from $h_{\text{osc}}$, we wish to determine 
+The local error of of the asymptotic solution described in \cref{phasefun} is not
+inherently dependent on the stepsize $h$ in the same way a \eg Runge--Kutta
+method's is. The convergence rate of the residual of asymptotic steps depends
+on the bounds on $\om$, $\om'$, and $\g$ over the course of the step as we show
+in \cref{TR}, which indirectly introduces stepsize-dependence, as does the fact
+that the derivatives and integral appearing in the step are computed
+numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). (***
+CITE) Ultimately, it is how well $\om$ and $\g$ can be represented by $n$th
+order Chebyshev polynomials that determines the error in asymptotic steps, which
+we therefore test directly to gain a more accurate estimate for the stepsize
+starting from $h_{\text{osc}}$ as an initial estimate. Given $\om$ and $\g$ evaluated on $t_n$, 
+which we denote $\om_n$ and $\g_n$, respectively, we define an error
+\be
+    \Delta_n[f] := \max_{j = 0, 1, \ldots, n-1} \left| \frac{f(t^{\star}_j) -
+    f^{\star}(t^{\star}_j)}{f(t^{\star}_j)} \right|,
+\ee
+where $f$ is $\om$ or $\g$, 
+\be
+t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n-1,
+\ee
+and the $f^{\star}(t^{\star}_j)$ are interpolated using the $f(t_n)$ values,
+\be
+f^{\star}(t^{\star}_n) = L_n f(t_n).
+\ee
+The interpolation matrix $L_n$ is computed using a Vandermonde matrix (***
+CITE). The entries of $L_n$ are invariant under the simultaneous rescaling of
+$t_n$ and $t^{\star}_n$ to lie within the standard interval $[-1, 1]$,
+therefore $L_n$ need only to be computed once.
+Given $\Delta_n[\om]$ and $\Delta_n[\g]$, we accept or update the stepsize as follows,
+\begin{align}
+    \Delta :=& \max \left(\Delta_n[\om], \; \Delta_n[\g]\right), \\
+    h :=& \begin{cases}
+        h &\text{if } \Delta \leq \eps_h, \\
+        \min \left( 0.7h,\; 0.9 h \left( \frac{\eps_h}{\Delta} \right)^{\frac{1}{n-1}} \right) &\text{otherwise}.
+    \end{cases}
+\end{align}
+In the above, the $1/(n-1)$ in the exponent is justified by noting that the
+error in Chebyshev interpolation is proportional to $h^n$, therefore if
+$\Delta$ exceeds $\eps_h$, using an exponent slightly larger than $1/n$ takes
+the local error back down to a value smaller than $\eps_h$, which is further
+ensured by multiplying by the safety factor 0.9. We decrease the step to $0.7h$
+if it yields a smaller stepsize to ensure quicker convergence if $\Delta$ is
+only slightly larger than $\eps_h$. The factors 0.7 and 0.9 were set based on
+empirical observations. 
 
+*** Chebyshev step stepsize refinement -- this is still not finalised in the
+code, so will add after some experiments.
 
-\subsection{Notes on implementation}
+\subsubsection{Choosing the steptype}
+
+With a refined $h_{\text{osc}}$ and $h_{\text{slo}}$ in hand, we can make an informed decision about which type of step to take.
+\begin{pro}\label{steptypechoose}
+    Let $h_{\text{osc}}$ and $h_{\text{slo}}$ be the refined stepsize proposals
+    for a step to be taken from $t = t_i$ using the asymptotic expansion and the Chebyshev
+    spectral method, respectively. The algorithm chooses to attempt an
+    asymptotic step of size $h_{\text{osc}}$ if and only if
+$$ h_{\text{osc}} > 5h_{\text{slo}} \quad \text{and} \quad \omega(t_i) h_{\text{osc}} > 2\pi, $$
+    otherwise it will attempt a spectral step of size $h_{\text{slo}}$.
+\end{pro}
+The reason behind requiring the proposed stepsize for an asymptotic step not to
+simply be larger than that of a Chebyshev spectral step is that in regions
+where the two stepsizes compete, the asymptotic method rarely converges before
+the residual reaches $\eps$, either because $\om$ is not large enough, or
+either of $\g$ and $\om'$ is too large. The prefactor of $5$ was set based on numerical experiments. 
+
+If an asymptotic step was decided to be attempted, the algorithm will start
+iterating over $x_j$ according to \cref{iter}, monitoring the residual
+$R[x_j](t_n)$ throughout. If $\max R[x_j](t_n) < \eps$ \emph{or} $\max
+R[x_j](t_n) \geq \max R[x_{j-1}](t_n)$, the iteration is stopped. In the former
+case, the proposed solution $u(t_i+h)$ is accepted and the independent variable
+is incremented, $t := t_i + h$. Otherwise, the step is re-attempted with size
+$h = h_{\text{slo}}$ and using the spectral method. 
+
+If either of the conditions in \cref{steptypechoose} were not met, a spectral
+step is attempted with $h = h_{\text{slo}}$. The local error of the step is
+then estimated and the number of nodes $n$, as well as the stepsize $h$, is
+adapted until a local error value of at most $\eps$ is reached, as described in
+\cref{chebysteps}.
 
 
 % EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
