@@ -4,12 +4,12 @@
 \textwidth 6in
 \textheight 8.5in
 
-\usepackage{graphicx,bm,amssymb,amsmath,amsthm}
-\usepackage[colorlinks]{hyperref}
-\usepackage[capitalise, nameinlink]{cleveref}
+\usepackage{graphicx,bm,amssymb,amsmath,amsthm} % Figures and maths
+\usepackage[colorlinks]{hyperref} % Hyperlinks
+\usepackage[capitalise, nameinlink]{cleveref} % Better referencing
 \usepackage{array}
-
-\usepackage{showlabels}
+\usepackage{showlabels} % Shows eq, fig, etc labels
+\usepackage{siunitx} % SI units
 
 % -------------------------------------- macros --------------------------
 % general ...
@@ -91,6 +91,7 @@ We gather basic definitions and error analysis.
 
 \section{Introduction}
 
+%\the\textwidth
 We are interested in efficient numerical solution of
 the oscillatory linear 2nd-order ordinary differential equation (ODE)
 \be
@@ -880,11 +881,109 @@ k_\eps \approx \frac{\log \eps^{-1}}{\log \rho\om}~.
 $$
 *** compare to numerics.
 
-\section{Results}
+Finally, note that a stopping criterion for $k$ based on the residual $R[x_k]$ of the Riccati equation is viable because the residual is directly related to that of the original ODE.
+\begin{cor}[Relationship of residuals]\label{residualu}
+    Let $R[x_k](t)$ be the residual of the Riccati equation as defined in
+    \cref{R} after $k$ iterations of \cref{init,iter}. Then if
+    $\tilde{R}[u_k](t)$ is the associated residual of the original ODE
+    \cref{ode}, defined as
+    \be\label{Rode}
+    \tilde{R}[u_k](t) := u''_k + 2\gamma(t)u'_k + \omega^2(t),
+    \ee
+    and $u_k = e^{\int^t x_k(\sigma)\mathrm{d}\sigma}$, then
+    \be
+    \tilde{R}[u_k] = u_k R[x_k].
+    \ee
+\end{cor}
+\begin{proof}
+    The proof follows straightforwardly from substitution of $u_k(x_k)$ into \cref{Rode}.
+\end{proof}
+
+
+\section{Numerical results}
+
+\subsection{Comparison with state-of-the-art oscillatory solvers}
+
+The only other arbitrarily high-order numerical solver for highly oscillatory
+ODEs known to the authors is that described in \cite{bremer2018}. Since this
+algorithm has an open-source implementation available\footnote{From
+\url{https://github.com/JamesCBremerJr/Phase-functions}.}, in this section we
+use it to benchmark the performance of the present numerical method against. We
+further compare the solver described in the present manuscript to
+\texttt{oscode} \cite{agocs2020efficient,agocs2020dense}, a low-order numerical solver for highly oscillatory ODEs. Importantly, \texttt{oscode} is 
+
+
+When
+evaluating the relative numberical error, we used Bremer's publicly available
+code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
+accuracy of his method on this problem is reported in Table 1 of
+\cite{bremer2018}, which in turn has been evaluated by using the spectral
+deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
+computed by Bremer's method is accurate to machine precision, and the only
+source of error at large $\lambda$ is the evaluation of trigonometric
+functions with a large argument. Since the accuracy of the method presented
+here is limited by the same phenomenon, we choose to compare our numerical
+solution with that of Bremer's method instead of SDC, noting that any accuracy
+error values lower than those presented in \cite{bremer2018} are not to be
+trusted, and that overall the present method achieves similar accuracy but is
+faster by around an order of magnitude.
 
 \begin{table*}
     \renewcommand{\arraystretch}{1.2}
-    \input{tables/legendre-fastest}
+    \input{tables/bremer237}
+    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
+        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
+     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
+ The column headers are identical to those in \cref{legendre-results}. 
+ %When
+ %evaluating the relative numberical error, we used Bremer's publicly available
+ %code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
+ %accuracy of his method on this problem is reported in Table 1 of
+ %\cite{bremer2018}, which in turn has been evaluated by using the spectral
+ %deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
+ %computed by Bremer's method is accurate to machine precision, and the only
+ %source of error at large $\lambda$ is the evaluation of trigonometric
+ %functions with a large argument. Since the accuracy of the method presented
+ %here is limited by the same phenomenon, we choose to compare our numerical
+ %solution with that of Bremer's method instead of SDC, noting that any accuracy
+ %error values lower than those presented in \cite{bremer2018} are not to be
+ %trusted, and that overall the present method achieves similar accuracy but is
+ %faster by around an order of magnitude.
+ We observe that the present method achieves a similar accuracy as those
+ presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
+ magnitude, despite being written in an interpreted language (Python), as
+ opposed to a compiled one (Fortran).}
+\end{table*}
+
+\begin{table*}
+    \renewcommand{\arraystretch}{1.2}
+    \input{tables/bremer237_oscode}
+    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
+        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
+     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
+ The column headers are identical to those in \cref{legendre-results}. 
+ We observe that the present method achieves a similar accuracy as those
+ presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
+ magnitude, despite being written in an interpreted language (Python), as
+ opposed to a compiled one (Fortran).}
+\end{table*}
+
+
+
+
+
+\subsection{Comparison with standard solvers}
+
+
+
+\subsection{Evaluating special functions}
+
+
+\begin{table*}
+    \renewcommand{\arraystretch}{1.2}
+    \input{tables/legendre-fastest-morestuff}
     \caption{Accuracy, runtime and evaluation statistics of the algorithm when
     applied to Legendre's differential equation, $(1-t^2)u'' - 2tu' + n(n+1)u =
     0.$ The ODE is solved from $t_i = 0.1$ to $t_f = 0.9$, with tolerance
@@ -896,8 +995,10 @@ $$
     the number of times the algorithm has to solve a system of equations
     expressed as $Ax = b$. Note that in some of the linear solve calls the LU
     decomposition of $A$ is already available, making these calls significantly
-    faster. }
+faster. \label{legendre-results} }
 \end{table*}
+
+
 
 
 \section{TODO}
@@ -913,8 +1014,7 @@ a larger ball.
 can be well-approximated by $p$th order Cheby,
 using Bernstein ellipse of Tref.
 
-*** Connect $R$ to residual error in sat the ODE (easy),
-then from this to solution error bounds, maybe?
+*** from [residual of ODE and Riccati] to solution error bounds, maybe?
 This is similar to local discretization err
 in a more typical numerical solver.
 (check LeVeque, Tref, Hairer, etc).
@@ -924,6 +1024,18 @@ in a more typical numerical solver.
 We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
 and Manas Rachh.
 The Flatiron Institute is a division of the Simons Foundation.
+
+\begin{figure}
+    \centering
+    \includegraphics{plots/residual-k.pdf}
+    \caption{\label{residual-reduction} Bla }
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{plots/airy-numsol.pdf}
+    \caption{\label{airy-results} Bla }
+\end{figure}
 
 
 
