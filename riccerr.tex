@@ -4,12 +4,12 @@
 \textwidth 6in
 \textheight 8.5in
 
-\usepackage{graphicx,bm,amssymb,amsmath,amsthm}
-\usepackage[colorlinks]{hyperref}
-\usepackage[capitalise, nameinlink]{cleveref}
+\usepackage{graphicx,bm,amssymb,amsmath,amsthm} % Figures and maths
+\usepackage[colorlinks]{hyperref} % Hyperlinks
+\usepackage[capitalise, nameinlink]{cleveref} % Better referencing
 \usepackage{array}
-
-\usepackage{showlabels}
+\usepackage{showlabels} % Shows eq, fig, etc labels
+\usepackage{siunitx} % SI units
 
 % -------------------------------------- macros --------------------------
 % general ...
@@ -91,6 +91,7 @@ We gather basic definitions and error analysis.
 
 \section{Introduction}
 
+%\the\textwidth
 We are interested in efficient numerical solution of
 the oscillatory linear 2nd-order ordinary differential equation (ODE)
 \be
@@ -172,7 +173,7 @@ Review recent WKB-based approaches using WKB as basis on intervals ***.
 Like Bremer, our solver is arbitrarily high-order.
 One advantage over Bremer is that our method generates an explicit asymptotic
 expansion. A disadvantage is that its error is limited by the number
-of iterations, and by $\omega$ itself; however,
+of iterations, and by $\om$ itself; however,
 we will show that close to machine accuracy is easily reached in
 intervals that contain many oscillations.
 
@@ -184,7 +185,7 @@ Local rather than QML or Bremer global.)
 
 \section{The method}
 
-\subsection{Phase function solution on a single interval}
+\subsection{Phase function solution on a single interval \label{phasefun}}
 
 We will use prime to denote differentiation with respect to time $t$.
 We consider an interval $t\in[a,b]$ lying in $[0,1]$.  
@@ -281,7 +282,7 @@ This is a type of defect correction scheme (CITE book).
 The result is nonoscillatory by construction, without explicit reference
 to initial conditions.
 
-The early iterates of \cref{init}--\cref{iter} illustrate
+The early iterates of \cref{init,iter} illustrate
 algebraically
 the type of residual reduction that occurs. We take $\g(t) = 0$ below for the
 sake of simplicity, but the results hold for the case of $\g(t) \neq 0$. The first few iterates and residuals are
@@ -338,7 +339,76 @@ asymptotic (but not convergent) series.
 However, we show that the iteration is numerically useful,
 and analyse its residual rigorously in \cref{TR}.
 
-\subsection{Direct spectral solution on nonoscillatory intervals}
+The numerical evaluation of the asymptotic solution $x(t)$, and the solution of
+the original ODE $u(t)$ requires repeated differentiation (as part of each
+correction term) and quadrature (since $u(t) = \exp \int^t x(\sigma)
+\mathrm{d}\sigma$). 
+Since our solver is a stepper, we are not attempting to find a global solution
+$u(t)$ for the entire integration range, and only need to compute the
+asymptotic solution over a timestep, $t \in [t_i, t_i+h]$ at a time. At each 
+timestep, we choose to perform differentiation and quadrature by discretizing
+time on a Chebyshev grid of $n + 1$ nodes.  
+Over the standard interval $t \in [-1, 1]$, the $n+1$ Chebyshev nodes are given by 
+\be\label{chebnodes}
+\tilde{t}_n := \{\tilde{t}_j\}, \quad \tilde{t}_j = \cos\left( j\pi/n\right), \quad j = 0, 1, \ldots, n,
+\ee
+where the parameter $n$ can be set by the user with a default value of $n = 16$, and is fixed throughout integration. 
+One may then define an $(n+1) \times (n+1)$ differentiation matrix $\tilde{D}_n$ which, given a vector of function
+values $\tilde{v}_n$ defined on the Chebyshev nodes $\tilde{t}_j$, returns $\tilde{w}_n$, the function's
+derivative evaluated at the nodes,
+\be\label{diffmat}
+\tilde{w}_n = \tilde{D}_n\tilde{v}_n, \quad \tilde{f}_n := f(\tilde{t}_n),
+\ee
+The timestep $t \in [t_i, t_i+h]$ can always be scaled up or down to the standard interval via
+\be\label{scaledt}
+t_n := \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
+\ee
+Under the scaling, the differentiation matrix transforms as
+\begin{align}
+    w_n &= D_nv_n, \quad f_n := f(t_n) \label{scaledDdef}\\
+    D_n &= \frac{2}{h}\tilde{D}_n. \label{scaledD}
+\end{align}
+We then use $D_n$ to compute antiderivatives (\eg $v_n$ given $w_n$), by
+solving the matrix equation \cref{scaledDdef}. 
+
+% Initial conditions
+
+We ensure continuity of the solution and its derivative across timestep
+boundaries by treating $u(t_i)$ and $u'(t_i)$ as initial conditions in the step
+from $t_i$ to  $t_i+h$. Noting that the asymptotic iteration \cref{iter} can be
+initialised with $x_0(t) = +i\om(t)$ as is done in \cref{init}, or with $x_0(t)
+= -i\om(t)$, the resulting asymptotic solutions, $x_{\pm}(t)$, approximate the
+nonlinear Riccati equation, but the associated 
+\be
+u_{\pm} = e^{\int_{t_i}^{t_i+h}x_{\pm}(\sigma)\mathrm{d}\sigma}
+\ee
+are two, linearly independent approximate solutions of the linear ODE \cref{ode}. They may therefore be linearly combined to match any set of initial conditions,
+\begin{align}
+    u(t) &= A_{+}u_{+}(t) + A_{-}u_{-}(t), \qquad t \in [t_i, t_i + h],\\
+    u'(t) &= A_{+}u'_{+}(t) + A_{-}u'_{-}(t), \qquad t \in [t_i, t_i + h],
+\end{align}
+with 
+\be
+\begin{bmatrix}
+    1 & 1 \\
+    x_{+}(t_i) & x_{-}(t_i)
+\end{bmatrix}
+\begin{bmatrix}
+    A_{+} \\
+    A_{-}
+\end{bmatrix}
+= 
+\begin{bmatrix}
+    u(t_i) \\
+    u'(t_i)
+\end{bmatrix}, 
+\ee
+where we used that $u_{\pm}(t_i) = 1$ and $u'_{\pm}(t_i) = x_{\pm}(t_i)$ by construction.
+
+
+% +/- solutions complex conjugates
+
+\subsection{Direct spectral solution on nonoscillatory intervals \label{chebysteps}}
 
 In case the solution is nonoscillatory or the asymptotic expansion fails to
 converge before the residual reaches a user-specified tolerance $\eps$, we
@@ -354,39 +424,30 @@ switching are not predetermined, we opt to break the integration range up into
 smaller timesteps, applying the spectral method over a single timestep at a
 time.
 
-Consider $n+1$ Chebyshev nodes over the standard interval $t \in [-1, 1]$, 
-\be\label{chebnodes}
-\tilde{t}_j = \cos\left( j\pi/n\right), \quad j = 0, 1, \ldots, n.
-\ee
-One may define an $n+1 \times n+1$ differentiation matrix $D_n$ which, given a vector of function
-values $v_n$ defined on the Chebyshev nodes, returns $w_n$, the function's
-derivative evaluated at the nodes,
-\be\label{diffmatrix}
-w_n = D_nv_n.
-\ee
-Using this differentiation matrix \cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
+Using the differentiation matrix from \cref{scaledD}, \cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
 \begin{align}\label{discreteode}
-    \tilde{D}_n u_n = \left(\left(\frac{2}{h}\right)^2D_n^2 + 2\frac{2}{h}\text{diag}(\g_n)D_n + \text{diag}(\om_n) \right)u_n = 0, 
+    F_n u_n = \left(D_n^2 + 2\text{diag}(\g_n)D_n + \text{diag}(\om_n) \right)u_n = 0, 
 \end{align}
-where the subscript $n$ denotes a vector of function values at the $n+1$ Chebyshev nodes
-\be\label{scaledt}
-t_n = \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
-\ee
+where the subscript $n$ denotes a vector of function values at the $n+1$ (scaled) Chebyshev nodes $t_n$.
+%\be\label{scaledt}
+%t_n = \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
+%\ee
 A spectral method based on Chebyshev nodes finds $u_n$ by solving the system of
 equations defined by \cref{discreteode}, subject to auxiliary conditions that
 ensure the uniqueness of the solution. In our case these conditions encode
 continuity across the lower timestep-boundary, \ie are the initial conditions
 \be\label{discreteic}
-u_n[0] = u(t_i), \quad D_nu_n[0] = u'(t_i).
+(u_n)_n = u(t_i), \quad \left(D_nu_n\right)_0 = u'(t_i),
 \ee
-The initial conditions may be encoded as two rows appended to $\tilde{D}_n$,
+where a lower index outside brackets denotes a given vector element.
+The initial conditions may be encoded as two rows appended to $F_n$,
 \be\label{discreteodeic}
 \renewcommand*{\arraystretch}{1.25}
 \begin{bmatrix}
-    \tilde{D}_{n, 00} & \ldots & \tilde{D}_{n, 0n} \\
+    (F_n)_{00} & \ldots & (F_n)_{0n} \\
     \vdots & \ddots & \vdots \\
-    \tilde{D}_{n, n0} & \ldots & \tilde{D}_{n, nn} \\
-    \frac{2}{h}D_{n, 00} & \ldots & \frac{2}{h}D_{n, 0n} \\
+    (F_n)_{n0} & \ldots & (F_n)_{nn} \\
+    (D_n)_{00} & \ldots & (D_n)_{0n} \\
     1 & \ldots & 0
 \end{bmatrix}
 u_n =  
@@ -398,19 +459,148 @@ u'(t_i) \\
 u(t_i)
 \end{bmatrix},
 \ee
-where the last two lower indices specify a given element of a matrix.
-After solving the $n+3 \times n+1$ system in \cref{discreteodeic}, the value of the solution
+where lower indices outside a bracket specify a given matrix element.
+After solving the $(n+3) \times (n+1)$ system in \cref{discreteodeic}, the value of the solution
 $u(t)$ at the end of the interval can be read off as the last element of the
-solution vector $u_n$, and its derivative as the last element of $2/hD_nu_n$.
-% Solution of rectangular systems slower
-% Overdetermined, can kill 2 rows to make system square
+solution vector $u_n$, and its derivative as the last element of $D_nu_n$.
+These then serve as the initial conditions for the subsequent time-step.
+Note that the system has now become rectangular but also overdetermined. The
+matrix on the right-hand-side of \cref{discreteodeic} may be replaced with a
+square one by removing the last two rows and incorporating the initial
+conditions directly, \eg the last row can be removed by solving only for
+$(u_n)_1, \ldots, (u_n)_n$ and setting $(u_n)_0 = u(t_i)$.
 
+The error on steps taken with the spectral method above is estimated by
+doubling the number of nodes $n$, attempting the step with the same stepsize
+$h$ again, and comparing results. If the error falls below the user-specified
+threshold $\eps$, the spectral method is considered to have converged and the
+step is accepted. If the error does not reach $\eps$ by $n=n_{\text{max}}$, $h$
+is halved and the iteration in $n$ begins again starting with
+$n=n_{\text{min}}$. The parameters $n_{\text{min, max}}$ can be chosen by the
+user, but their default values are set to $n_{\text{min}} = 16$,
+$n_{\text{max}} = 64$. Computation time spent in failed steps is lost, making
+it imperative that the initial stepsize estimate $h$ is chosen carefully. We
+describe the procedure for choosing $h$ for both spectral and asymptotic steps
+in detail in the next section.
+
+% Error analysis? Just briefly about order of error...
+% Argue why Chebyshev nodes are a good choice here, citing Tref
 
 \subsection{Adaptive selection of interval size and type}
 
-*** to do. No numerical results here.
+\subsubsection{Initial stepsize estimates}
 
-\subsection{Notes on implementation}
+At each timestep $t_i$, a decision needs to be made about whether to attempt a
+step using the spectral method or the asymptotic exansion. The two types of
+steps could be attempted simultaneously and the decision could be made based on
+their estimated error (as done in ... *** CITE), but in order to minimise
+computation time, we estimate whether the asymptotic expansion would
+converge quickly enough first. Inspecting the first few iterates of the asymptotic
+method from \cref{init,iter}, and noting that the convergence rate is
+determined by the size of the correction term added in each iteration, a rough
+upper bound on the first correction term is $\om'/\om$, giving the
+approximate timescale 
+\be\label{hoscini}
+h_{\text{osc}} = \frac{\om(t_i)}{\om'(t_i)}.
+\ee
+\cref{TR} to follow justifies this initial stepsize-estimate by showing that
+the ratio of bounds on $\om'$ and $\om$ appears in the rate of
+convergence of successive Riccati residuals. 
+
+A similar estimate for the spectral method should depend on two things: how
+oscillatory the solution is, and what timescales the terms in \cref{ode} change
+on, \ie their smoothness. If the solution is highly oscillatory, we wish to
+avoid taking a step with a Chebyshev spectral method. A measure of the rate of
+oscillations is simply the frequency, giving the timescale
+\be\label{hsloini}
+h_{\text{slo}} = \frac{1}{\om(t_i)}.
+\ee
+
+These initial stepsize estimates are too crude to attempt a step with in
+practice, since over $h_{\text{osc}}$ or  $h_{\text{slo}}$, $\om$, $\om'$, and $\g$ may change significantly. 
+Nonetheless they provide a useful starting point for the algorithm that computes
+finer estimates.
+
+\subsubsection{Refining the stepsize estimates}
+
+The local error of of the asymptotic solution described in \cref{phasefun} is not
+inherently dependent on the stepsize $h$ in the same way a \eg Runge--Kutta
+method's is. The convergence rate of the residual of asymptotic steps depends
+on the bounds on $\om$, $\om'$, and $\g$ over the course of the step as we show
+in \cref{TR}, which indirectly introduces stepsize-dependence, as does the fact
+that the derivatives and integral appearing in the step are computed
+numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). (***
+CITE) Ultimately, it is how well $\om$ and $\g$ can be represented by $n$th
+order Chebyshev polynomials that determines the error in asymptotic steps, which
+we therefore test directly to gain a more accurate estimate for the stepsize
+starting from $h_{\text{osc}}$ as an initial estimate. Given $\om$ and $\g$ evaluated on $t_n$, 
+which we denote $\om_n$ and $\g_n$, respectively, we define an error
+\be
+    \Delta_n[f] := \max_{j = 0, 1, \ldots, n-1} \left| \frac{f(t^{\star}_j) -
+    f^{\star}(t^{\star}_j)}{f(t^{\star}_j)} \right|,
+\ee
+where $f$ is $\om$ or $\g$, 
+\be
+t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n-1,
+\ee
+and the $f^{\star}(t^{\star}_j)$ are interpolated using the $f(t_n)$ values,
+\be
+f^{\star}(t^{\star}_n) = L_n f(t_n).
+\ee
+The interpolation matrix $L_n$ is computed using a Vandermonde matrix (***
+CITE). The entries of $L_n$ are invariant under the simultaneous rescaling of
+$t_n$ and $t^{\star}_n$ to lie within the standard interval $[-1, 1]$,
+therefore $L_n$ need only to be computed once.
+Given $\Delta_n[\om]$ and $\Delta_n[\g]$, we accept or update the stepsize as follows,
+\begin{align}
+    \Delta :=& \max \left(\Delta_n[\om], \; \Delta_n[\g]\right), \\
+    h :=& \begin{cases}
+        h &\text{if } \Delta \leq \eps_h, \\
+        \min \left( 0.7h,\; 0.9 h \left( \frac{\eps_h}{\Delta} \right)^{\frac{1}{n-1}} \right) &\text{otherwise}.
+    \end{cases}
+\end{align}
+In the above, the $1/(n-1)$ in the exponent is justified by noting that the
+error in Chebyshev interpolation is proportional to $h^n$, therefore if
+$\Delta$ exceeds $\eps_h$, using an exponent slightly larger than $1/n$ takes
+the local error back down to a value smaller than $\eps_h$, which is further
+ensured by multiplying by the safety factor 0.9. We decrease the step to $0.7h$
+if it yields a smaller stepsize to ensure quicker convergence if $\Delta$ is
+only slightly larger than $\eps_h$. The factors 0.7 and 0.9 were set based on
+empirical observations. 
+
+*** Chebyshev step stepsize refinement -- this is still not finalised in the
+code, so will add after some experiments.
+
+\subsubsection{Choosing the steptype}
+
+With a refined $h_{\text{osc}}$ and $h_{\text{slo}}$ in hand, we can make an informed decision about which type of step to take.
+\begin{pro}\label{steptypechoose}
+    Let $h_{\text{osc}}$ and $h_{\text{slo}}$ be the refined stepsize proposals
+    for a step to be taken from $t = t_i$ using the asymptotic expansion and the Chebyshev
+    spectral method, respectively. The algorithm chooses to attempt an
+    asymptotic step of size $h_{\text{osc}}$ if and only if
+$$ h_{\text{osc}} > 5h_{\text{slo}} \quad \text{and} \quad \omega(t_i) h_{\text{osc}} > 2\pi, $$
+    otherwise it will attempt a spectral step of size $h_{\text{slo}}$.
+\end{pro}
+The reason behind requiring the proposed stepsize for an asymptotic step not to
+simply be larger than that of a Chebyshev spectral step is that in regions
+where the two stepsizes compete, the asymptotic method rarely converges before
+the residual reaches $\eps$, either because $\om$ is not large enough, or
+either of $\g$ and $\om'$ is too large. The prefactor of $5$ was set based on numerical experiments. 
+
+If an asymptotic step was decided to be attempted, the algorithm will start
+iterating over $x_j$ according to \cref{iter}, monitoring the residual
+$R[x_j](t_n)$ throughout. If $\max R[x_j](t_n) < \eps$ \emph{or} $\max
+R[x_j](t_n) \geq \max R[x_{j-1}](t_n)$, the iteration is stopped. In the former
+case, the proposed solution $u(t_i+h)$ is accepted and the independent variable
+is incremented, $t := t_i + h$. Otherwise, the step is re-attempted with size
+$h = h_{\text{slo}}$ and using the spectral method. 
+
+If either of the conditions in \cref{steptypechoose} were not met, a spectral
+step is attempted with $h = h_{\text{slo}}$. The local error of the step is
+then estimated and the number of nodes $n$, as well as the stepsize $h$, is
+adapted until a local error value of at most $\eps$ is reached, as described in
+\cref{chebysteps}.
 
 
 % EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -691,11 +881,109 @@ k_\eps \approx \frac{\log \eps^{-1}}{\log \rho\om}~.
 $$
 *** compare to numerics.
 
-\section{Results}
+Finally, note that a stopping criterion for $k$ based on the residual $R[x_k]$ of the Riccati equation is viable because the residual is directly related to that of the original ODE.
+\begin{cor}[Relationship of residuals]\label{residualu}
+    Let $R[x_k](t)$ be the residual of the Riccati equation as defined in
+    \cref{R} after $k$ iterations of \cref{init,iter}. Then if
+    $\tilde{R}[u_k](t)$ is the associated residual of the original ODE
+    \cref{ode}, defined as
+    \be\label{Rode}
+    \tilde{R}[u_k](t) := u''_k + 2\gamma(t)u'_k + \omega^2(t),
+    \ee
+    and $u_k = e^{\int^t x_k(\sigma)\mathrm{d}\sigma}$, then
+    \be
+    \tilde{R}[u_k] = u_k R[x_k].
+    \ee
+\end{cor}
+\begin{proof}
+    The proof follows straightforwardly from substitution of $u_k(x_k)$ into \cref{Rode}.
+\end{proof}
+
+
+\section{Numerical results}
+
+\subsection{Comparison with state-of-the-art oscillatory solvers}
+
+The only other arbitrarily high-order numerical solver for highly oscillatory
+ODEs known to the authors is that described in \cite{bremer2018}. Since this
+algorithm has an open-source implementation available\footnote{From
+\url{https://github.com/JamesCBremerJr/Phase-functions}.}, in this section we
+use it to benchmark the performance of the present numerical method against. We
+further compare the solver described in the present manuscript to
+\texttt{oscode} \cite{agocs2020efficient,agocs2020dense}, a low-order numerical solver for highly oscillatory ODEs. Importantly, \texttt{oscode} is 
+
+
+When
+evaluating the relative numberical error, we used Bremer's publicly available
+code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
+accuracy of his method on this problem is reported in Table 1 of
+\cite{bremer2018}, which in turn has been evaluated by using the spectral
+deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
+computed by Bremer's method is accurate to machine precision, and the only
+source of error at large $\lambda$ is the evaluation of trigonometric
+functions with a large argument. Since the accuracy of the method presented
+here is limited by the same phenomenon, we choose to compare our numerical
+solution with that of Bremer's method instead of SDC, noting that any accuracy
+error values lower than those presented in \cite{bremer2018} are not to be
+trusted, and that overall the present method achieves similar accuracy but is
+faster by around an order of magnitude.
 
 \begin{table*}
     \renewcommand{\arraystretch}{1.2}
-    \input{tables/legendre-fastest}
+    \input{tables/bremer237}
+    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
+        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
+     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
+ The column headers are identical to those in \cref{legendre-results}. 
+ %When
+ %evaluating the relative numberical error, we used Bremer's publicly available
+ %code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
+ %accuracy of his method on this problem is reported in Table 1 of
+ %\cite{bremer2018}, which in turn has been evaluated by using the spectral
+ %deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
+ %computed by Bremer's method is accurate to machine precision, and the only
+ %source of error at large $\lambda$ is the evaluation of trigonometric
+ %functions with a large argument. Since the accuracy of the method presented
+ %here is limited by the same phenomenon, we choose to compare our numerical
+ %solution with that of Bremer's method instead of SDC, noting that any accuracy
+ %error values lower than those presented in \cite{bremer2018} are not to be
+ %trusted, and that overall the present method achieves similar accuracy but is
+ %faster by around an order of magnitude.
+ We observe that the present method achieves a similar accuracy as those
+ presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
+ magnitude, despite being written in an interpreted language (Python), as
+ opposed to a compiled one (Fortran).}
+\end{table*}
+
+\begin{table*}
+    \renewcommand{\arraystretch}{1.2}
+    \input{tables/bremer237_oscode}
+    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
+        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
+     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
+ The column headers are identical to those in \cref{legendre-results}. 
+ We observe that the present method achieves a similar accuracy as those
+ presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
+ magnitude, despite being written in an interpreted language (Python), as
+ opposed to a compiled one (Fortran).}
+\end{table*}
+
+
+
+
+
+\subsection{Comparison with standard solvers}
+
+
+
+\subsection{Evaluating special functions}
+
+
+\begin{table*}
+    \renewcommand{\arraystretch}{1.2}
+    \input{tables/legendre-fastest-morestuff}
     \caption{Accuracy, runtime and evaluation statistics of the algorithm when
     applied to Legendre's differential equation, $(1-t^2)u'' - 2tu' + n(n+1)u =
     0.$ The ODE is solved from $t_i = 0.1$ to $t_f = 0.9$, with tolerance
@@ -707,13 +995,13 @@ $$
     the number of times the algorithm has to solve a system of equations
     expressed as $Ax = b$. Note that in some of the linear solve calls the LU
     decomposition of $A$ is already available, making these calls significantly
-    faster. }
+faster. \label{legendre-results} }
 \end{table*}
 
 
-\section{TODO}
 
-*** Add in $\gamma$ throughout above!
+
+\section{TODO}
 
 *** compare at least in a paragraph to Bremer's iteration
 \footnote{J. Bremer, private communication.}
@@ -726,8 +1014,7 @@ a larger ball.
 can be well-approximated by $p$th order Cheby,
 using Bernstein ellipse of Tref.
 
-*** Connect $R$ to residual error in sat the ODE (easy),
-then from this to solution error bounds, maybe?
+*** from [residual of ODE and Riccati] to solution error bounds, maybe?
 This is similar to local discretization err
 in a more typical numerical solver.
 (check LeVeque, Tref, Hairer, etc).
@@ -737,6 +1024,18 @@ in a more typical numerical solver.
 We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
 and Manas Rachh.
 The Flatiron Institute is a division of the Simons Foundation.
+
+\begin{figure}
+    \centering
+    \includegraphics{plots/residual-k.pdf}
+    \caption{\label{residual-reduction} Bla }
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{plots/airy-numsol.pdf}
+    \caption{\label{airy-results} Bla }
+\end{figure}
 
 
 
