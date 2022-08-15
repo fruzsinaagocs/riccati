@@ -91,17 +91,30 @@ We gather basic definitions and error analysis.
 
 \section{Introduction}
 
-%\the\textwidth
-We are interested in efficient numerical solution of
-the oscillatory linear 2nd-order ordinary differential equation (ODE)
+The efficient numerical solution of highly oscillatory ordinary differential
+equations (ODEs) has long been a challenge and focus of computational
+mathematics. A wide range of specialised methods exists for dealing with ODEs
+with different structures, thorough reviews of which are found in
+\cite{petzold1997,engquist2009}. Due to the large number of ways oscillations
+in ODEs can arise, only a handful of methods have been designed to deal with any
+given type of oscillatory ODE.  
+
+In this work we focus on ODEs of a particular form: the general, linear, second
+order ODE for a single variable, or the generalised single harmonic oscillator.
+Since approximation by harmonic oscillators is ubiquitous in physical models,
+this ODE, albeit simple-looking, is pivotal in many computational physics problems.
+
+The ODE of interest takes the form
+%We are interested in efficient numerical solution of
+%the oscillatory linear 2nd-order ordinary differential equation (ODE)
 \be
-u''(t) + 2\g(t) u'(t) + \om^2(t)u(t) = 0, \qquad t \in (0,1),
+u''(t) + 2\g(t) u'(t) + \om^2(t)u(t) = 0, \qquad t \in (t_0,t_1).
 \label{ode}
 \ee
-subject to the initial conditions
+We choose to solve the ODE as an initial value problem (IVP) by specifying the initial conditions
 \begin{align} % \ba, \ea doesn't work here, LaTeX complains
-    u(0) &= u_0 \label{ic0} \\
-    u'(0) &= u_1. \label{ic1}
+    u(t_0) &= u_0 \label{ic0} \\
+    u'(t_0) &= u'_0. \label{ic1}
 \end{align}
 %Here the local frequency function $\om(t)$ is purely real or purely imaginary.
 In regions where $\om \gg 1$, the solution $u$ is oscillatory, meaning that on some local
@@ -109,7 +122,10 @@ scale it is approximately $a e^{i\om_0t} + b e^{-i\om_0t}$ where $\om_0$ is the 
 Conventional ODE integrators then require discretization with several
 time-points per local period $2\pi/\om$, which can be prohibitively slow.
 This has led to the development of more efficient solvers for this
-high-frequency case.
+high-frequency case. However, as we will review later, none of these methods so
+far have been robust or general enough to solve the general ODE to arbitrary
+accuracy in both the highly oscillatory and the slowly-varying regime.   
+
 For now we consider only regions where $\om(t)$ and $\g(t)$ are real-valued and $\om(t)$ is positive, but 
 one may also consider $q(t):=\om^2(t)$ real and allow evanescent
 $q<0$ regions, where the solution $u$ has rapid growth and decay.
@@ -1019,6 +1035,11 @@ This is similar to local discretization err
 in a more typical numerical solver.
 (check LeVeque, Tref, Hairer, etc).
 
+*** Cosmology example: why we need $\g$, plots
+
+*** algorithm flowchart
+
+
 
 \section*{Acknowledgments}
 We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
@@ -1035,6 +1056,12 @@ The Flatiron Institute is a division of the Simons Foundation.
     \centering
     \includegraphics{plots/airy-numsol.pdf}
     \caption{\label{airy-results} Bla }
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{plots/cosmology.pdf}
+    \caption{\label{cosmology-example} Bla }
 \end{figure}
 
 
