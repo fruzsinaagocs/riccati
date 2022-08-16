@@ -126,13 +126,17 @@ high-frequency case. However, as we will review later, none of these methods so
 far have been robust or general enough to solve the general ODE to arbitrary
 accuracy in both the highly oscillatory and the slowly-varying regime.   
 
-For now we consider only regions where $\om(t)$ and $\g(t)$ are real-valued and $\om(t)$ is positive, but 
+In this work we only consider regions where $\om(t)$ and $\g(t)$ are real-valued and $\om(t)$ is positive, but 
 one may also consider $q(t):=\om^2(t)$ real and allow evanescent
 $q<0$ regions, where the solution $u$ has rapid growth and decay.
 %For now we ignore the real-valued damping function $\g(t)$,
 %setting $\g \equiv =0$. *** to include.
 
-Background. ***
+% Asymptotic methods: WKB, oscode, QML
+% Not asymptotics: Bremer
+A large class of efficient numerical solvers for highly oscillatory ODEs of the above form makes use of asymptotic expansions. 
+
+
 WKB blah.
 QML.
 oscode.
@@ -986,6 +990,20 @@ faster by around an order of magnitude.
  opposed to a compiled one (Fortran).}
 \end{table*}
 
+\begin{table*}
+    \renewcommand{\arraystretch}{1.2}
+    \input{tables/bremer237_arnold}
+    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
+        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
+     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
+ The column headers are identical to those in \cref{legendre-results}. 
+ We observe that the present method achieves a similar accuracy as those
+ presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
+ magnitude, despite being written in an interpreted language (Python), as
+ opposed to a compiled one (Fortran).}
+\end{table*}
+
 
 
 
@@ -1018,27 +1036,44 @@ faster. \label{legendre-results} }
 
 
 \section{TODO}
-
-*** compare at least in a paragraph to Bremer's iteration
-\footnote{J. Bremer, private communication.}
-
-*** some comment that although theorem is pointwise convergence,
+Introduction
+\begin{itemize}
+    \item{Summary of previous efforts: define asymptoticity, WKB theory, QML, oscode. Non-asymptotic: Arnold, Bremer}
+    \item{Separate summary of what each of these are missing (for emphasis)}
+    \item{Short example from cosmology explanining why $\g$ is needed + other arguments}
+    \item{Clear aim and novelty of this work}
+\end{itemize}
+Methods
+\begin{itemize}
+    \item{Short comparison to WKB and Bremer's basic iteration}
+    \item{Finalise stepsize-choosing algorithm for Chebyshev steps}
+    \item{Note on numerically stable residual reduction}
+\end{itemize}
+Results
+\begin{itemize}
+    \item{Code up and time special function evaluations (dense output) and add to tables (expect $10^{-6}$ s, similar to Bremer)}
+    \item{Describe figures/tables in text, spell out differences between current solver and others}
+\end{itemize}
+Figures and tables
+\begin{itemize}
+    \item{Algorithm flowchart? (Have a skecth from CMO talk ready) Or pseudocode better?}
+    \item{Captions missing for all figures}
+    \item{Table captions need updating}
+    \item{Could optimise Chebyshev steps further to improve results in low-frequency regime...}
+\end{itemize}
+Misc
+\begin{itemize}
+    \item{some comment that although theorem is pointwise convergence,
 uniform convergence over some interval is trivial by enclosing it in
-a larger ball.
-
-*** relate the ball in the theorem to the interval size that
+        a larger ball.}
+    \item{relate the ball in the theorem to the interval size that
 can be well-approximated by $p$th order Cheby,
-using Bernstein ellipse of Tref.
-
-*** from [residual of ODE and Riccati] to solution error bounds, maybe?
+        using Bernstein ellipse of Tref.}
+    \item{from [residual of ODE and Riccati] to solution error bounds, maybe?
 This is similar to local discretization err
 in a more typical numerical solver.
-(check LeVeque, Tref, Hairer, etc).
-
-*** Cosmology example: why we need $\g$, plots
-
-*** algorithm flowchart
-
+        (check LeVeque, Tref, Hairer, etc).}
+\end{itemize}
 
 
 \section*{Acknowledgments}
