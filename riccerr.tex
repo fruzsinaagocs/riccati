@@ -10,6 +10,7 @@
 \usepackage{array}
 \usepackage{showlabels} % Shows eq, fig, etc labels
 \usepackage{siunitx} % SI units
+\usepackage[caption=false]{subfig} % For subfloats
 
 % -------------------------------------- macros --------------------------
 % general ...
@@ -1081,11 +1082,14 @@ We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
 and Manas Rachh.
 The Flatiron Institute is a division of the Simons Foundation.
 
-\begin{figure}
-    \centering
-    \includegraphics{plots/residual-k.pdf}
-    \caption{\label{residual-reduction} Bla }
-\end{figure}
+\begin{figure*}[p]
+    \flushleft
+    \subfloat{\includegraphics{plots/residual-k.pdf}}
+%    \caption{\label{residual-reduction} Bla }
+    \subfloat{\includegraphics{plots/convergence.pdf}}
+%    \caption{\label{convergence-plot} Bla }
+\end{figure*}
+
 
 \begin{figure}
     \centering
