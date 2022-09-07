@@ -10,6 +10,13 @@
 \usepackage{array}
 \usepackage{showlabels} % Shows eq, fig, etc labels
 \usepackage{siunitx} % SI units
+\usepackage[caption=false]{subfig} % For subfloats
+\usepackage{bold-extra} % bold for texttt
+\usepackage{bm} % bold for maths 
+
+
+% SI unit definitions
+\DeclareSIUnit\parsec{pc}
 
 % -------------------------------------- macros --------------------------
 % general ...
@@ -201,7 +208,129 @@ intervals that contain many oscillations.
 (Arb high-order compared to oscode $\bigO(h)$ and the $h^2$ guys.
 Local rather than QML or Bremer global.)
 
+One might be tempted to think that considering the damping-free form ($\g(t) =
+0$) of \cref{ode} would have been sufficient, and that allowing for the case of
+$\g(t) \neq 0$ does not add generality, since the $\g$-term in \cref{ode} may
+always be removed via a variable transform. Indeed, it can be shown that either
+the independent or the dependent variable can be rescaled to yield a
+damping-free ODE. The most general transformation that preserves the linearity
+of the ODE is
+\be\label{transformation}
+t \to \tau := f(t), \quad u \to y:= g(\tau)u,
+\ee
+which yields the second-order linear ODE
+\be\label{transformed-ode}
+\ddot{y} + \left[ \frac{2\dot{g}}{g} + \frac{f''}{(f')^2} + \frac{2\g}{f'} \right]\dot{y} + 
+\left[\ddot{g} + \left( \frac{f''}{(f')^2} + \frac{2\g}{f'} \right)\frac{\dot{g}}{g} + \frac{\om^2}{(f')^2} \right]y = 0,
+\ee
+where the overdot denotes differentiation with respect to $\tau$. Setting the coefficient of $\dot{y}$ to zero yields the constraint
+\be
+2\tilde{\g} = \frac{2\dot{g}}{g} + \frac{f''}{(f')^2} + \frac{2\g}{f'} = 0,
+\ee
+and simplifies the frequency of the transformed ODE to
+\be
+\tilde{\omega}^2 = \ddot{g} - 2\left( \frac{\dot{g}}{g}\right)^2 + \left( \frac{\om}{f'}\right)^2.
+\ee
+This, however, still carries a functional degree of freedom, in that one is free to choose $g$ (or $f$). Despite the fact that the ODE may always be transformed this way, in some cases it is not numerically stable to do so. We demonstrate this through an example taken from cosmology.
 
+\subsection{Why we need $\g$: an example}
+
+A widely accepted theory explaining the origin of large-scale structure in the Universe is that of inflation \cite{baumann2022}. Preceding and during an early phase of exponential expansion, quantum-scale fluctuations in matter density (and hence spacetime-curvature) evolved according to the Mukhanov--Sasaki equation,
+\be\label{mseq}
+\frac{\d^2 \mathcal{R}_k}{\d N^2} + 2\g(N)\frac{\d \mathcal{R}_k }{\d N} + \om^2(N) \mathcal{R}_k = 0, 
+\ee
+where the independent variable is the number of e-folds of inflation, $N = \ln
+a$, with $a$ being the scale factor, a time-dependent characteristic
+lengthscale associated with the expansion. During inflation, $a$ grows
+exponentially, making $N$ a natural independent variable for the purposes of
+computation. $\mathcal{R}$ is a time-dependent scalar field that quantifies
+perturbations in the spatial curvature of spacetime called the gauge-invariant
+curvature perturbation. $\mathcal{R}_k$ is then the Fourier component of
+$\mathcal{R}$ associated with the wavenumber $k$. The damping term and
+frequency in \cref{mseq} are time- ($N$-) and wavenumber ($k$-) dependent, as
+well as functions of the underlying cosmological model. An example
+for their behaviour is shown in the top left panel of \cref{cosmology-example}.
+The bottom left panel then shows the evolution of a single perturbation mode
+$\mathcal{R}_k$ corresponding to a lengthscale of\footnote{When the perturbation mode is governed by
+the Mukhanov--Sasaki equation, the Universe is in its primordial phase of
+inflation, approximately $10^{-32}$ \si{\s} after the Big Bang. These primordial
+perturbations later translate into anisotropies in the temperature and
+polarisation of the Cosmic Microwave Background (CMB), which we can observe
+today. The CMB anisotropies are observed over the celestial sphere and are thus broken
+down into spherical harmonics parametrised by their multipole moment
+$\ell$. Even though a single plane wave projected onto a sphere generates
+anisotropies on multiple scales, the dominant anisotropy it generates will have
+$\ell \approx kD_{\ast}$ \cite{hu1995}, where $D_{\ast}$ is the angular
+diameter distance to the surface of last scattering, measured in
+\si{\mega\parsec}. The scale we consider in the text corresponds to the
+resolution of the current CMB experiments, \ie the largest currently observable
+multipole, $\ell \approx 2000$, or a wavenumber of \SI{0.2}{\per\mega\parsec}.
+} \SI{0.2}{\per\mega\parsec}. The perturbation mode exhibits rapid oscillations
+before it ``freezes out'' at a constant amplitude at which it will remain until
+after the end of primordial inflation. In cosmology, it is this frozen-out
+amplitude we are interested in computing, so the perturbation modes are evolved numerically
+until well into the constant-amplitude regime. Towards the end of the
+integration regime $\om \approx 0$ and $\g \approx \text{const.}$, giving the
+solution
+\be\label{infl-sol-1}
+\mathcal{R}_k \approx C_0 - \frac{C_1}{\g}e^{-\g N},
+\ee
+which quickly converges to $\mathcal{R}_k \approx C_0$. Once this phase of the
+numerical solution is reached, the condition number of the problem does not increase
+significantly -- intuitively, it is the constant part of the solution that is
+of interest, which is easy to follow numerically. Transforming the
+dependent variable to yield the damping-free equation of motion 
+\be
+\frac{\d^2 \tilde{\mathcal{R}}_k}{\d N^2} + \tilde{\om}^2(N) \tilde{\mathcal{R}}_k = 0, 
+\ee
+with $\tilde{\om}^2 = \om^2 + \g' - \g^2$, results in the behaviour plotted on
+the left-hand-side of \cref{cosmology-example}. In the region where the
+perturbation mode's amplitude was previously constant we now have $\tilde{\om}
+< 0$ and $\tilde{\om} \approx \text{const.}$, giving 
+\be
+\tilde{\mathcal{R}}_k \approx C_2 e^{+\tilde{\om}N} + C_3 e^{-\tilde{\om}N}.
+\ee
+The physically meaningful solution is, unfortunately, the exponentially
+decaying one. Due to rounding error however, it is inevitable that some of the
+exponentially growing solution will be picked up by the numerical method being used, which quickly overpowers the
+physical solution. This may in principle be mitigated against by solving the
+ODE backwards in $N$, but some models may have $\tilde{\om}$ with several
+sign-changes, in which case this trick cannot be used. Even if the
+time-reversal trick is employed, the condition number of the problem still
+grows proportionally with $|\tilde{\om}N|$, regardless of whether the solution
+is oscillatory or exponential, costing valuable digits.
+
+The primordial power spectrum (PPS) of curvature perturbations is defined as the function
+\be
+\mathcal{P}_{\mathcal{R}}(k) = \frac{k^3}{2\pi^2} |\mathcal{R}_k|^2,
+\ee
+where $|\mathcal{R}_k|$ is taken as the frozen-out amplitude of the given perturbation mode. 
+In cosmological inference, forward modelling often starts from the PPS which is
+computed assuming some set of cosmological parameters. For each PPS
+computation, one needs to solve \cref{mseq} for $\mathcal{O}(10^3)$ values of
+$k$, and around $\mathcal{O}(10^7 - 10^9)$ likelihood evaluations (each of
+which involves one PPS calculation) are necessary for mapping the posterior
+probability distribution. This gives a total of {$\mathcal{O}(10^{10} -
+10^{12})$} numerical solves of the highly oscillatory \cref{mseq}, which is only
+feasible if an extremely efficient, specialised numerical method is used. Moreover, the above reasoning demonstrates that the numerical method needs to be able to deal with a non-zero $\g$-term.   
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics{plots/cosmology.pdf}
+    \caption{\label{cosmology-example} Plot illustrating the change in the
+    terms in the Mukhanov--Sasaki equation \cref{mseq} and the behaviour of its
+    solution upon transforming to $\gamma$-free form. The top panels show the
+    frequency and damping term (where applicable) in the ODE as a function of
+    the e-folds of inflation $N$, while the bottom panels shows the evolution
+    of the dependent variable, the gauge-invariant curvature perturbation
+    $\mathcal{R}_k$ of comoving wavenumber $k$ corresponding to an 
+    observable lengthscale of \SI{0.2}{\per\mega\parsec}. Note the
+    symmetric-logarithmic scales on all $y$-axes, which is linear close to
+    zero but logarithmic otherwise. }
+\end{figure}
+
+
+\subsection{Structure of this paper}
 
 \section{The method}
 
@@ -212,7 +341,6 @@ We consider an interval $t\in[a,b]$ lying in $[0,1]$.
 Writing $u = e^z$ where $z'(t) = x(t)$ is the phase function,
 then any nonvanishing $u(t)$ satisfies \cref{ode} if and only if
 its complex phase function $x(t)$ satisfies the nonlinear Riccati equation
-\Fruzsi{[Probably can't call this Riccati anymore due to the presence of $\g(t)$].}
 \be
 x' + x^2 + 2\g(t)x + \om(t)^2 = 0.
 \label{ricc}
@@ -241,7 +369,7 @@ for the related real-valued Kummer's equation
 \ee
 corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
 but the existence of a nonoscillatory Kummer's solution implies the same for
-a Riccati solution \footnote{We thank Jim Bremer for explaining this argument.}.
+a Riccati solution\footnote{We thank Jim Bremer for explaining this argument.}.
 The latter is easy to show, since if $\alpha(t)$ satisfies \cref{kummer},
 then defining $\beta = -\alpha'/2\alpha$ allows \cref{kummer}
 to be written
@@ -287,8 +415,7 @@ Namely, since
 by linearizing we get that $\delta$ solves the linear 1st-order ODE
 $\delta' + 2x_j(t) \delta + 2\g \delta  = -R[x_j](t)$,
 which has an analytic solution.
-Solving this exact Newton update symbolically is the basis of the QML iteration
-(*** CITE + check).
+Solving this exact Newton update symbolically is the basis of the quasilinearization method (QML) \cite{bellman1970}.
 However, this ODE is again generally oscillatory,
 with unknown initial condition needed for a nonoscillatory solution $\delta$.
 Yet if $\delta$ is nonoscillatory the first term $\delta'$ is
@@ -298,7 +425,7 @@ still result\footnote{\Fruzsi{[Strictly speaking, we should then be dropping the
 This leads to the algebraic formula $2\left(x_j(t) + \g(t)\right) \delta(t) = -R[x_j](t)$
 which is solved pointwise for each $t$, and
 writing $x_{j+1} = x_j + \delta$ gives \cref{iter}.
-This is a type of defect correction scheme (CITE book).
+This is a type of defect correction scheme \cite{bohmer1984}.
 The result is nonoscillatory by construction, without explicit reference
 to initial conditions.
 
@@ -358,6 +485,34 @@ order of derivatives of $\om(t)$, which will lead to an
 asymptotic (but not convergent) series.
 However, we show that the iteration is numerically useful,
 and analyse its residual rigorously in \cref{TR}.
+
+\begin{figure*}[htpb]
+    \flushleft
+    \subfloat{\includegraphics{plots/residual-k.pdf}}
+    %\label{residual-reduction}
+    \subfloat{\includegraphics{plots/convergence.pdf}}
+    \caption{\label{convergence-plot} Error analysis and convergence of our
+    method. The left panel shows the maximum residual of the Riccati equation
+    over a single step of the numerical method as a function of the number of
+    terms added to the asymptotic expansion, which is used to propagate the
+    numerical solution in the highly oscillatory regions of the ODE. The
+    differently coloured curves correspond to different peak frequencies over
+    the same time interval. A geometric reduction in the residual for the first
+    few iterations, forecast qualitatively in \cref{phasefun} and shown formally in
+    \cref{TR}, is observed. Following this geometric reduction the
+    asymptotic nature of the approximation is manifest as an increase in the
+    residual, especially visible at low $\omega_{\text{max}}$. The right panel
+    is a convergence plot showing the achieved relative error against the
+    relative tolerance set to the solver. The coloured curves correspond to
+    different upper ends of the integration region. These should be compared to
+    the grey dashed line showing an achieved error matching the tolerance.
+    In regions where the condition number of the problem may limit the achievable
+    accuracy, we plot the condition number as a coloured dashed line to compare
+    the achieved error with. }
+   % Need to say what ODEs were used to create these  
+\end{figure*}
+
+
 
 The numerical evaluation of the asymptotic solution $x(t)$, and the solution of
 the original ODE $u(t)$ requires repeated differentiation (as part of each
@@ -922,89 +1077,59 @@ Finally, note that a stopping criterion for $k$ based on the residual $R[x_k]$ o
 
 \section{Numerical results}
 
-\subsection{Comparison with state-of-the-art oscillatory solvers}
+\subsection{A toy example: the Airy equation}
 
-The only other arbitrarily high-order numerical solver for highly oscillatory
-ODEs known to the authors is that described in \cite{bremer2018}. Since this
-algorithm has an open-source implementation available\footnote{From
-\url{https://github.com/JamesCBremerJr/Phase-functions}.}, in this section we
-use it to benchmark the performance of the present numerical method against. We
-further compare the solver described in the present manuscript to
-\texttt{oscode} \cite{agocs2020efficient,agocs2020dense}, a low-order numerical solver for highly oscillatory ODEs. Importantly, \texttt{oscode} is 
-
-
-When
-evaluating the relative numberical error, we used Bremer's publicly available
-code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
-accuracy of his method on this problem is reported in Table 1 of
-\cite{bremer2018}, which in turn has been evaluated by using the spectral
-deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
-computed by Bremer's method is accurate to machine precision, and the only
-source of error at large $\lambda$ is the evaluation of trigonometric
-functions with a large argument. Since the accuracy of the method presented
-here is limited by the same phenomenon, we choose to compare our numerical
-solution with that of Bremer's method instead of SDC, noting that any accuracy
-error values lower than those presented in \cite{bremer2018} are not to be
-trusted, and that overall the present method achieves similar accuracy but is
-faster by around an order of magnitude.
-
-\begin{table*}
-    \renewcommand{\arraystretch}{1.2}
-    \input{tables/bremer237}
-    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
-        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
-        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
-     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
- The column headers are identical to those in \cref{legendre-results}. 
- %When
- %evaluating the relative numberical error, we used Bremer's publicly available
- %code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
- %accuracy of his method on this problem is reported in Table 1 of
- %\cite{bremer2018}, which in turn has been evaluated by using the spectral
- %deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
- %computed by Bremer's method is accurate to machine precision, and the only
- %source of error at large $\lambda$ is the evaluation of trigonometric
- %functions with a large argument. Since the accuracy of the method presented
- %here is limited by the same phenomenon, we choose to compare our numerical
- %solution with that of Bremer's method instead of SDC, noting that any accuracy
- %error values lower than those presented in \cite{bremer2018} are not to be
- %trusted, and that overall the present method achieves similar accuracy but is
- %faster by around an order of magnitude.
- We observe that the present method achieves a similar accuracy as those
- presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
- magnitude, despite being written in an interpreted language (Python), as
- opposed to a compiled one (Fortran).}
-\end{table*}
-
-\begin{table*}
-    \renewcommand{\arraystretch}{1.2}
-    \input{tables/bremer237_oscode}
-    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
-        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
-        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
-     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
- The column headers are identical to those in \cref{legendre-results}. 
- We observe that the present method achieves a similar accuracy as those
- presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
- magnitude, despite being written in an interpreted language (Python), as
- opposed to a compiled one (Fortran).}
-\end{table*}
-
-\begin{table*}
-    \renewcommand{\arraystretch}{1.2}
-    \input{tables/bremer237_arnold}
-    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
-        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
-        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
-     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
- The column headers are identical to those in \cref{legendre-results}. 
- We observe that the present method achieves a similar accuracy as those
- presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
- magnitude, despite being written in an interpreted language (Python), as
- opposed to a compiled one (Fortran).}
-\end{table*}
+A simple but effective test ODE for highly oscillatory solvers is the Airy equation,
+\be
+u'' + tu = 0, \quad t \in [1, 10^8], 
+\ee
+with initial conditions
+\be
+u(1) = \text{Ai}(-1) + i\text{Bi}(-1), \quad u'(1) = - \text{Ai}'(-1) -i\text{Bi}'(-1).
+\ee
+It serves as a good test case because it is maximally hard for standard
+numerical methods due to the frequency growing with time, but should prove to
+be maximally easy for specialised oscillatory methods for the rate of change of
+the frequency decreases with time, making $A\cos(\om t) + B\sin(\om t)$ -- the
+zeroth order solution -- an increasingly good approximation. With this test
+case one can check whether the method adapts its stepsize correctly and
+achieves the maximum possible accuracy, given by the condition number $K$ of
+the problem times machine precision $\varepsilon_{\text{mach}}$. The condition
+number measures the sensitivity of the numerical solution to perturbations,
+which in this case can be interpreted as sensitivity to the initial conditions.
+One can easily see that for a highly oscillatory problem $K$ will scale with
+the total accumulated phase during the solution, since one will end up having
+to take the sine and cosine of it. We therefore estimate $K$ as the cumulative
+number of periods in the numerical solution. \cref{airy-results} shows the
+internal steps our numerical solver takes while solving the Airy equation,
+colour-coded by step type, as well as the progression of stepsizes, numerical
+error, and number of periods of oscillations traversed in a single step. The
+stepsize $h$ is expected to reflect the timescale over which $\om$ changes,
+therefore $h \propto \om/\om' \propto t$, which is observed. The numerical
+error traces the theoretical minimum, $K \cdot \varepsilon_{\text{mach}}$, to
+within a digit. The number of oscillations traversed per step can be derived
+from $h(t)$: $n_{\text{osc}} \propto \om h \propto t^{3/2}$, which again is
+clearly seen in \cref{airy-results}.
 
 
+\begin{figure}
+    \centering
+    \includegraphics{plots/airy-numsol.pdf}
+    \caption{\label{airy-results} Numerical solution of the Airy equation. The
+    top left panel shows the real part of the analytic solution in black, on
+    top of which the individual timesteps of the solver are plotted, coloured
+    by their step type. The top right panel plots the stepsize as a function of
+    time, which exhibits linear growth. The bottom left shows the relative
+    error achieved by the solver in black, with two dashed lines to guide the
+    eye: the tolerance requirement we set to the solver in grey, and the
+    maximum achievable accuracy (calculated as the product of the condition
+    number~$K$ and machine precision~$\varepsilon_{\text{mach}}$) in blue. On the
+    bottom right, we show the number of wavelengths of oscillation traversed in
+    a single step, as a function of time. 
+%    This is expected to be roughly proportional to the frequency times timescale over which $\om$ changes, which is $\om^2/\om' = t^{3/2}$, plotted in dashed blue. 
+    %, $u'' + tu = 0$, on $t \in [1, 10^8]$, with initial conditions $u(1) = \text{Ai}(-1) + i\text{Bi}(-1)$, $u'(1) = - \text{Ai}'(-1) -i\text{Bi}'(-1)$.   
+    }
+\end{figure}
 
 
 
@@ -1012,24 +1137,285 @@ faster by around an order of magnitude.
 
 
 
+\subsection{Comparison with state-of-the-art oscillatory solvers}
+
+As reviewed in the introduction, a number of numerical methods have been
+created specifically for highly oscillatory ODEs. We compare the performance of
+the present solver with theirs in this section. For reference, a short
+description of the available numerical solvers is found below, along with the
+names by which they will be referred to hereafter. 
+%
+\begin{description}
+    \item[The phase function method]{is an arbitrarily high-order solver
+        described in \cite{bremer2018}, specifically created for highly
+        oscillatory problems, operating near machine precision. Its main
+        drawbacks are the lack of generalisability to include a friction term
+        and to operate at low frequencies or non-oscillatory regions of the
+        solution. The method is callable from \texttt{Fortran 90}.}
+    \item[\texttt{\textbf{oscode}}]{is a low-order numerical solver
+        \cite{agocs2020efficient,agocs2020dense} that can accommodate a
+        friction term and nonoscillatory regions in the solution. It requires
+        only requires the user to specify $\om$ and $\g$, which can be given as
+        either closed-form functions or as timeseries. The solver has both a
+        \texttt{Python} and \texttt{C++} interface, but for the experiments below it is called in
+        \texttt{Python}.}
+    \item[The WKB marching method]{\cite{arnold2011wkb,korner2022wkb} uses the
+        mechanism described in \cite{agocs2020efficient} to switch between an a
+        WKB-inspired method in regions of rapid oscillation and Runge--Kutta
+        method. Its convergence order in the oscillatory regions is one higher
+        than that of \texttt{oscode}, but does not (easily) generalise to
+        include a $\g$ term. It further requires the user to specify the
+        derivatives of $\om$ by hand, up to $\om^{(5)}$. It is implemented in \texttt{MATLAB}.}
+\end{description}
+%
+Since solvers not created specifically for oscillatory problems typically have
+a runtime proportional to $\om$\footnote{This would mean unacceptably long
+runtimes for the problems presented in this section.} and the phase function
+method is the only existing 
+arbitrarily high-order specialised method with an open-source implementation
+available\footnote{From
+\url{https://github.com/JamesCBremerJr/Phase-functions}.}, we shall use its
+output as the reference solution for the highly oscillatory problem
+investigated in this section. For the sake of comparison, we take the example
+ODE defined in Eq. (237) of \cite{bremer2018},
+\be\label{bremer237eq}
+u'' + \lambda^2 q(t) = 0, \quad q(t) = 1 - t^2\cos(3t)
+\ee
+on $t \in [-1, 1]$, subject to the initial conditions
+\be\label{bremer237ic}
+u(-1) = 0, \quad u'(-1) = \lambda,
+\ee
+where we vary $\lambda$ between $10^1$ and $10^7$.
+
+Performance statistics of the phase function method on this problem is presented in
+Table 1 of \cite{bremer2018}. The maximum error quoted therein was computed
+with respect to a reference solution obtained by a spectral deferred correction
+(SDC) method \cite{dutt2000}. As noted in \cite{bremer2018}, the phase function
+computed by the method is accurate to machine precision, and the only source of
+error at large $\lambda$ stems from roundoff error during the evaluation of
+trigonometric functions with large arguments. In general, the condition number
+of an oscillatory IVP such as \cref{bremer237eq,bremer237ic} grows with $K$,
+the number of oscillations traversed, making the maximum achievable precision
+$K\cdot \varepsilon_{\text{mach}}$. This causes the phase function method to
+be accurate to $13$ digits at $\lambda = 10^1$, but only $8$  at $\lambda =
+10^7$. This is important to keep in mind as our reference solution is generated
+by phase function method, meaning that the numerical errors presented in Table
+1 of \cite{bremer2018} serve as \emph{upper bounds} for any lower numerical
+errors reported here. In other words, we can only tell if the present method is
+as accurate as the phase function method, not more. We consider this acceptable
+given that the numerical accuracy is limited by the high condition number of
+the problem at hand, and that the present method is likewise limited by
+the accuracy of evaluating trigonometric functions with large arguments.
+
+\cref{bremer237tab} presents the runtime statistics of the present method,
+\texttt{oscode}, and the WKB marching method, respectively, separated by double
+lines. For \texttt{oscode}, the table contains two separate entries that have
+been generated with the relative tolerance set to $10^{-6}$ and $10^{-12}$,
+respectively. This is reflected in the achieved error in the low-$\lambda$
+limit. For all other solvers, we set the relative tolerance to $10^{-12}$, and
+in all cases we use double precision. For our solver, we set the number of
+Chebyshev nodes in Riccati (oscillatory) steps (see \cref{chebysteps}) to $n = 40$, the
+tolerance for stepsize selection to $\varepsilon_h = 10^{-13}$, and the number
+of Chebyshev nodes in the spectral (nonoscillatory) steps to the default
+$n_{\text{min}} = 16$, $n_{\text{max}} = 64$. For \texttt{oscode} and the WKB
+marching method none of the parameters were modified from their default values
+with the exception of the local tolerance.
+
+
+The quantities tabulated are described in detail below.
+\begin{description}
+    \item[$\bm{\mathrm{max}|\Delta u/u|}$:]{Maximum relative error over the
+        integration range, evaluated at the timesteps taken internally by the
+        solver.}
+    \item[$\bm{t_{\mathrm{solve}}}$:]{Total runtime, in seconds, of a single
+        ODE solve averaged over $10^3$--$10^5$ runs. This is equivalent to the
+        ``phase function construction time'' reported in Table 1 of
+        \cite{bremer2018}. Note that this alone is not a good basis for
+        comparison for the methods presented, since even though the ODE solves
+        were timed on the same machine, the methods have been implemented in
+        different programming languages.}
+    \item[$\bm{t_{\mathrm{eval}}}$:]{Time it takes for the program to evaluate
+        the solution at an arbitrary point other than the internal timesteps.
+        This time should be compared to the ``average phase function evaluation
+        time'' of Table 1 \cite{bremer2018}, but as all runtimes, should not be
+        used for the sake of comparison on its own.}
+    \item[$\bm{n_{\mathrm{s,osc}}}$:]{Number of steps taken by the solver with
+        a specialised method in the oscillatory regime. This quantity is only
+        applicable for the present solver, \texttt{oscode}, and the WKB
+        marching method, and means a different  method in each case. For the
+        present solver and \texttt{oscode}, it denotes steps taken with a
+        ``direct'' asymptotic method (that described in \cref{phasefun} and WKB,
+        respectively), and the WKB-inspired stepping scheme of
+        \cite{korner2022wkb} in the case of the WKB marching method. When this
+        quantity appears as $(n_1, n_2)$, $n_1$ denotes the number of attempted
+        steps of the given type, out of which $n_2$ have been successful
+        (accepted). The same convention applies to $n_{\text{s,slo}}$ and
+        $n_{\text{s,tot}}$.}
+    \item[$\bm{n_{\mathrm{s,slo}}}$:]{Number of steps taken by the solver with
+        a ``standard'' method, in the nonoscillatory regions of the solution.
+        For the present solver, this covers the adaptive-order spectral method
+        based on Chebyshev nodes, but means a fixed-order Runge--Kutta method
+        in all other cases.}
+    \item[$\bm{n_{\mathrm{s,tot}}}$:]{Total number of steps performed by the
+        solver, sum of $n_{\mathrm{s,osc}}$ and $n_{\mathrm{s,slo}}$.}
+    \item[$\bm{n_f}$:]{Total number of function evaluations during a single ODE solve.}
+    \item[$\bm{n_{\mathrm{LS}}}$:]{Denotes the total number of linear solve
+        operations on a system of equations (\ie $A\vec{x} = \vec{b}$)
+        performed by the solver.}
+    \item[$\bm{n_{\mathrm{LU}}}$:]{Counts the number of LU decompositions
+        performed by the solver. }
+    \item[$\bm{n_{\mathrm{sub}}}$:]{Number of backsubstitutions (solving a
+        system of equations in lower- or upper-triangular form) performed by
+        the solver.}
+\end{description}
+%
+\begin{table*}
+    \renewcommand{\arraystretch}{1.2}
+    \input{tables/bremer237_oscmethods}
+    \caption{\label{bremer237tab} Accuracy, runtime and evaluation statistics of the algorithms
+    considered (the present method, the phase function method, \texttt{oscode},
+    and the WKB marching method) when applied to \cref{bremer237eq}. The column
+    headers of this table, together with the various settings of the solvers
+    are described in the text.}
+\end{table*}
+%
+\cref{bremer237tab} shows clearly the extremely quick convergence of the asymptotic method within our solver
+at sufficiently large frequencies: at $\lambda \geq 10^2$, the number of
+function evaluations and steps become constant, causing the runtime to be
+constant as well. It achieves the same accuracy as the phase function method in
+this regime, but in $\mathcal{O}(1/10)$ time. Towards $\lambda = 10^7$, only
+$\approx 2$ terms are required for the asymptotic expansion to achieve an
+estimated (local) relative error of $10^{-12}$. 
+\texttt{oscode} and the WKB
+marching method also achieve fast convergence at sufficiently large
+frequencies, but due to the fact that neither are adaptive in the order of the
+asymptotic expansion (\ie the number of terms in the expansion) this
+happens later, at around $\lambda \geq 10^4$. Potentially due to the
+stepsize-update algorithm used by \texttt{oscode}, its number of steps,
+function evaluations, and therefore runtime, grows slowly rather than staying
+constant as the frequency increases. It is also worth noting that at
+sufficiently high frequencies, $\lambda \geq 10^4$, setting a tolerance of
+$\varepsilon = 10^{-6}$ in \texttt{oscode} results in the same accuracy as
+setting $\varepsilon = 10^{-12}$ but at fewer function evaluations and steps,
+again due to the WKB expansion being highly accurate in this regime and to
+\texttt{oscode} potentially overstimating its local error. Finally, it is worth
+noting that the WKB marching method needs fewer function evaluations and has a
+slightly shorter runtime (although achieves fewer digits of accuracy) at high
+frequencies because it asks the user to provide high-order derivatives of the
+frequency $\om(t)$, therefore it need not use further evaluations of $\om$ to
+compute said derivatives numerically. Three methods (the present solver, the
+phase function method, and \texttt{oscode}) offer a dense output option, \ie
+can perform interpolation and compute the numerical solution in-between
+internal steps, and do so by interpolating a slowly-varying phase function,
+therefore they all have evaluation times of $t_{\text{eval}} =
+\mathcal{O}(10^{-6})$ \si{\s}.  
+
+
+
+%only other arbitrarily high-order numerical solver for highly oscillatory
+%ODEs known to the authors is that described in \cite{bremer2018}. Since this
+%algorithm has an open-source implementation available\footnote{From
+%\url{https://github.com/JamesCBremerJr/Phase-functions}.}, in this section we
+%use it to benchmark the performance of the present numerical method against. We
+%further compare the solver described in the present manuscript to
+%\texttt{oscode} \cite{agocs2020efficient,agocs2020dense}, a low-order
+%numerical solver for highly oscillatory ODEs. Importantly, \texttt{oscode} is 
+
+
+%When
+%evaluating the relative numberical error, we used Bremer's publicly available
+%code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
+%accuracy of his method on this problem is reported in Table 1 of
+%\cite{bremer2018}, which in turn has been evaluated by using the spectral
+%deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
+%computed by Bremer's method is accurate to machine precision, and the only
+%source of error at large $\lambda$ is the evaluation of trigonometric
+%functions with a large argument. Since the accuracy of the method presented
+%here is limited by the same phenomenon, we choose to compare our numerical
+%solution with that of Bremer's method instead of SDC, noting that any accuracy
+%error values lower than those presented in \cite{bremer2018} are not to be
+%trusted, and that overall the present method achieves similar accuracy but is
+%faster by around an order of magnitude.
+
+
+%\begin{table*}
+%    \renewcommand{\arraystretch}{1.2}
+%    \input{tables/bremer237}
+%    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+%        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
+%        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
+%     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
+% The column headers are identical to those in \cref{legendre-results}. 
+% %When
+% %evaluating the relative numberical error, we used Bremer's publicly available
+% %code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
+% %accuracy of his method on this problem is reported in Table 1 of
+% %\cite{bremer2018}, which in turn has been evaluated by using the spectral
+% %deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
+% %computed by Bremer's method is accurate to machine precision, and the only
+% %source of error at large $\lambda$ is the evaluation of trigonometric
+% %functions with a large argument. Since the accuracy of the method presented
+% %here is limited by the same phenomenon, we choose to compare our numerical
+% %solution with that of Bremer's method instead of SDC, noting that any accuracy
+% %error values lower than those presented in \cite{bremer2018} are not to be
+% %trusted, and that overall the present method achieves similar accuracy but is
+% %faster by around an order of magnitude.
+% We observe that the present method achieves a similar accuracy as those
+% presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
+% magnitude, despite being written in an interpreted language (Python), as
+% opposed to a compiled one (Fortran).}
+%\end{table*}
+%
+%\begin{table*}
+%    \renewcommand{\arraystretch}{1.2}
+%    \input{tables/bremer237_oscode}
+%    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+%        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
+%        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
+%     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
+% The column headers are identical to those in \cref{legendre-results}. 
+% We observe that the present method achieves a similar accuracy as those
+% presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
+% magnitude, despite being written in an interpreted language (Python), as
+% opposed to a compiled one (Fortran).}
+%\end{table*}
+%
+%\begin{table*}
+%    \renewcommand{\arraystretch}{1.2}
+%    \input{tables/bremer237_arnold}
+%    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
+%        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
+%        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
+%     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
+% The column headers are identical to those in \cref{legendre-results}. 
+% We observe that the present method achieves a similar accuracy as those
+% presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
+% magnitude, despite being written in an interpreted language (Python), as
+% opposed to a compiled one (Fortran).}
+%\end{table*}
+
 \subsection{Evaluating special functions}
 
+Being able to solve highly oscillatory ODEs accurately means the solver can
+quickly evaluate high-order special functions that obey an ODE of the required
+form, such as Legendre's differential equation,
+\be\label{legendreode}
+(1-t^2)u'' - 2tu' + n(n+1)u = 0, \quad t \in [0.1, 0.9]. 
+\ee
+The problem need not be phrased as an initial value problem: due to the
+linearity of the ODE, two arbitrary linearly independent solutions can be
+linearly combined to satisfy initial or boundary conditions. In this example,
+the results of which are shown in \cref{legendre-results}, we set tolerances of
+$\varepsilon = 10^{-12}$, $\varepsilon_h = 10^{-13}$ and the number of
+Chebyshev nodes in oscillatory steps to $n = 16$. 
 
 \begin{table*}
     \renewcommand{\arraystretch}{1.2}
     \input{tables/legendre-fastest-morestuff}
-    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
-    applied to Legendre's differential equation, $(1-t^2)u'' - 2tu' + n(n+1)u =
-    0.$ The ODE is solved from $t_i = 0.1$ to $t_f = 0.9$, with tolerance
-    settings $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$.
-    $t_{\text{solve}}$ measures the solution time of the ODE, while
-    $t_{\text{eval}}$ is the time subsequently needed to evaluate $u$ at any
-    given intermediate point $t_i \leq t \leq t_f$. We measure the total number
-    of steps taken by the solver, the number of calls to $\om$ and $\g$, and
-    the number of times the algorithm has to solve a system of equations
-    expressed as $Ax = b$. Note that in some of the linear solve calls the LU
-    decomposition of $A$ is already available, making these calls significantly
-faster. \label{legendre-results} }
+    \caption{Accuracy, runtime and evaluation statistics of the present algorithm when
+    applied to Legendre's differential equation, \cref{legendreode}. The column
+    headers are identical to those in \cref{bremer237tab} and are explained in
+    the text. \label{legendre-results}}
 \end{table*}
 
 
@@ -1040,7 +1426,7 @@ Introduction
 \begin{itemize}
     \item{Summary of previous efforts: define asymptoticity, WKB theory, QML, oscode. Non-asymptotic: Arnold, Bremer}
     \item{Separate summary of what each of these are missing (for emphasis)}
-    \item{Short example from cosmology explanining why $\g$ is needed + other arguments}
+    \item{[Done] Short example from cosmology explanining why $\g$ is needed + other arguments}
     \item{Clear aim and novelty of this work}
 \end{itemize}
 Methods
@@ -1052,13 +1438,13 @@ Methods
 Results
 \begin{itemize}
     \item{Code up and time special function evaluations (dense output) and add to tables (expect $10^{-6}$ s, similar to Bremer)}
-    \item{Describe figures/tables in text, spell out differences between current solver and others}
+    \item{[In progress] Describe figures/tables in text, spell out differences between current solver and others}
 \end{itemize}
 Figures and tables
 \begin{itemize}
     \item{Algorithm flowchart? (Have a skecth from CMO talk ready) Or pseudocode better?}
-    \item{Captions missing for all figures}
-    \item{Table captions need updating}
+    \item{[Done] Captions missing for all figures}
+    \item{[Done] Table captions need updating}
     \item{Could optimise Chebyshev steps further to improve results in low-frequency regime...}
 \end{itemize}
 Misc
@@ -1081,23 +1467,6 @@ We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
 and Manas Rachh.
 The Flatiron Institute is a division of the Simons Foundation.
 
-\begin{figure}
-    \centering
-    \includegraphics{plots/residual-k.pdf}
-    \caption{\label{residual-reduction} Bla }
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics{plots/airy-numsol.pdf}
-    \caption{\label{airy-results} Bla }
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics{plots/cosmology.pdf}
-    \caption{\label{cosmology-example} Bla }
-\end{figure}
 
 
 
