@@ -13,6 +13,37 @@ from pathlib import Path
 import time
 import cProfile, pstats
 import pyoscode as oscode
+from scipy.optimize import root_scalar
+from matplotlib.legend_handler import HandlerTuple
+import pandas
+
+class HandlerTupleVertical(HandlerTuple):
+    def __init__(self, **kwargs):
+        HandlerTuple.__init__(self, **kwargs)
+
+    def create_artists(self, legend, orig_handle,
+                       xdescent, ydescent, width, height, fontsize, trans):
+        # How many lines are there.
+        numlines = len(orig_handle)
+        handler_map = legend.get_legend_handler_map()
+
+        # divide the vertical space where the lines will go
+        # into equal parts based on the number of lines
+        height_y = (height / numlines)
+
+        leglines = []
+        for i, handle in enumerate(orig_handle):
+            handler = legend.get_legend_handler(handler_map, handle)
+
+            legline = handler.create_artists(legend, handle,
+                                             xdescent,
+                                             (2*i + 1)*height_y,
+                                             width,
+                                             2*height,
+                                             fontsize, trans)
+            leglines.extend(legline)
+
+        return leglines
 
 class counter:
     """
@@ -90,8 +121,59 @@ def airy():
 #    plt.show()
     plt.savefig("riccati-paper/plots/airy-numsol.pdf")
 
+def convergence():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    xi = 1e0
+    xfs = np.array([1e2, 1e3, 1e4, 1e5])
+    epss = np.logspace(-12, -4, num = 100)
+    errs = np.zeros((xfs.shape[0], epss.shape[0]))
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    wiggles = np.zeros(xfs.shape[0])
+    for i, eps in enumerate(epss):
+        for j, xf in enumerate(xfs):
+            xs, ys, dys, ss, ps, stypes, statdict = riccati.solve(w, g, xi, xf, yi, dyi, eps = eps, epsh = epsh, n = 32, p = 32)
+            xs = np.array(xs)
+            ys = np.array(ys)
+            ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
+            yerrs = np.abs((ytrue - ys)/ytrue)
+            yerr = np.max(yerrs)
+            print(yerr)
+            errs[j,i] = yerr
+            wiggles[j] = sum(ps)/(2*np.pi)
+    
+    tab20c = matplotlib.cm.get_cmap('tab20c')
+    plt.style.use('riccatipaper') 
+    fig, ax1 = plt.subplots(1, 1, figsize=(3, 4))
 
+    cond0 = np.ones_like(epss)*np.finfo(float).eps*wiggles[0]
+    lower0 = np.where(cond0 > epss, cond0, None)
+    l1, = ax1.loglog(epss, errs[0,:], color=tab20c.colors[0*4])
+    l2, = ax1.loglog(epss, lower0, '--', color=tab20c.colors[0*4 + 1])
 
+    cond1 = np.ones_like(epss)*np.finfo(float).eps*wiggles[1]
+    lower1 = np.where(cond1 > epss, cond1, None)
+    l3, = ax1.loglog(epss, errs[1,:], color=tab20c.colors[1*4])
+    l4, = ax1.loglog(epss, lower1, '--', color=tab20c.colors[1*4 + 1])
+
+    cond2 = np.ones_like(epss)*np.finfo(float).eps*wiggles[2]
+    lower2 = np.where(cond2 > epss, cond2, None)
+    l5, = ax1.loglog(epss, errs[2,:], color=tab20c.colors[2*4])
+    l6, = ax1.loglog(epss, lower2, '--', color=tab20c.colors[2*4 + 1])
+
+    cond3 = np.ones_like(epss)*np.finfo(float).eps*wiggles[3]
+    lower3 = np.where(cond3 > epss, cond3, None)
+    l7, = ax1.loglog(epss, errs[3,:], color=tab20c.colors[3*4])
+    l8, = ax1.loglog(epss, lower3, '--', color=tab20c.colors[3*4 + 1])
+
+    ax1.loglog(epss, epss, '--', color='grey')
+    ax1.set_xlabel('Tolerance, $\\varepsilon$')
+    ax1.set_ylabel('Relative error, $|\Delta u/u|$')
+    l = ax1.legend([l1, l3, l5, l7, (l2, l4, l6, l8)], ['$t_1 = 10^{}$'.format(int(np.log10(xfs[0]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[1]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[2]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[3]))), '$K \cdot \\varepsilon_{\mathrm{mach}}$'], handler_map = {tuple: HandlerTupleVertical()})
+#    plt.show()
+    plt.savefig("riccati-paper/plots/convergence.pdf")
 
 
 def legendre(m):
@@ -283,10 +365,10 @@ def residual():
         ax[i].annotate('$k={}$'.format(k), (11, -0.5))
     fig.text(0.0, 0.5, '$y(x)$', va='center', rotation='vertical')
     plt.subplots_adjust(wspace=0, hspace=0)
-    plt.savefig('riccati-paper/plots/residual.pdf')
+#    plt.savefig('riccati-paper/plots/residual.pdf')
     
     # Just residual 
-    N = 16
+    N = 10
     ks = np.linspace(0, N, N+1, dtype=int)
     ms = [int(1e1), int(1e2), int(1e3), int(1e4)]
     g = lambda x: np.zeros_like(x)
@@ -295,34 +377,72 @@ def residual():
     eps = 1e-12
     epsh = 1e-13
     errs = np.zeros(N+1)
-    xcoords = [11.05, 5.66, 3.97, 3.13]
-    angles = [-np.arctan(np.log10(mi)*1/2.5)/np.pi*180 for mi in ms]
 #    symbols = ['.', '^', '+', 'o']
 
-    plt.figure(figsize = (6, 4))
-    plt.xlabel("$k$")
-    plt.ylabel("$R\left[x^{(k)}\\right]$")
-    for j, m, xc, angle in zip(range(len(ms)), ms, xcoords, angles):
-        m = m
-        w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    fig, ax1 = plt.subplots(1, 1, figsize = (3, 4))
+    ax1.set_xlabel("$k$")
+    ax1.set_ylabel("$R\left[x^{(k)}\\right]$")
 
-        for i, k in enumerate(ks):
-            xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
-            errs[i] = err
-            bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
-            burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
-                   + (-m + 1j*x)*np.sin(m*np.arctan(x)))
-            y0 = bursty(x0)
-            dy0 = burstdy(x0)   
+    m = ms[0]
+    w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    for i, k in enumerate(ks):
+        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
+        errs[i] = err
+        bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
+        burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
+               + (-m + 1j*x)*np.sin(m*np.arctan(x)))
+        y0 = bursty(x0)
+        dy0 = burstdy(x0)   
 
-        plt.semilogy(ks, errs, '.-', label='$\omega(t_i) = 10^{}$'.format(int(np.log10(m))), color=tab20c.colors[j*4])
-        plt.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[j*4+1])
-        plt.annotate('$\propto \omega(t_i)^k$' , (xc, 1e-11), rotation=angle, color=tab20c.colors[j*4])
+    l1, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[0*4])
+    l2, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[0*4+1])
     
-#    plt.title('Maximum residual after $k$ Riccati iterations')
-    plt.xlim((0,16))
-    plt.ylim((1e-16, 2e8))
-    plt.legend()
+    m = ms[1]
+    w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    for i, k in enumerate(ks):
+        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
+        errs[i] = err
+        bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
+        burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
+               + (-m + 1j*x)*np.sin(m*np.arctan(x)))
+        y0 = bursty(x0)
+        dy0 = burstdy(x0)   
+
+    l3, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[1*4])
+    l4, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[1*4+1])
+ 
+    m = ms[2]
+    w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    for i, k in enumerate(ks):
+        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
+        errs[i] = err
+        bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
+        burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
+               + (-m + 1j*x)*np.sin(m*np.arctan(x)))
+        y0 = bursty(x0)
+        dy0 = burstdy(x0)   
+
+    l5, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[2*4])
+    l6, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[2*4+1])
+ 
+    m = ms[3]
+    w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    for i, k in enumerate(ks):
+        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
+        errs[i] = err
+        bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
+        burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
+               + (-m + 1j*x)*np.sin(m*np.arctan(x)))
+        y0 = bursty(x0)
+        dy0 = burstdy(x0)   
+
+    l7, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[3*4])
+    l8, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[3*4+1])
+ 
+#, label='$\omega(t_i) = 10^{}$'.format(int(np.log10(m)))
+    ax1.set_xlim((0,N))
+    ax1.set_ylim((1e-16, 1e5))
+    l = ax1.legend([l1, l3, l5, l7, (l2, l4, l6, l8)], ['$\omega_{\mathrm{max}} = $'+'$10^{}$'.format(int(np.log10(ms[0]))), '$\omega_{\mathrm{max}} = $'+'$10^{}$'.format(int(np.log10(ms[1]))), '$\omega_{\mathrm{max}} = $'+'$10^{}$'.format(int(np.log10(ms[2]))), '$\omega_{\mathrm{max}} = $'+'$10^{}$'.format(int(np.log10(ms[3]))), '$\propto \omega_{\mathrm{max}}^{-k}$'], handler_map = {tuple: HandlerTupleVertical()})
     plt.savefig("riccati-paper/plots/residual-k.pdf")
 
 def Bremer237(l):
@@ -360,16 +480,16 @@ def Bremer237(l):
     xi = -1.0
     xf = 1.0
 
-    eps = 1e-12 #, n = p = 16
-    epsh = 1e-13
+    eps = 1e-6 #, n = p = 16
+    epsh = 1e-9
     yi = 0.0
     dyi = l
     yi_vec = np.array([yi, dyi])
     N = 100
-    n = 40
-    p = 40
-#    n = 32
-#    p = 32
+#    n = 40
+#    p = 40
+    n = 27
+    p = 27
 
     # Time this process
     start = time.time_ns()
@@ -400,7 +520,7 @@ def Bremer237(l):
     n_LS = statdict["linear solves"]
     n_LU = statdict["LU decomp"]
     n_sub = statdict["substitution"]
-    outputf = "riccati-paper/tables/bremer237.tex"
+    outputf = "riccati-paper/tables/bremer237-tol-6.tex"
     outputpath = Path(outputf)
     outputpath.touch(exist_ok = True)
     print("time/s: ", (end - start)*1e-9/N)
@@ -419,6 +539,56 @@ def Bremer237(l):
             f.write(line)
         f.write("$10^{}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$\\\\ \n".format(int(np.log10(l)), num2tex(round_to_n(3, max(yerr))), num2tex(round_to_n(3, runtime)), evaltime, steps_ricc, steps_cheb, steps, round(n_fevals), n_LS, n_LU, n_sub))
         f.write("\hline \hline\n\end{tabular}\n")
+
+def bremer237_timing_fig():
+
+    def w(x):
+        return l*np.sqrt(1 - x**2*np.cos(3*x))
+
+    def g(x):
+        return np.zeros_like(x)
+
+    # Call high-order RK as the 'standard' method 
+    lambdas = np.logspace(1, 4, 4)
+    runtimesrk = np.zeros_like(lambdas)
+    nfevalsrk = np.zeros_like(lambdas)
+    errs = np.zeros_like(lambdas)
+    for i, lamb in enumerate(lambdas):
+        print(lamb)
+        f = lambda t, y: np.array([y[1], -lamb**2*(1 - t**2*np.cos(3*t))*y[0]])
+        time0 = time.time_ns()
+        for j in range(int(1e4/lamb)):
+            sol = solve_ivp(f, [-1, 1], [0, lamb], method = 'DOP853', rtol = 1e-12, atol = 1e-14)
+        time1 = time.time_ns()
+        runtime = (time1 - time0)*1e-9/1e4*lamb
+        runtimesrk[i] = runtime
+        nfevalsrk[i] = sol.nfev
+
+        # Read reference solution from table
+        reftable = "eq237.txt"
+        refarray = np.genfromtxt(reftable, delimiter=',')
+        ls = refarray[:,0]
+        ytrue = refarray[abs(ls - lamb) < 1e-8, 1]
+        err = np.abs(( sol.y[0,-1]- ytrue)/ytrue)
+        errs[i] = err
+        print(err)
+        print(sol.status)
+        print(sol.message)
+        print(sol.success)
+
+
+    # Write to file 
+    print(runtimesrk, nfevalsrk)
+    outfile = "riccati-paper/tables/bremer237_rk78-tol-12.txt"
+    with open(outfile, 'w+') as f:
+        for i, lamb in enumerate(lambdas):
+            f.write("{};{};{};{}".format(lamb, runtimesrk[i], nfevalsrk[i], errs[i]))
+
+    # Read rest of data from large table
+    datafile = "riccati-paper/tables/bremer237_oscmethods.txt"
+    data = pandas.read_csv(datafile, sep = ';')
+    print(data)
+#    solvernames = data['solver']
 
 def oscode237(l):
 
@@ -506,8 +676,157 @@ def oscode237(l):
         f.write("\hline \hline\n\end{tabular}\n")
 
 
+def cosmology():
+    
+    # Inflaton mass, Planck mass, infl potential, spatial curvature
+    m = 1
+    mp = 1
+    nv = 2
+    K = 0
+    
+    # Cosmological background evolution
+    def V(phi):
+        """ inflationary potential"""
+        return 0.5*m**2*phi**nv
+
+    def dV(phi):
+        """ derivative of the inflationary potential """
+        return 0.5*nv*m**2*phi**(nv-1)
+    
+    def bgeqs(t, y):
+        """ System of equations describing the evolution of the cosmological
+        background """
+        dy = np.zeros(y.shape)
+        dy[0] = 4.0 + np.exp(y[0])*(4.0*K - 2.0*np.exp(2.0*t)*V(y[1]))
+        dy[1] = - np.sqrt(6.0 + np.exp(y[0])*(6.0*K -
+        2.0*np.exp(2.0*t)*V(y[1])))
+        return dy
+    
+    def endinfl(t, y):
+        """ Crosses zero when inflation ends """
+        dphi = bgeqs(t,y)[1]
+        epsilon = 0.5*dphi**2
+        return epsilon - 1.
+
+    ok_i = 2.1e-3
+    N_i = 1.
+    # Nominal end point of integration (we'll stop at the end of inflation)
+    N_f = 80.
+    # Points at which we'll obtain the background solution
+    Nbg = 100000 # This determines grid fineness, see note below.
+    N = np.linspace(N_i,N_f,Nbg)
+    # Initial conditions
+    phi_i = np.sqrt(4.*(1./ok_i + K)*np.exp(-2.0*N_i)/m**2)
+    logok_i = np.log(ok_i)
+    y_i = np.array([logok_i, phi_i])
+    # Solve for the background until the end of inflation
+    endinfl.terminal = True
+    endinfl.direction = 1
+    bgsol = solve_ivp(bgeqs, (N_i,N_f), y_i, events=endinfl, t_eval=N, rtol=1e-8, atol=1e-10)
+    Nend = bgsol.t_events[0][0]
+    Ntot = Nend - N_i
+    print("Number of e-folds of inflation: ", Ntot)
+    assert(Ntot > 55)
+
+    logok = bgsol.y[0]
+    phi = bgsol.y[1]
+    N = bgsol.t
+    dphi = np.array([-np.sqrt(6.0 + np.exp(Logok)*(6.0*K -
+        2.0*np.exp(2.0*t)*V(Phi))) for Logok,Phi,t in zip(logok,phi,N) ])
+    dlogok = np.array([4.0 + np.exp(Logok)*(4.0*K - 2.0*np.exp(2.0*t)*V(Phi)) for Logok,Phi,t in zip(logok,phi,N) ])
+    dE_E = dlogok - 4. -2.*dV(phi)*np.exp(logok)*np.exp(2.*N)/dphi
+    E = 0.5*dphi**2
+    # Damping term
+    g = 0.5*(3 - E + dE_E)
+    # frequency
+    logw = 0.5*logok
+    
+    # Determining pivot wavevector
+    # Find which index corresponds to having ~50 e-folds of inflation left
+    icrossing = np.nonzero(np.where(N - N_i > 11.0, N, 0))[0][0]
+    print(icrossing)
+    print("Pivot wavevector crosses horizon at efolds: ", N[icrossing] - N_i)
+    kpivot = np.exp(-logw[icrossing])
+    # Observable range of perturbations is 1e4 -- 2e-1 Mpc^-1
+    kmin = 1e-4/0.05*kpivot
+    kmax = 2e-1/0.05*kpivot
+    print("Comoving minimum and maximum wavenumber: ", kmin, kmax)
+    
+    # Get a crude estimate for derivative of gamma
+    gp = np.array([(g[i] - g[i-1])/(N[i] - N[i-1]) for i in range(1, len(g))])
+
+    # Frequency corresponding to smallest scale (largest k, \ell)
+    w2_kmax = gp + np.exp(2*(logw + np.log(kmax)))[1:] - g[1:]**2
 
 
+    # Find horizon crossing times
+    # range of wavevectors
+    ks = np.logspace(np.log10(kmin),np.log10(kmax),10)
+    end = np.zeros_like(ks,dtype=int)
+    endindex = 0
+    for i in range(len(ks)):
+        for j in range(endindex,Nbg):
+            if np.exp(-0.5*logok[j])/ks[i] > 100:
+                end[i] = j
+                endindex = j
+                break
+    print("Horizon crossing times: ", N[end])
+
+    # Individual mode solution for k = kmax, with original ODE and its damping-free form
+    solkmax = oscode.solve(N, logw + np.log(kmax), g, N_i+0.01, N[end[-1]], 1.0, 0.0, even_grid = True, t_eval = N[100:end[-1]], logw = True)
+    solkmaxtilde = oscode.solve(N[1:], np.sqrt(w2_kmax+0j), np.zeros_like(N[1:]), N_i+0.01, N[end[-1]], 1.0, 0.0, even_grid = True, t_eval = N[100:end[-1]])
+    ucts = solkmax['x_eval']
+    uctstilde = solkmaxtilde['x_eval']
+
+    plt.style.use('riccatipaper')
+    fig, ax = plt.subplots(2, 2, sharex = True, figsize = (6, 5))
+
+    #ax[0,0].set_ylabel("$\ln\omega(N)$")
+    #ax[0, 1].set_ylabel("$\gamma(N)$")
+    #ax[1,0].set_ylabel("$\\tilde{\omega}^2 \equiv \gamma' + \omega^2 - \gamma^2$")
+    ax[1,0].set_xlabel("$N$")
+    #ax[0,1].set_xlabel("$N$")
+    ax[1,1].set_xlabel("$N$")
+    #ax[0,0].set_xlabel("$N$")
+    ax[0,0].set_xlim(N[100], 18.0)
+    ax[0,1].set_xlim(N[100], 18.0)
+#    ax[1,1].set_ylim(-1e-7, 1e7)
+    
+    #ax[0,0].plot(N, logw, label = "Hubble horizon")
+    ax[0,0].plot(N, np.zeros_like(N), '--', color='grey')
+    ax[0,0].plot(N, np.exp(2*(logw + np.log(kmax))), label = '$\omega^2$', color='black')
+    ax[0,0].plot(N, g, label = '$\gamma$')
+    ax[0,1].plot(N, np.zeros_like(N), '--', color='grey')
+    ax[0,1].plot(N[1:], gp + np.exp(2*(logw + np.log(kmax)))[1:] - g[1:]**2, label='$\\tilde{\omega}^2$', color='black')
+    ax[1,0].plot(N[100:end[-1]], np.zeros_like(ucts), '--', color='grey')
+    ax[1,0].plot(N[100:end[-1]], ucts, color='black', lw = 0.7)
+    ax[1,1].plot(N[100:end[-1]], np.zeros_like(ucts), '--', color='grey')
+    ax[1,1].plot(N[100:end[-1]], uctstilde, color='black', lw = 0.7)
+   
+    #ax[0].axhspan(-np.log(100*kmax), -np.log(kmin), color = 'black', alpha = 0.1, ec = None)
+    #ax[0].axvspan(N_i, 17.5, color = 'red', alpha = 0.1, ec = None)
+    #ax[1].axvspan(N_i, 17.5, color = 'red', alpha = 0.1, ec = None)
+    #ax[2].axvspan(N_i, 17.5, color = 'red', alpha = 0.1, ec = None)
+    
+    ax[0,0].set_yscale('symlog')
+    ax[0,1].set_yscale('symlog')
+    ax[1,0].set_yscale('symlog', linthresh = 1e-5)
+    ax[1,1].set_yscale('symlog')
+    ax[0,1].set_yticks([-1e1, 0, 1e1, 1e3, 1e5, 1e7, 1e9, 1e11])
+    ax[0,0].set_yticks([-1e1, 0, 1e1, 1e3, 1e5, 1e7, 1e9, 1e11])
+    ax[1,0].set_yticks([-1e1, -1e-1, -1e-3, -1e-5, 0, 1e-5, 1e-3, 1e-1, 1e1])
+    ax[1,1].set_yticks([-1e5, -1e3, -1e1, 0, 1e1, 1e3])
+    ax[0,0].set_ylabel('Coefficients in the ODE')
+    ax[1,0].set_ylabel('$\mathcal{R}_k$')
+    ax[1,1].set_ylabel('$\\tilde{\mathcal{R}}_k$')
+
+    ax[0,0].legend()
+    ax[0,1].legend()
+    fig.subplots_adjust(hspace=0)
+
+#    plt.show()
+    plt.tight_layout()
+    plt.savefig('riccati-paper/plots/cosmology.pdf')
 
 
 
@@ -517,11 +836,12 @@ def oscode237(l):
 #for m in np.logspace(1, 7, num = 7):
 #    print("starting with Riccati ", m)
 #    Bremer237(m)
-Bremer237(1e7)
+#Bremer237(1e1)
 #airy()
 #for m in np.logspace(1, 7, num = 4):
 #    print("starting ", m)
 #    oscode237(m)
 #    print("done ", m)
-
-
+#cosmology()
+#convergence()
+#bremer237_timing_fig()
