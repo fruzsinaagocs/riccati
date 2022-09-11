@@ -1132,12 +1132,7 @@ clearly seen in \cref{airy-results}.
 \end{figure}
 
 
-
-\subsection{Comparison with standard solvers}
-
-
-
-\subsection{Comparison with state-of-the-art oscillatory solvers}
+\subsection{Comparison with standard and state-of-the-art oscillatory solvers}
 
 As reviewed in the introduction, a number of numerical methods have been
 created specifically for highly oscillatory ODEs. We compare the performance of
@@ -1311,89 +1306,6 @@ therefore they all have evaluation times of $t_{\text{eval}} =
 \mathcal{O}(10^{-6})$ \si{\s}.  
 
 
-
-%only other arbitrarily high-order numerical solver for highly oscillatory
-%ODEs known to the authors is that described in \cite{bremer2018}. Since this
-%algorithm has an open-source implementation available\footnote{From
-%\url{https://github.com/JamesCBremerJr/Phase-functions}.}, in this section we
-%use it to benchmark the performance of the present numerical method against. We
-%further compare the solver described in the present manuscript to
-%\texttt{oscode} \cite{agocs2020efficient,agocs2020dense}, a low-order
-%numerical solver for highly oscillatory ODEs. Importantly, \texttt{oscode} is 
-
-
-%When
-%evaluating the relative numberical error, we used Bremer's publicly available
-%code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
-%accuracy of his method on this problem is reported in Table 1 of
-%\cite{bremer2018}, which in turn has been evaluated by using the spectral
-%deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
-%computed by Bremer's method is accurate to machine precision, and the only
-%source of error at large $\lambda$ is the evaluation of trigonometric
-%functions with a large argument. Since the accuracy of the method presented
-%here is limited by the same phenomenon, we choose to compare our numerical
-%solution with that of Bremer's method instead of SDC, noting that any accuracy
-%error values lower than those presented in \cite{bremer2018} are not to be
-%trusted, and that overall the present method achieves similar accuracy but is
-%faster by around an order of magnitude.
-
-
-%\begin{table*}
-%    \renewcommand{\arraystretch}{1.2}
-%    \input{tables/bremer237}
-%    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
-%        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
-%        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
-%     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
-% The column headers are identical to those in \cref{legendre-results}. 
-% %When
-% %evaluating the relative numberical error, we used Bremer's publicly available
-% %code from \cite{bremer2018} to generate a reference solution with the settings described in the text. The
-% %accuracy of his method on this problem is reported in Table 1 of
-% %\cite{bremer2018}, which in turn has been evaluated by using the spectral
-% %deferred correction (SDC) method \cite{dutt2000}. The phase function as defined and
-% %computed by Bremer's method is accurate to machine precision, and the only
-% %source of error at large $\lambda$ is the evaluation of trigonometric
-% %functions with a large argument. Since the accuracy of the method presented
-% %here is limited by the same phenomenon, we choose to compare our numerical
-% %solution with that of Bremer's method instead of SDC, noting that any accuracy
-% %error values lower than those presented in \cite{bremer2018} are not to be
-% %trusted, and that overall the present method achieves similar accuracy but is
-% %faster by around an order of magnitude.
-% We observe that the present method achieves a similar accuracy as those
-% presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
-% magnitude, despite being written in an interpreted language (Python), as
-% opposed to a compiled one (Fortran).}
-%\end{table*}
-%
-%\begin{table*}
-%    \renewcommand{\arraystretch}{1.2}
-%    \input{tables/bremer237_oscode}
-%    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
-%        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
-%        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
-%     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
-% The column headers are identical to those in \cref{legendre-results}. 
-% We observe that the present method achieves a similar accuracy as those
-% presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
-% magnitude, despite being written in an interpreted language (Python), as
-% opposed to a compiled one (Fortran).}
-%\end{table*}
-%
-%\begin{table*}
-%    \renewcommand{\arraystretch}{1.2}
-%    \input{tables/bremer237_arnold}
-%    \caption{Accuracy, runtime and evaluation statistics of the algorithm when
-%        applied to Eq. (237) of \cite{bremer2018}, $u'' + \lambda^2q(t)u =
-%        0$, with $q(t) = 1 - t^2\cos(3t)$, on the interval $ t \in [-1, 1] $ and subject to the initial conditions $ u(-1) = 0 $, $ u'(-1) = \lambda $. We set tolerances of 
-%     $\varepsilon = 10^{-12}$ and $\varepsilon_h = 10^{-13}$, and used $n = 40$ Chebyshev points for Riccati steps.
-% The column headers are identical to those in \cref{legendre-results}. 
-% We observe that the present method achieves a similar accuracy as those
-% presented in Table 1 of \cite{bremer2018}, but is faster by about an order of
-% magnitude, despite being written in an interpreted language (Python), as
-% opposed to a compiled one (Fortran).}
-%\end{table*}
-
 \subsection{Evaluating special functions}
 
 Being able to solve highly oscillatory ODEs accurately means the solver can
@@ -1421,45 +1333,53 @@ Chebyshev nodes in oscillatory steps to $n = 16$.
 
 
 
-\section{TODO}
-Introduction
-\begin{itemize}
-    \item{Summary of previous efforts: define asymptoticity, WKB theory, QML, oscode. Non-asymptotic: Arnold, Bremer}
-    \item{Separate summary of what each of these are missing (for emphasis)}
-    \item{[Done] Short example from cosmology explanining why $\g$ is needed + other arguments}
-    \item{Clear aim and novelty of this work}
-\end{itemize}
-Methods
-\begin{itemize}
-    \item{Short comparison to WKB and Bremer's basic iteration}
-    \item{Finalise stepsize-choosing algorithm for Chebyshev steps}
-    \item{Note on numerically stable residual reduction}
-\end{itemize}
-Results
-\begin{itemize}
-    \item{Code up and time special function evaluations (dense output) and add to tables (expect $10^{-6}$ s, similar to Bremer)}
-    \item{[In progress] Describe figures/tables in text, spell out differences between current solver and others}
-\end{itemize}
-Figures and tables
-\begin{itemize}
-    \item{Algorithm flowchart? (Have a skecth from CMO talk ready) Or pseudocode better?}
-    \item{[Done] Captions missing for all figures}
-    \item{[Done] Table captions need updating}
-    \item{Could optimise Chebyshev steps further to improve results in low-frequency regime...}
-\end{itemize}
-Misc
-\begin{itemize}
-    \item{some comment that although theorem is pointwise convergence,
-uniform convergence over some interval is trivial by enclosing it in
-        a larger ball.}
-    \item{relate the ball in the theorem to the interval size that
-can be well-approximated by $p$th order Cheby,
-        using Bernstein ellipse of Tref.}
-    \item{from [residual of ODE and Riccati] to solution error bounds, maybe?
-This is similar to local discretization err
-in a more typical numerical solver.
-        (check LeVeque, Tref, Hairer, etc).}
-\end{itemize}
+%\section{TODO}
+%Introduction
+%\begin{itemize}
+%    \item{Summary of previous efforts: define asymptoticity, WKB theory, QML, oscode. Non-asymptotic: Arnold, Bremer}
+%    \item{Separate summary of what each of these are missing (for emphasis)}
+%    \item{[Done] Short example from cosmology explanining why $\g$ is needed + other arguments}
+%    \item{Clear aim and novelty of this work}
+%\end{itemize}
+%Methods
+%\begin{itemize}
+%    \item{Short comparison to WKB and Bremer's basic iteration}
+%    \item{Finalise stepsize-choosing algorithm for Chebyshev steps}
+%    \item{Note on numerically stable residual reduction}
+%\end{itemize}
+%Results
+%\begin{itemize}
+%    \item{Code up and time special function evaluations (dense output) and add to tables (expect $10^{-6}$ s, similar to Bremer)}
+%    \item{[In progress] Describe figures/tables in text, spell out differences between current solver and others}
+%\end{itemize}
+%Figures and tables
+%\begin{itemize}
+%    \item{Algorithm flowchart? (Have a skecth from CMO talk ready) Or pseudocode better?}
+%    \item{[Done] Captions missing for all figures}
+%    \item{[Done] Table captions need updating}
+%    \item{Could optimise Chebyshev steps further to improve results in low-frequency regime...}
+%\end{itemize}
+%Misc
+%\begin{itemize}
+%    \item{some comment that although theorem is pointwise convergence,
+%uniform convergence over some interval is trivial by enclosing it in
+%        a larger ball.}
+%    \item{relate the ball in the theorem to the interval size that
+%can be well-approximated by $p$th order Cheby,
+%        using Bernstein ellipse of Tref.}
+%    \item{from [residual of ODE and Riccati] to solution error bounds, maybe?
+%This is similar to local discretization err
+%in a more typical numerical solver.
+%        (check LeVeque, Tref, Hairer, etc).}
+%\end{itemize}
+
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics{plots/bremer237-timing.pdf}
+    \caption{\label{bremer237-timing} Bla. }
+\end{figure}
+
 
 
 \section*{Acknowledgments}
