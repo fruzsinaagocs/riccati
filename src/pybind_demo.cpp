@@ -27,7 +27,7 @@ std::vector<std::complex<double> > bursty (std::vector<double> x) {
   for(auto it = std::begin(x); it != std::end(x); ++it)
   {
     double matanx = m*atan(*it);
-    std::complex<double> num = cos(matanx) + 1i * sin(matanx);
+    std::complex<double> num = std::complex<double>(cos(matanx), sin(matanx));
     res.push_back(temp*num);
   }
   return res;
@@ -47,8 +47,8 @@ std::vector<std::complex<double> > burstdy (std::vector<double> x) {
   temp = 1.0/(m*sqrt(temp));
   for(auto it = std::begin(x); it != std::end(x); ++it)
   {
-    double matanx = m*atan(*it);
-    std::complex<double> num = (*it + 1i*m) * cos(matanx) + ((*it)*1i - m) * sin(matanx);
+    std::complex<double> matanx = m*atan(*it);
+    std::complex<double> num = std::complex<double>(*it, m) * cos(matanx) + std::complex<double>(-m, *it) * sin(matanx);
     res.push_back(temp*num);
   }
   return res;
