@@ -88,27 +88,28 @@ def airy():
     grey2 = tab20c.colors[-3]
     
     plt.style.use('riccatipaper') 
-    fig, ax = plt.subplots(2, 2, figsize=(6, 6))
+    fig, ax = plt.subplots(2, 2, figsize=(6, 4))
     # Numerical solution
     ax[0,0].semilogx(xcts, ycts, color='black', lw = 0.7, label='analytic solution')
-    ax[0,0].semilogx(xs[stypes==0], ys[stypes==0], '.', color='C0', label='Chebyshev step')
+    ax[0,0].semilogx(xs[stypes==0], ys[stypes==0], 'x', color='C0', label='Chebyshev step')
     ax[0,0].semilogx(xs[stypes==1], ys[stypes==1], '.', color='C1', label='Riccati step')
-    ax[0,0].set_ylabel('$R\left[u(t)\\right]$')
+    ax[0,0].set_ylabel('$\Re\left(u(t)\\right)$')
     ax[0,0].set_xlim((1, 65))
+    ax[0,0].set_ylim((-0.5, 0.7))
     ax[0,0].legend()
     # Stepsize
     ax[0,1].loglog(xs[:-1], hs, color='black')
     ax[0,1].loglog(np.logspace(0,8,10), np.logspace(0,8,10), '--', color=blue2)
-    ax[0,1].set_ylabel('Stepsize, $h$')
-    ax[0,1].annotate('$\propto t$', (5e3, 2e3), rotation=45, c=blue1)
+    ax[0,1].set_ylabel('stepsize, $h$')
+    ax[0,1].annotate('$\propto t$', (5e3, 1.7e3), rotation=30, c=blue1)
     ax[0,1].set_xlim((1e0, 1e8))
     # Error
     ax[1,0].loglog(xs[ss==True], yerr[ss==True], color='black')
     ax[1,0].loglog(xs, eps*np.ones_like(xs), '--', color=grey2, label='$\\varepsilon$')
     ax[1,0].loglog(xs[1:], wiggles*np.finfo(float).eps, '--', color=blue2,\
-            label='$K\cdot \\varepsilon_{\mathrm{mach}}$')
+            label='$\kappa\cdot \\varepsilon_{\mathrm{mach}}$')
     ax[1,0].set_xlabel('$t$')
-    ax[1,0].set_ylabel('Relative error, $|\Delta u/u|$')
+    ax[1,0].set_ylabel('relative error, $|\Delta u/u|$')
     ax[1,0].set_xlim((xi, xf))
     ax[1,0].legend()
     # Wiggles
@@ -116,7 +117,7 @@ def airy():
     ax[1,1].set_ylabel('$n_{\mathrm{osc}}$ per step') 
     ax[1,1].set_xlabel('$t$') 
     ax[1,1].loglog(np.logspace(0,8,10), np.logspace(0,8*3/2,10), '--', color=blue2)
-    ax[1,1].annotate('$\propto t^{\\frac{3}{2}}$', (5e3, 2e6), rotation=45, c=blue1)
+    ax[1,1].annotate('$\propto t^{\\frac{3}{2}}$', (5e3, 3e6), rotation=30, c=blue1)
     ax[1,1].set_xlim((1e0, 1e8))
 #    plt.show()
     plt.savefig("riccati-paper/plots/airy-numsol.pdf")
@@ -146,33 +147,35 @@ def convergence():
     
     tab20c = matplotlib.cm.get_cmap('tab20c')
     plt.style.use('riccatipaper') 
-    fig, ax1 = plt.subplots(1, 1, figsize=(3, 4))
+    fig, ax1 = plt.subplots(1, 1, figsize=(3, 3))
 
     cond0 = np.ones_like(epss)*np.finfo(float).eps*wiggles[0]
     lower0 = np.where(cond0 > epss, cond0, None)
-    l1, = ax1.loglog(epss, errs[0,:], color=tab20c.colors[0*4])
-    l2, = ax1.loglog(epss, lower0, '--', color=tab20c.colors[0*4 + 1])
+    l1, = ax1.loglog(epss, errs[0,:], lw = 1.2, color=tab20c.colors[0*4])
+    l2, = ax1.loglog(epss, lower0, ':', lw = 1.0, color=tab20c.colors[0*4 + 1])
 
     cond1 = np.ones_like(epss)*np.finfo(float).eps*wiggles[1]
     lower1 = np.where(cond1 > epss, cond1, None)
-    l3, = ax1.loglog(epss, errs[1,:], color=tab20c.colors[1*4])
-    l4, = ax1.loglog(epss, lower1, '--', color=tab20c.colors[1*4 + 1])
+    l3, = ax1.loglog(epss, errs[1,:], ls = (0, (5, 1)), lw = 1.2, color=tab20c.colors[1*4])
+    l4, = ax1.loglog(epss, lower1, ':', lw = 1.0, color=tab20c.colors[1*4 + 1])
 
     cond2 = np.ones_like(epss)*np.finfo(float).eps*wiggles[2]
     lower2 = np.where(cond2 > epss, cond2, None)
-    l5, = ax1.loglog(epss, errs[2,:], color=tab20c.colors[2*4])
-    l6, = ax1.loglog(epss, lower2, '--', color=tab20c.colors[2*4 + 1])
+    l5, = ax1.loglog(epss, errs[2,:], ls = (0, (5, 5)), lw = 1.2, color=tab20c.colors[2*4])
+    l6, = ax1.loglog(epss, lower2, ':', lw = 1.0, color=tab20c.colors[2*4 + 1])
 
     cond3 = np.ones_like(epss)*np.finfo(float).eps*wiggles[3]
     lower3 = np.where(cond3 > epss, cond3, None)
-    l7, = ax1.loglog(epss, errs[3,:], color=tab20c.colors[3*4])
-    l8, = ax1.loglog(epss, lower3, '--', color=tab20c.colors[3*4 + 1])
+    l7, = ax1.loglog(epss, errs[3,:], ls = '-.', lw = 1.2, color=tab20c.colors[3*4])
+    l8, = ax1.loglog(epss, lower3, ':', lw = 1.0, color=tab20c.colors[3*4 + 1])
 
     ax1.loglog(epss, epss, '--', color='grey')
-    ax1.set_xlabel('Tolerance, $\\varepsilon$')
-    ax1.set_ylabel('Relative error, $|\Delta u/u|$')
-    l = ax1.legend([l1, l3, l5, l7, (l2, l4, l6, l8)], ['$t_1 = 10^{}$'.format(int(np.log10(xfs[0]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[1]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[2]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[3]))), '$K \cdot \\varepsilon_{\mathrm{mach}}$'], handler_map = {tuple: HandlerTupleVertical()})
+    ax1.set_xlabel('tolerance, $\\varepsilon$')
+    ax1.set_ylabel('relative error, $|\Delta u/u|$')
+    l = ax1.legend([l1, l3, l5, l7, (l2, l4, l6, l8)], ['$t_1 = 10^{}$'.format(int(np.log10(xfs[0]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[1]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[2]))),'$t_1 = 10^{}$'.format(int(np.log10(xfs[3]))), '$\kappa \cdot \\varepsilon_{\mathrm{mach}}$'], handler_map = {tuple: HandlerTupleVertical()})
 #    plt.show()
+    ax1.set_xlim((1e-12,1e-4))
+    ax1.set_ylim((1e-12,1.5e-4))
     plt.savefig("riccati-paper/plots/convergence.pdf")
 
 
@@ -379,20 +382,20 @@ def residual():
     errs = np.zeros(N+1)
 #    symbols = ['.', '^', '+', 'o']
 
-    fig, ax1 = plt.subplots(1, 1, figsize = (3, 4))
-    ax1.set_xlabel("$k$")
-    ax1.set_ylabel("$R\left[x^{(k)}\\right]$")
+    fig, ax1 = plt.subplots(1, 1, figsize = (3, 3))
+    ax1.set_xlabel("iteration number, $k$")
+    ax1.set_ylabel("maximum residual, $\max\limits_{t \in [t_j, t_{j+1}]}R\left[x_k\\right]$")
 
     m = ms[0]
     w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
     for i, k in enumerate(ks):
-        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
-        errs[i] = err
         bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
         burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
                + (-m + 1j*x)*np.sin(m*np.arctan(x)))
         y0 = bursty(x0)
         dy0 = burstdy(x0)   
+        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
+        errs[i] = err
 
     l1, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[0*4])
     l2, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[0*4+1])
@@ -400,50 +403,50 @@ def residual():
     m = ms[1]
     w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
     for i, k in enumerate(ks):
-        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
-        errs[i] = err
         bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
         burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
                + (-m + 1j*x)*np.sin(m*np.arctan(x)))
         y0 = bursty(x0)
         dy0 = burstdy(x0)   
+        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
+        errs[i] = err
 
-    l3, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[1*4])
+    l3, = ax1.semilogy(ks, errs, 'o-', color=tab20c.colors[1*4])
     l4, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[1*4+1])
  
     m = ms[2]
     w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
     for i, k in enumerate(ks):
-        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
-        errs[i] = err
         bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
         burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
                + (-m + 1j*x)*np.sin(m*np.arctan(x)))
         y0 = bursty(x0)
         dy0 = burstdy(x0)   
+        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
+        errs[i] = err
 
-    l5, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[2*4])
+    l5, = ax1.semilogy(ks, errs, '^-', color=tab20c.colors[2*4])
     l6, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[2*4+1])
  
     m = ms[3]
     w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
     for i, k in enumerate(ks):
-        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
-        errs[i] = err
         bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
         burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
                + (-m + 1j*x)*np.sin(m*np.arctan(x)))
         y0 = bursty(x0)
         dy0 = burstdy(x0)   
+        xs, ys, x1, y1, err = riccati.osc_step(w, g, x0, h, y0, dy0, stats, epsres = eps, plotting = True, k=k)
+        errs[i] = err
 
-    l7, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[3*4])
+    l7, = ax1.semilogy(ks, errs, 'x-', color=tab20c.colors[3*4])
     l8, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[3*4+1])
  
 #, label='$\omega(t_i) = 10^{}$'.format(int(np.log10(m)))
     ax1.set_xlim((0,N))
-    ax1.set_ylim((1e-16, 1e5))
+    ax1.set_ylim((1e-16, 1e6))
     l = ax1.legend([l1, l3, l5, l7, (l2, l4, l6, l8)], ['$\omega_{\mathrm{max}} = $'+'$10^{}$'.format(int(np.log10(ms[0]))), '$\omega_{\mathrm{max}} = $'+'$10^{}$'.format(int(np.log10(ms[1]))), '$\omega_{\mathrm{max}} = $'+'$10^{}$'.format(int(np.log10(ms[2]))), '$\omega_{\mathrm{max}} = $'+'$10^{}$'.format(int(np.log10(ms[3]))), '$\propto \omega_{\mathrm{max}}^{-k}$'], handler_map = {tuple: HandlerTupleVertical()})
-    plt.savefig("riccati-paper/plots/residual-k.pdf")
+    plt.savefig("riccati-paper/plots/residual-k-corr.pdf")
 
 def Bremer237(l):
     """
@@ -548,47 +551,143 @@ def bremer237_timing_fig():
     def g(x):
         return np.zeros_like(x)
 
-    # Call high-order RK as the 'standard' method 
-    lambdas = np.logspace(1, 4, 4)
-    runtimesrk = np.zeros_like(lambdas)
-    nfevalsrk = np.zeros_like(lambdas)
-    errs = np.zeros_like(lambdas)
-    for i, lamb in enumerate(lambdas):
-        print(lamb)
-        f = lambda t, y: np.array([y[1], -lamb**2*(1 - t**2*np.cos(3*t))*y[0]])
-        time0 = time.time_ns()
-        for j in range(int(1e4/lamb)):
-            sol = solve_ivp(f, [-1, 1], [0, lamb], method = 'DOP853', rtol = 1e-12, atol = 1e-14)
-        time1 = time.time_ns()
-        runtime = (time1 - time0)*1e-9/1e4*lamb
-        runtimesrk[i] = runtime
-        nfevalsrk[i] = sol.nfev
-
-        # Read reference solution from table
-        reftable = "eq237.txt"
-        refarray = np.genfromtxt(reftable, delimiter=',')
-        ls = refarray[:,0]
-        ytrue = refarray[abs(ls - lamb) < 1e-8, 1]
-        err = np.abs(( sol.y[0,-1]- ytrue)/ytrue)
-        errs[i] = err
-        print(err)
-        print(sol.status)
-        print(sol.message)
-        print(sol.success)
-
-
-    # Write to file 
-    print(runtimesrk, nfevalsrk)
-    outfile = "riccati-paper/tables/bremer237_rk78-tol-12.txt"
-    with open(outfile, 'w+') as f:
-        for i, lamb in enumerate(lambdas):
-            f.write("{};{};{};{}".format(lamb, runtimesrk[i], nfevalsrk[i], errs[i]))
+#    # Call high-order RK as the 'standard' method 
+#    lambdas = np.logspace(5, 6, 2)
+#    runtimesrk = np.zeros_like(lambdas)
+#    nfevalsrk = np.zeros_like(lambdas)
+#    errs = np.zeros_like(lambdas)
+#    for i, lamb in enumerate(lambdas):
+#        print(lamb)
+#        f = lambda t, y: np.array([y[1], -lamb**2*(1 - t**2*np.cos(3*t))*y[0]])
+#        time0 = time.time_ns()
+#        for j in range(1):
+#            sol = solve_ivp(f, [-1, 1], [0, lamb], method = 'DOP853', rtol = 1e-6, atol = 1e-14)
+#        time1 = time.time_ns()
+#        runtime = (time1 - time0)*1e-9#/1e4*lamb
+#        runtimesrk[i] = runtime
+#        nfevalsrk[i] = sol.nfev
+#
+#        # Read reference solution from table
+#        reftable = "eq237.txt"
+#        refarray = np.genfromtxt(reftable, delimiter=',')
+#        ls = refarray[:,0]
+#        ytrue = refarray[abs(ls - lamb) < 1e-8, 1]
+#        err = np.abs(( sol.y[0,-1]- ytrue)/ytrue)
+#        errs[i] = err
+#        print(err)
+#        print(sol.status)
+#        print(sol.message)
+#        print(sol.success)
+#
+#
+#    # Write to file 
+#    print(runtimesrk, nfevalsrk)
+#    outfile = "riccati-paper/tables/bremer237_rk78-tol-6.txt"
+#    with open(outfile, 'a') as f:
+#        for i, lamb in enumerate(lambdas):
+#            f.write("{};{};{};{}".format(lamb, runtimesrk[i], nfevalsrk[i], errs[i]))
 
     # Read rest of data from large table
     datafile = "riccati-paper/tables/bremer237_oscmethods.txt"
-    data = pandas.read_csv(datafile, sep = ';')
-    print(data)
-#    solvernames = data['solver']
+    data = pandas.read_csv(datafile, sep = ';', skipinitialspace = True)
+    solvernames = data['solver']
+    allosc = data.loc[solvernames == 'oscode']
+    allrk = data.loc[solvernames == 'rk78']
+    allricc = data.loc[solvernames == 'Riccati']
+    allarn = data.loc[solvernames == 'arnold']
+    losc = allosc['lambda']
+    lrk = allrk['lambda'] 
+    lricc = allricc['lambda'] 
+    larn = allarn['lambda'] 
+    tosc = allosc['tsolve']
+    trk = allrk['tsolve']
+    tricc = allricc['tsolve']
+    tarn = allarn['tsolve']
+    eosc = allosc['error']
+    erk = allrk['error']
+    ericc = allricc['error']
+    earn = allarn['error']
+
+    datafile2 = "riccati-paper/tables/bremer237_oscmethods_tol-6.txt"
+    data2 = pandas.read_csv(datafile2, sep = ';', skipinitialspace = True)
+    solvernames2 = data2['solver']
+    allosc2 = data2.loc[solvernames2 == 'oscode']
+    allrk2 = data2.loc[solvernames2 == 'rk78']
+    allricc2 = data2.loc[solvernames2 == 'riccati']
+    allarn2 = data2.loc[solvernames2 == 'arnold']
+    losc2 = allosc2['lambda']
+    lrk2 = allrk2['lambda'] 
+    lricc2 = allricc2['lambda'] 
+    larn2 = allarn2['lambda'] 
+    tosc2 = allosc2['tsolve']
+    trk2 = allrk2['tsolve']
+    tricc2 = allricc2['tsolve']
+    tarn2 = allarn2['tsolve']
+    eosc2 = allosc2['error']
+    erk2 = allrk2['error']
+    ericc2 = allricc2['error']
+    earn2 = allarn2['error']
+
+    # Bremer 'exclusion zone'
+    ebrem = np.array([7e-14, 5e-13, 3e-12, 5e-11, 3e-10, 5e-9, 4e-8])
+
+    # Colourmap
+    tab20c = matplotlib.cm.get_cmap('tab20c').colors
+
+    plt.style.use('riccatipaper')
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize = (6, 4))
+    l1, = ax0.loglog(lrk, trk, '.-', c = tab20c[0*4 + 0])
+    l2, = ax0.loglog(losc, tosc, 'o-', c = tab20c[1*4 + 0])
+    l3, = ax0.loglog(larn, tarn, '^-', c = tab20c[2*4 + 0])
+    l4, = ax0.loglog(lricc, tricc, 'x-', c = tab20c[3*4 + 0])
+    l5, = ax0.loglog(lrk2, trk2, marker = '.', ls = '--',  c = tab20c[0*4 + 1])
+    l6, = ax0.loglog(losc2, tosc2, marker = 'o', ls = '--', c = tab20c[1*4 + 1])
+    l7, = ax0.loglog(larn2, tarn2, marker = '^', ls = '--', c = tab20c[2*4 + 1])
+    l8, = ax0.loglog(lricc2, tricc2, marker = 'x', ls = '--', c = tab20c[3*4 + 1])
+    # Invisible lines
+    l9, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[0*4 + 0])
+    l10, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[1*4 + 0])
+    l11, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[2*4 + 0])
+    l12, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[3*4 + 0])
+    l13, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[0*4 + 1])
+    l14, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[1*4 + 1])
+    l15, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[2*4 + 1])
+    l16, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[3*4 + 1])
+    l = ax0.legend([(l1, l5), (l2, l6), (l3, l7), (l4, l8), (l9, l10, l11, l12), (l13, l14, l15, l16)], ['RK78', '\\texttt{oscode}', 'WKB marching', 'this work', '$\\varepsilon = 10^{-12}$', '$\\varepsilon = 10^{-6}$'], handler_map = {tuple: HandlerTupleVertical()})
+
+    ax1.fill_between(losc, np.ones_like(losc)*1e-14, ebrem, color = 'grey', alpha = 0.4)
+    ax1.loglog(losc, np.ones_like(losc)*1e-6, ls = 'dotted', c = 'grey')
+    ax1.loglog(losc, np.ones_like(losc)*1e-12, ls = 'dotted', c = 'black')
+    l1, = ax1.loglog(lrk, erk, '.-', c = tab20c[0*4 + 0])
+    l2, = ax1.loglog(losc, eosc, 'o-', c = tab20c[1*4 + 0])
+    l3, = ax1.loglog(larn, earn, '^-', c = tab20c[2*4 + 0])
+    l4, = ax1.loglog(lricc, ericc, 'x-', c = tab20c[3*4 + 0])
+    l5, = ax1.loglog(lrk2, erk2, marker = '.', ls = '--',  c = tab20c[0*4 + 1])
+    l6, = ax1.loglog(losc2, eosc2, marker = 'o', ls = '--', c = tab20c[1*4 + 1])
+    l7, = ax1.loglog(larn2, earn2, marker = '^', ls = '--', c = tab20c[2*4 + 1])
+    l8, = ax1.loglog(lricc2, ericc2, marker = 'x', ls = '--', c = tab20c[3*4 + 1])
+    # Invisible lines
+    l9, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[0*4 + 0])
+    l10, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[1*4 + 0])
+    l11, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[2*4 + 0])
+    l12, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[3*4 + 0])
+    l13, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[0*4 + 1])
+    l14, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[1*4 + 1])
+    l15, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[2*4 + 1])
+    l16, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[3*4 + 1])
+    l = ax1.legend([(l1, l5), (l2, l6), (l3, l7), (l4, l8), (l9, l10, l11, l12), (l13, l14, l15, l16)], ['RK78', '\\texttt{oscode}', 'WKB marching', 'this work', '$\\varepsilon = 10^{-12}$', '$\\varepsilon = 10^{-6}$'], handler_map = {tuple: HandlerTupleVertical()}, loc = 'upper left')
+
+    ax1.set_ylabel('relative error, $|\Delta u/u|$')
+    ax0.set_ylabel('runtime/s, $t_{\mathrm{solve}}$')
+    ax1.set_xlabel('$\lambda$')
+    ax0.set_xlim((1e1, 1e7))
+    ax0.set_ylim((1e-4, 1e4))
+    ax1.set_xlim((1e1, 1e7))
+    ax1.set_ylim((7e-14, 1e0))
+    ax0.set_xlabel('$\lambda$')
+
+    plt.savefig('riccati-paper/plots/bremer237-timing.pdf')
+
 
 def oscode237(l):
 
@@ -837,7 +936,7 @@ def cosmology():
 #    print("starting with Riccati ", m)
 #    Bremer237(m)
 #Bremer237(1e1)
-#airy()
+airy()
 #for m in np.logspace(1, 7, num = 4):
 #    print("starting ", m)
 #    oscode237(m)
