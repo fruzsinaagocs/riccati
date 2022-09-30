@@ -1320,9 +1320,9 @@ The quantities tabulated are described in detail below.
         the solver.}
 \end{description}
 %
-\begin{table*}
+\begin{table*}[tb]
     \renewcommand{\arraystretch}{1.2}
-    \input{tables/bremer237_oscmethods_masked}
+    \resizebox{\textwidth}{!}{\input{tables/bremer237_oscmethods_masked}}
     \caption{\label{bremer237tab} Accuracy, runtime and evaluation statistics of the algorithms
     considered (the present method, the phase function method, \texttt{oscode},
     and the WKB marching method) when applied to \cref{bremer237eq}. The column
@@ -1397,7 +1397,7 @@ Chebyshev nodes in oscillatory steps to $n = 16$.
 
 \begin{table*}
     \renewcommand{\arraystretch}{1.2}
-    \input{tables/legendre-fastest-morestuff}
+    \resizebox{\textwidth}{!}{\input{tables/legendre-fastest-morestuff}}
     \caption{Accuracy, runtime and evaluation statistics of the present algorithm when
     applied to Legendre's differential equation, \cref{legendreode}. The column
     headers are identical to those in \cref{bremer237tab} and are explained in
@@ -1408,127 +1408,129 @@ Chebyshev nodes in oscillatory steps to $n = 16$.
 
 
 
-\subsection{An example from cosmology \label{cosmo-example-sec}}
-
-%One might be tempted to think that considering the damping-free form ($\g(t) =
-%0$) of \cref{ode} would have been sufficient, and that allowing for the case of
-%$\g(t) \neq 0$ does not add generality, since the $\g$-term in \cref{ode} may
-%always be removed via a variable transform. Indeed, it can be shown that either
-%the independent or the dependent variable can be rescaled to yield a
-%damping-free ODE. The most general transformation that preserves the linearity
-%of the ODE is
-%\be\label{transformation}
-%t \to \tau := f(t), \quad u \to y:= g(\tau)u,
+%\subsection{An example from cosmology \label{cosmo-example-sec}}
+%
+%%One might be tempted to think that considering the damping-free form ($\g(t) =
+%%0$) of \cref{ode} would have been sufficient, and that allowing for the case of
+%%$\g(t) \neq 0$ does not add generality, since the $\g$-term in \cref{ode} may
+%%always be removed via a variable transform. Indeed, it can be shown that either
+%%the independent or the dependent variable can be rescaled to yield a
+%%damping-free ODE. The most general transformation that preserves the linearity
+%%of the ODE is
+%%\be\label{transformation}
+%%t \to \tau := f(t), \quad u \to y:= g(\tau)u,
+%%\ee
+%%which yields the second-order linear ODE
+%%\be\label{transformed-ode}
+%%\ddot{y} + \left[ \frac{2\dot{g}}{g} + \frac{f''}{(f')^2} + \frac{2\g}{f'} \right]\dot{y} + 
+%%\left[\ddot{g} + \left( \frac{f''}{(f')^2} + \frac{2\g}{f'} \right)\frac{\dot{g}}{g} + \frac{\om^2}{(f')^2} \right]y = 0,
+%%\ee
+%%where the overdot denotes differentiation with respect to $\tau$. Setting the coefficient of $\dot{y}$ to zero yields the constraint
+%%\be
+%%2\tilde{\g} = \frac{2\dot{g}}{g} + \frac{f''}{(f')^2} + \frac{2\g}{f'} = 0,
+%%\ee
+%%and simplifies the frequency of the transformed ODE to
+%%\be
+%%\tilde{\omega}^2 = \ddot{g} - 2\left( \frac{\dot{g}}{g}\right)^2 + \left( \frac{\om}{f'}\right)^2.
+%%\ee
+%%This, however, still carries a functional degree of freedom, in that one is free to choose $g$ (or $f$). Despite the fact that the ODE may always be transformed this way, in some cases it is not numerically stable to do so. We demonstrate this through an example taken from cosmology.
+%
+%A widely accepted theory explaining the origin of large-scale structure in the Universe is that of inflation \cite{baumann2022}. Preceding and during an early phase of exponential expansion, quantum-scale fluctuations in matter density (and hence spacetime-curvature) evolved according to the Mukhanov--Sasaki equation,
+%\be\label{mseq}
+%\frac{\d^2 \mathcal{R}_k}{\d N^2} + 2\g(N)\frac{\d \mathcal{R}_k }{\d N} + \om^2(N) \mathcal{R}_k = 0, 
 %\ee
-%which yields the second-order linear ODE
-%\be\label{transformed-ode}
-%\ddot{y} + \left[ \frac{2\dot{g}}{g} + \frac{f''}{(f')^2} + \frac{2\g}{f'} \right]\dot{y} + 
-%\left[\ddot{g} + \left( \frac{f''}{(f')^2} + \frac{2\g}{f'} \right)\frac{\dot{g}}{g} + \frac{\om^2}{(f')^2} \right]y = 0,
+%where the independent variable is the number of e-folds of inflation, $N = \ln
+%a$, with $a$ being the scale factor, a time-dependent characteristic
+%lengthscale associated with the expansion. During inflation, $a$ grows
+%exponentially, making $N$ a natural independent variable for the purposes of
+%computation. $\mathcal{R}$ is a time-dependent scalar field that quantifies
+%perturbations in the spatial curvature of spacetime called the gauge-invariant
+%curvature perturbation. $\mathcal{R}_k$ is then the Fourier component of
+%$\mathcal{R}$ associated with the wavenumber $k$. The damping term and
+%frequency in \cref{mseq} are time- ($N$-) and wavenumber ($k$-) dependent, as
+%well as functions of the underlying cosmological model. An example
+%for their behaviour is shown in the top left panel of \cref{cosmology-example}.
+%The bottom left panel then shows the evolution of a single perturbation mode
+%$\mathcal{R}_k$ corresponding to a lengthscale of\footnote{When the perturbation mode is governed by
+%the Mukhanov--Sasaki equation, the Universe is in its primordial phase of
+%inflation, approximately $10^{-32}$ \si{\s} after the Big Bang. These primordial
+%perturbations later translate into anisotropies in the temperature and
+%polarisation of the Cosmic Microwave Background (CMB), which we can observe
+%today. The CMB anisotropies are observed over the celestial sphere and are thus broken
+%down into spherical harmonics parametrised by their multipole moment
+%$\ell$. Even though a single plane wave projected onto a sphere generates
+%anisotropies on multiple scales, the dominant anisotropy it generates will have
+%$\ell \approx kD_{\ast}$ \cite{hu1995}, where $D_{\ast}$ is the angular
+%diameter distance to the surface of last scattering, measured in
+%\si{\mega\parsec}. The scale we consider in the text corresponds to the
+%resolution of the current CMB experiments, \ie the largest currently observable
+%multipole, $\ell \approx 2000$, or a wavenumber of \SI{0.2}{\per\mega\parsec}.
+%} \SI{0.2}{\per\mega\parsec}. The perturbation mode exhibits rapid oscillations
+%before it ``freezes out'' at a constant amplitude at which it will remain until
+%after the end of primordial inflation. In cosmology, it is this frozen-out
+%amplitude we are interested in computing, so the perturbation modes are evolved numerically
+%until well into the constant-amplitude regime. Towards the end of the
+%integration regime $\om \approx 0$ and $\g \approx \text{const.}$, giving the
+%solution
+%\be\label{infl-sol-1}
+%\mathcal{R}_k \approx C_0 - \frac{C_1}{\g}e^{-\g N},
 %\ee
-%where the overdot denotes differentiation with respect to $\tau$. Setting the coefficient of $\dot{y}$ to zero yields the constraint
+%which quickly converges to $\mathcal{R}_k \approx C_0$. Once this phase of the
+%numerical solution is reached, the condition number of the problem does not increase
+%significantly -- intuitively, it is the constant part of the solution that is
+%of interest, which is easy to follow numerically. Transforming the
+%dependent variable to yield the damping-free equation of motion 
 %\be
-%2\tilde{\g} = \frac{2\dot{g}}{g} + \frac{f''}{(f')^2} + \frac{2\g}{f'} = 0,
+%\frac{\d^2 \tilde{\mathcal{R}}_k}{\d N^2} + \tilde{\om}^2(N) \tilde{\mathcal{R}}_k = 0, 
 %\ee
-%and simplifies the frequency of the transformed ODE to
+%with $\tilde{\om}^2 = \om^2 + \g' - \g^2$, results in the behaviour plotted on
+%the left-hand-side of \cref{cosmology-example}. In the region where the
+%perturbation mode's amplitude was previously constant we now have $\tilde{\om}
+%< 0$ and $\tilde{\om} \approx \text{const.}$, giving 
 %\be
-%\tilde{\omega}^2 = \ddot{g} - 2\left( \frac{\dot{g}}{g}\right)^2 + \left( \frac{\om}{f'}\right)^2.
+%\tilde{\mathcal{R}}_k \approx C_2 e^{+\tilde{\om}N} + C_3 e^{-\tilde{\om}N}.
 %\ee
-%This, however, still carries a functional degree of freedom, in that one is free to choose $g$ (or $f$). Despite the fact that the ODE may always be transformed this way, in some cases it is not numerically stable to do so. We demonstrate this through an example taken from cosmology.
-
-A widely accepted theory explaining the origin of large-scale structure in the Universe is that of inflation \cite{baumann2022}. Preceding and during an early phase of exponential expansion, quantum-scale fluctuations in matter density (and hence spacetime-curvature) evolved according to the Mukhanov--Sasaki equation,
-\be\label{mseq}
-\frac{\d^2 \mathcal{R}_k}{\d N^2} + 2\g(N)\frac{\d \mathcal{R}_k }{\d N} + \om^2(N) \mathcal{R}_k = 0, 
-\ee
-where the independent variable is the number of e-folds of inflation, $N = \ln
-a$, with $a$ being the scale factor, a time-dependent characteristic
-lengthscale associated with the expansion. During inflation, $a$ grows
-exponentially, making $N$ a natural independent variable for the purposes of
-computation. $\mathcal{R}$ is a time-dependent scalar field that quantifies
-perturbations in the spatial curvature of spacetime called the gauge-invariant
-curvature perturbation. $\mathcal{R}_k$ is then the Fourier component of
-$\mathcal{R}$ associated with the wavenumber $k$. The damping term and
-frequency in \cref{mseq} are time- ($N$-) and wavenumber ($k$-) dependent, as
-well as functions of the underlying cosmological model. An example
-for their behaviour is shown in the top left panel of \cref{cosmology-example}.
-The bottom left panel then shows the evolution of a single perturbation mode
-$\mathcal{R}_k$ corresponding to a lengthscale of\footnote{When the perturbation mode is governed by
-the Mukhanov--Sasaki equation, the Universe is in its primordial phase of
-inflation, approximately $10^{-32}$ \si{\s} after the Big Bang. These primordial
-perturbations later translate into anisotropies in the temperature and
-polarisation of the Cosmic Microwave Background (CMB), which we can observe
-today. The CMB anisotropies are observed over the celestial sphere and are thus broken
-down into spherical harmonics parametrised by their multipole moment
-$\ell$. Even though a single plane wave projected onto a sphere generates
-anisotropies on multiple scales, the dominant anisotropy it generates will have
-$\ell \approx kD_{\ast}$ \cite{hu1995}, where $D_{\ast}$ is the angular
-diameter distance to the surface of last scattering, measured in
-\si{\mega\parsec}. The scale we consider in the text corresponds to the
-resolution of the current CMB experiments, \ie the largest currently observable
-multipole, $\ell \approx 2000$, or a wavenumber of \SI{0.2}{\per\mega\parsec}.
-} \SI{0.2}{\per\mega\parsec}. The perturbation mode exhibits rapid oscillations
-before it ``freezes out'' at a constant amplitude at which it will remain until
-after the end of primordial inflation. In cosmology, it is this frozen-out
-amplitude we are interested in computing, so the perturbation modes are evolved numerically
-until well into the constant-amplitude regime. Towards the end of the
-integration regime $\om \approx 0$ and $\g \approx \text{const.}$, giving the
-solution
-\be\label{infl-sol-1}
-\mathcal{R}_k \approx C_0 - \frac{C_1}{\g}e^{-\g N},
-\ee
-which quickly converges to $\mathcal{R}_k \approx C_0$. Once this phase of the
-numerical solution is reached, the condition number of the problem does not increase
-significantly -- intuitively, it is the constant part of the solution that is
-of interest, which is easy to follow numerically. Transforming the
-dependent variable to yield the damping-free equation of motion 
-\be
-\frac{\d^2 \tilde{\mathcal{R}}_k}{\d N^2} + \tilde{\om}^2(N) \tilde{\mathcal{R}}_k = 0, 
-\ee
-with $\tilde{\om}^2 = \om^2 + \g' - \g^2$, results in the behaviour plotted on
-the left-hand-side of \cref{cosmology-example}. In the region where the
-perturbation mode's amplitude was previously constant we now have $\tilde{\om}
-< 0$ and $\tilde{\om} \approx \text{const.}$, giving 
-\be
-\tilde{\mathcal{R}}_k \approx C_2 e^{+\tilde{\om}N} + C_3 e^{-\tilde{\om}N}.
-\ee
-The physically meaningful solution is the exponentially
-growing one. It is possible to follow this solution closely, but in this
-formulation the condition number of the problem grows proportionally with
-$|\tilde{\om}N|$, regardless of whether the solution
-is oscillatory or exponential, costing valuable digits.
-
-The primordial power spectrum (PPS) of curvature perturbations is defined as the function
-\be
-\mathcal{P}_{\mathcal{R}}(k) = \frac{k^3}{2\pi^2} |\mathcal{R}_k|^2,
-\ee
-where $|\mathcal{R}_k|$ is taken as the frozen-out amplitude of the given perturbation mode. 
-In cosmological inference, forward modelling often starts from the PPS which is
-computed assuming some set of cosmological parameters. For each PPS
-computation, one needs to solve \cref{mseq} for $\mathcal{O}(10^3)$ values of
-$k$, and around $\mathcal{O}(10^7 - 10^9)$ likelihood evaluations (each of
-which involves one PPS calculation) are necessary for mapping the posterior
-probability distribution. This gives a total of {$\mathcal{O}(10^{10} -
-10^{12})$} numerical solves of the highly oscillatory \cref{mseq}, which is only
-feasible if an extremely efficient, specialised numerical method is used. Moreover, the above reasoning demonstrates that the numerical method needs to be able to deal with a non-zero $\g$-term.   
-
-\begin{figure}[tbp]
-    \centering
-    \includegraphics{plots/cosmology.pdf}
-    \caption{\label{cosmology-example} Plot illustrating the change in the
-    terms in the Mukhanov--Sasaki equation \cref{mseq} and the behaviour of its
-    solution upon transforming to $\gamma$-free form. The top panels show the
-    frequency and damping term (where applicable) in the ODE as a function of
-    the e-folds of inflation $N$, while the bottom panels shows the evolution
-    of the dependent variable, the gauge-invariant curvature perturbation
-    $\mathcal{R}_k$ of comoving wavenumber $k$ corresponding to an 
-    observable lengthscale of \SI{0.2}{\per\mega\parsec}. Note the
-    symmetric-logarithmic scales on all $y$-axes, which is linear close to
-    zero but logarithmic otherwise. }
-\end{figure}
+%The physically meaningful solution is the exponentially
+%growing one. It is possible to follow this solution closely, but in this
+%formulation the condition number of the problem grows proportionally with
+%$|\tilde{\om}N|$, regardless of whether the solution
+%is oscillatory or exponential, costing valuable digits.
+%
+%The primordial power spectrum (PPS) of curvature perturbations is defined as the function
+%\be
+%\mathcal{P}_{\mathcal{R}}(k) = \frac{k^3}{2\pi^2} |\mathcal{R}_k|^2,
+%\ee
+%where $|\mathcal{R}_k|$ is taken as the frozen-out amplitude of the given perturbation mode. 
+%In cosmological inference, forward modelling often starts from the PPS which is
+%computed assuming some set of cosmological parameters. For each PPS
+%computation, one needs to solve \cref{mseq} for $\mathcal{O}(10^3)$ values of
+%$k$, and around $\mathcal{O}(10^7 - 10^9)$ likelihood evaluations (each of
+%which involves one PPS calculation) are necessary for mapping the posterior
+%probability distribution. This gives a total of {$\mathcal{O}(10^{10} -
+%10^{12})$} numerical solves of the highly oscillatory \cref{mseq}, which is only
+%feasible if an extremely efficient, specialised numerical method is used. Moreover, the above reasoning demonstrates that the numerical method needs to be able to deal with a non-zero $\g$-term.   
+%
+%\begin{figure}[tbp]
+%    \centering
+%    \includegraphics{plots/cosmology.pdf}
+%    \caption{\label{cosmology-example} Plot illustrating the change in the
+%    terms in the Mukhanov--Sasaki equation \cref{mseq} and the behaviour of its
+%    solution upon transforming to $\gamma$-free form. The top panels show the
+%    frequency and damping term (where applicable) in the ODE as a function of
+%    the e-folds of inflation $N$, while the bottom panels shows the evolution
+%    of the dependent variable, the gauge-invariant curvature perturbation
+%    $\mathcal{R}_k$ of comoving wavenumber $k$ corresponding to an 
+%    observable lengthscale of \SI{0.2}{\per\mega\parsec}. Note the
+%    symmetric-logarithmic scales on all $y$-axes, which is linear close to
+%    zero but logarithmic otherwise. }
+%\end{figure}
 
 
 \section{Conclusions \label{conclusions}}
 
 % Summary of paper
+
+
 
 % Future work
 Allow for negative $\om$, evanescent solutions
