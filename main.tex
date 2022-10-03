@@ -105,8 +105,8 @@ The algorithm automatically switches between two methods for dealing with the
 two types of behaviour and has $\bigO(1)$ runtime in terms of the frequency
 of oscillations in the highly oscillatory regime. It is arbitrarily high
 order accurate in both the oscillatory and the slowly changing regime.
-When the solution changes slowly a spectral methods based on $n$ Chebyshev
-nodes is used, where $n$ is changed adaptively to ensure the local error is
+When the solution changes slowly a spectral methods based on Chebyshev
+nodes is used, where the number of nodes is changed adaptively to ensure the local error is
 within a user specified tolerance. During a highly oscillatory phase, the
 ODE is converted to Riccati form and a non-oscillory solution is
 constructed for the logarithmic derivative of the dependent variable (the
@@ -294,8 +294,9 @@ solution is oscillatory (and the asymptotic expansion used to represent it is
 sufficiently accurate) and when it is not. This is achieved by switching
 between the asymptotic expansion and a spectral method on the fly as the solver
 steps through the solution interval $[t_0, t_1]$. The spectral method is based
-on $n$ Chebyshev nodes, where $n$ is chosen adaptively, resulting in an
-$\bigO(h^{n+1})$ local error, where $h$ is the stepsize. This is in contrast to
+on $n+1$ Chebyshev nodes, where $n$ is chosen adaptively, resulting in an
+% CHECK NUMERICALLY!
+$\bigO(h^{n})$ local error, where $h$ is the stepsize. This is in contrast to
 \texttt{oscode} and the WKB-marching method, which both use a fixed (4,5th)
 order Runge--Kutta scheme as their alternative solver and produce a
 $\bigO(h^6)$ error. \texttt{oscode}'s WKB-based method produces an $\bigO(h)$
@@ -423,7 +424,8 @@ with unknown initial condition needed for a nonoscillatory solution $\delta$.
 Yet if $\delta$ is nonoscillatory the first term $\delta'$ is
 a factor $x_j = \bigO(\om)$ smaller than the second term, thus
 one might hope that by dropping it a useful reduction in residual might
-still result\footnote{\Fruzsi{[Strictly speaking, we should then be dropping the $\g$ term as well, since it's also an order of magnitude smaller...]}}. 
+still result.
+%\footnote{\Fruzsi{[Strictly speaking, we should then be dropping the $\g$ term as well, since it's also an order of magnitude smaller...]}}. 
 This leads to the algebraic formula $2\left(x_j(t) + \g(t)\right) \delta(t) = -R[x_j](t)$
 which is solved pointwise for each $t$, and
 writing $x_{j+1} = x_j + \delta$ gives \cref{iter}.
@@ -440,7 +442,7 @@ sake of simplicity, but the results hold for the case of $\g(t) \neq 0$. The fir
 x_1 &= i\om - \frac{\om'}{2\om}, 
     &&R[x_1] = -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2} = \bigO(1), \nonumber \\
 x_2 &= i\om - \frac{\om'}{2\om} + \delta_1, \mbox{ where }
-    \delta_1 \equiv \frac{\om''/2\om - 3\om'^2/4\om^2}{2i\om - \om'/\om}, \quad
+    \delta_1 \equiv \frac{\frac{\om''}{2\om} - \frac{3\om'^2}{4\om^2}}{2i\om - \frac{\om'}{\om}}, \quad
     &&R[x_2] = \delta_1' + \delta_1^2 = \bigO(\om^{-1}). \nonumber
 \end{align}
 To measure the size of term we assume that $\om'$, $\om''$, \etc, are
@@ -671,7 +673,7 @@ conditions directly, \eg the last row can be removed by solving only for
 $(u_n)_1, \ldots, (u_n)_n$ and setting $(u_n)_0 = u(t_i)$.
 
 The error on steps taken with the spectral method above is estimated by
-doubling the number of nodes $n$, attempting the step with the same stepsize
+doubling $n$, attempting the step with the same stepsize
 $h$ again, and comparing results. If the error falls below the user-specified
 threshold $\varepsilon$, the spectral method is considered to have converged and the
 step is accepted. If the error does not reach $\varepsilon$ by $n=n_{\text{max}}$, $h$
@@ -729,18 +731,18 @@ method's is. The convergence rate of the residual of asymptotic steps depends
 on the bounds on $\om$, $\om'$, and $\g$ over the course of the step as we show
 in \cref{TR}, which indirectly introduces stepsize-dependence, as does the fact
 that the derivatives and integral appearing in the step are computed
-numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). Ultimately, it is how well $\om$ and $\g$ can be represented by $n$th
-order Chebyshev polynomials that determines the error in asymptotic steps, which
+numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). Ultimately, it is how well $\om$ and $\g$ can be represented by $(n+1)$th
+degree Chebyshev polynomials that determines the error in asymptotic steps, which
 we therefore test directly to gain a more accurate estimate for the stepsize
 starting from $h_{\text{osc}}$ as an initial estimate. Given $\om$ and $\g$ evaluated on $t_n$, 
 which we denote $\om_n$ and $\g_n$, respectively, we define an error
 \be
-    \Delta_n[f] := \max_{j = 0, 1, \ldots, n-1} \left| \frac{f(t^{\star}_j) -
+    \Delta_n[f] := \max_{j = 0, 1, \ldots, n} \left| \frac{f(t^{\star}_j) -
     f^{\star}(t^{\star}_j)}{f(t^{\star}_j)} \right|,
 \ee
 where $f$ is $\om$ or $\g$, 
 \be
-t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n-1,
+t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n,
 \ee
 and the $f^{\star}(t^{\star}_j)$ are interpolated using the $f(t_n)$ values,
 \be
@@ -754,20 +756,30 @@ Given $\Delta_n[\om]$ and $\Delta_n[\g]$, we accept or update the stepsize as fo
     \Delta :=& \max \left(\Delta_n[\om], \; \Delta_n[\g]\right), \\
     h :=& \begin{cases}
         h &\text{if } \Delta \leq \varepsilon_h, \\
-        \min \left( 0.7h,\; 0.9 h \left( \frac{\varepsilon_h}{\Delta} \right)^{\frac{1}{n-1}} \right) &\text{otherwise}.
+        \min \left( 0.7h,\; 0.9 h \left( \frac{\varepsilon_h}{\Delta} \right)^{\frac{1}{n+1}} \right) &\text{otherwise}.
     \end{cases}
 \end{align}
-In the above, the $1/(n-1)$ in the exponent is justified by noting that the
-error in Chebyshev interpolation is proportional to $h^n$, therefore if
-$\Delta$ exceeds $\varepsilon_h$, using an exponent slightly larger than $1/n$ takes
+In the above, the $1/(n+1)$ in the exponent is justified by noting that the
+error in $n+1$-point Chebyshev interpolation is proportional to $h^(n+2)$, therefore if
+$\Delta$ exceeds $\varepsilon_h$, using an exponent slightly larger than $1/(n+2)$ takes
 the local error back down to a value smaller than $\varepsilon_h$, which is further
 ensured by multiplying by the safety factor 0.9. We decrease the step to $0.7h$
 if it yields a smaller stepsize to ensure quicker convergence if $\Delta$ is
 only slightly larger than $\varepsilon_h$. The factors 0.7 and 0.9 were set based on
 empirical observations. 
 
-*** Chebyshev step stepsize refinement -- this is still not finalised in the
-code, so will add after some experiments.
+The local error of Chebyshev spectral steps depends on both the stepsize and
+the number of nodes. Since within a step we iterate over both of these until
+convergence, we only need to ensure that over our proposed stepsize the
+timescale over which $u$ changes ($\approx 1/\om$) does not increase too much. Starting from $h =
+h_{\text{slo}}$, we refine the stepsize proposal according to
+\begin{align}
+    h :=& \begin{cases}
+        h/2 &\text{if } \min\limits_{j = 0, 1, \ldots, n}\frac{1}{\om(t^{\star}_j)} < \sigma h \\
+        h &\text{otherwise},
+    \end{cases}
+\end{align}
+with $\sigma = 0.8$, chosen experimentally, and $n$ being a hyperparameter with a default value of $n = 16$.
 
 \subsubsection{Choosing the steptype}
 
@@ -796,7 +808,7 @@ $h = h_{\text{slo}}$ and using the spectral method.
 
 If either of the conditions in \cref{steptypechoose} were not met, a spectral
 step is attempted with $h = h_{\text{slo}}$. The local error of the step is
-then estimated and the number of nodes $n$, as well as the stepsize $h$, is
+then estimated and the number of nodes, as well as the stepsize, is
 adapted until a local error value of at most $\varepsilon$ is reached, as described in
 \cref{chebysteps}.
 
@@ -1014,7 +1026,7 @@ The fact that, as $k$ grows,
 the rate $r$ in \cref{TR} deteriorates
 we believe to be an inevitable consequence of
 the series being asymptotic in $1/\om$ but not convergent.
-We support this in numerical results in ***.
+%We support this in numerical results in ***.
 
 However, given a function $\om(t)$ uniformly large enough
 in a ball,
@@ -1271,7 +1283,7 @@ of Chebyshev nodes in the spectral (nonoscillatory) steps to the default
 $n_{\text{min}} = 16$, $n_{\text{max}} = 64$. For \texttt{oscode} and the WKB
 marching method none of the parameters were modified from their default values
 with the exception of the local tolerance.
-
+% Slightly imprecise as the number of nodes is (n+1)
 
 The quantities tabulated are described in detail below.
 \begin{description}
@@ -1394,6 +1406,14 @@ linearly combined to satisfy initial or boundary conditions. In this example,
 the results of which are shown in \cref{legendre-results}, we set tolerances of
 $\varepsilon = 10^{-12}$, $\varepsilon_h = 10^{-13}$ and the number of
 Chebyshev nodes in oscillatory steps to $n = 16$. 
+% Imprecise again, number of nodes is (n+1)
+These results again demonstrate the frequency-independence of the runtime of
+our algorithm and show that the required tolerance (where the condition number
+of the problem allows) is achieved. Note that after the solution of the ODE has
+taken place, evaluating $u$ at intermediate points (\ie not at the internal
+timesteps taken by the solver) is possible via interpolation of the phase
+function $x$ in $\bigO(1)$ time, independently of the order $n$ in \cref{legendreode}.
+
 
 \begin{table*}
     \renewcommand{\arraystretch}{1.2}
@@ -1557,18 +1577,55 @@ numerical experiments confirmed the convergence of the overall algorithm and
 compared its performance with that of state-of-the-art and standard solvers.
 
 % Future work
-Within the scope of this work, we only allowed $\om^2 \geq 0$
-Allow for negative $\om$, evanescent solutions
+% Allow for imaginary $\om$
+Within the scope of this work, we only allowed $\om^2 \geq 0$. When $\om$ is
+imaginary, any standard numerical solver will pick up the exponentially growing
+solution due to rounding error, which will quickly overpower the evanescent
+solution. A similar asymptotic approach, however, is possible as in the
+oscillatory case, in that one can construct two series solutions to the Riccati
+equation which form a complete basis for \cref{ode} and can thus be linearly
+combined and the desired (evanescent or growing) solution can be selected for
+each timestep. Care needs to be taken in regions where $|\om|$ is not large
+enough for the asymptotic expansion to be sufficiently accurate.
 
-Boundary value problems by determining the switching points a priori
+% BVPs
+Although we focused on initial value problems, note that due to the linearity
+of the ODE any set of auxiliary conditions can be satisfied as a
+post-processing step by solving the ODE with two sets of linearly indipentend
+initial conditions and linearly combining the resulting solutions.
 
-Error analysis: relating the residual to the error in the numerical solution
+% Error analysis
+It is left to a future analysis to relate the residual of the Riccati equation
+\cref{ricc} or the original ODE \cref{ode} to an estimate of the solution's
+local error. This would make the error control more uniform across the
+different types of steps our algorithm uses and is the quantity being
+controlled in typical numerical solvers.  
 
-PDEs
+% Global spectral method ~ Chebop
+Spectral methods are usually applied over the entire solution interval (\eg in
+\cite{driscoll2008}) rather than within a time-stepping framework. When applied
+locally and over a stepsize that can be changed adaptively, a degeneracy
+appears between the number of nodes $n$ and the stepsize $h$, in that $n$ can
+be increased and $h$ can be decreased to lower the local error. This degeneracy
+could potentially be broken by determining the points at which the algorithm is
+supposed to switch between Riccati and Chebyshev steps \emph{a priori}, or at
+least identifying large regions of the solution interval where the Chebyshev
+spectral will need to be used, and solving the ODE in these regions with a
+single application of the spectral method with large $n$. Using \eg a sparse
+spectral element method \cite{fortunato2021}, the solution of these regions
+could be made more efficient.
 
-Break degeneracy between $n$ and $h$ in Chebyshev steps -- Dan's paper
-
-Fast quadrature of oscillatory functions?
+% Quadrature
+The piecewise-continuous numerical solution $\tilde{u}(t)$ our algorithm generates is made up
+of sections represented by polynomials or exponentials of polynomials with
+complex coefficients. Both of these are analytic in the complex plane, and so
+it may be possible to calculate $\int_a^b \tilde{u}(t)\mathrm{d}t$ quickly,
+despite $\tilde{u}$ being highly oscillatory for some or all of $[a, b]$, by
+finding an appropriate contour in the complex plane. The more oscillatory
+$\tilde{u}$, the faster it decays along the imaginary axis, and so the smaller
+the number of quadrature points required to compute the numerical integral to a
+given accuracy. This application will be explored in a future paper.
+% PDEs???
 
 \section*{Acknowledgments}
 We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
@@ -1576,54 +1633,18 @@ and Manas Rachh.
 The Flatiron Institute is a division of the Simons Foundation.
 
 % Some things left to do:
-% Figure for complex plane setup
-% Numerically stable iterations
+%
+% Figure for complex plane setup for proof of thm 3
+% Numerically stable residual iterations!
 % Final description of stepsize algorithm 
 % Flowchart?
 % Cosmo stuff? (Paper is too long!)
-
-%\section{TODO}
-%Introduction
-%\begin{itemize}
-%    \item{Summary of previous efforts: define asymptoticity, WKB theory, QLM, oscode. Non-asymptotic: Arnold, Bremer}
-%    \item{Separate summary of what each of these are missing (for emphasis)}
-%    \item{[Done] Short example from cosmology explanining why $\g$ is needed + other arguments}
-%    \item{Clear aim and novelty of this work}
-%\end{itemize}
-%Methods
-%\begin{itemize}
-%    \item{Short comparison to WKB and Bremer's basic iteration}
-%    \item{Finalise stepsize-choosing algorithm for Chebyshev steps}
-%    \item{Note on numerically stable residual reduction}
-%\end{itemize}
-%Results
-%\begin{itemize}
-%    \item{Code up and time special function evaluations (dense output) and add to tables (expect $10^{-6}$ s, similar to Bremer)}
-%    \item{[In progress] Describe figures/tables in text, spell out differences between current solver and others}
-%\end{itemize}
-%Figures and tables
-%\begin{itemize}
-%    \item{Algorithm flowchart? (Have a skecth from CMO talk ready) Or pseudocode better?}
-%    \item{[Done] Captions missing for all figures}
-%    \item{[Done] Table captions need updating}
-%    \item{Could optimise Chebyshev steps further to improve results in low-frequency regime...}
-%\end{itemize}
-%Misc
-%\begin{itemize}
-%    \item{some comment that although theorem is pointwise convergence,
-%uniform convergence over some interval is trivial by enclosing it in
-%        a larger ball.}
-%    \item{relate the ball in the theorem to the interval size that
-%can be well-approximated by $p$th order Cheby,
-%        using Bernstein ellipse of Tref.}
-%    \item{from [residual of ODE and Riccati] to solution error bounds, maybe?
-%This is similar to local discretization err
-%in a more typical numerical solver.
-%        (check LeVeque, Tref, Hairer, etc).}
-%\end{itemize}
-
-
-
+% Bremer's basic iteration (worked it out on paper but paper is already too long)
+% Some comment that although theorem is pointwise convergence, uniform convergence over some interval is trivial by enclosing it in a larger ball.}
+% Relate the ball in the theorem to the interval size that can be well-approximated by $p$th order Cheby, using Bernstein ellipse of Tref
+% From [residual of ODE and Riccati] to solution error bounds, maybe? This is similar to local discretization err in a more typical numerical solver. (check LeVeque, Tref, Hairer, etc).
+% Numerical results to support deterioration of convergence rate r with total iteration number k in Thm (figure?)
+% More references needed
 
 
 % BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
