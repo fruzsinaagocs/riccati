@@ -1334,7 +1334,7 @@ The quantities tabulated are described in detail below.
 at sufficiently large frequencies: at $\lambda \geq 10^2$, the number of
 function evaluations and steps become constant, causing the runtime to be
 constant as well. It achieves the same accuracy as the phase function method in
-this regime, but in $\mathcal{O}(1/10)$ time. Towards $\lambda = 10^7$, only
+this regime, but in $\approx 1/10$ time. Towards $\lambda = 10^7$, only
 $\approx 2$ terms are required for the asymptotic expansion to achieve an
 estimated (local) relative error of $10^{-12}$. 
 \texttt{oscode} and the WKB
@@ -1529,10 +1529,35 @@ Chebyshev nodes in oscillatory steps to $n = 16$.
 \section{Conclusions \label{conclusions}}
 
 % Summary of paper
-
-
+We presented an efficient numerical algorithm for solving linear second order
+ODEs of a single variable, posed as initial value problems (see \cref{ode}), whose solution
+might be highly oscillatory for some regions of the solution interval.
+The
+algorithm's runtime is independent of the characteristic frequency of
+oscillations, like that of a few contemporary solvers that exploit asymptotics to speed up computation in the highly oscillatory region.
+Our solver is an improvement on these contemporary solvers
+in three ways: it is capable of solving the ODE efficiently regardless of
+whether its solution oscillates or not; it is arbitrarily high-order accurate;
+and it solves a more general problem by not imposing the restriction $\gamma =
+0$ in \cref{ode}. 
+We described the two methods making up the algorithm which works by
+time-stepping, the mechanism by which the stepsize is adapted based on local
+error estimates, and the procedure that decides which of the two methods to
+use. One of the methods is a spectral solver based on Chebyshev nodes, while
+the other is a numerical functional iteration that generates an asymptotic
+solution for the Riccati form of the ODE. This amounts to constructing a
+non-oscillatory phase function (logarithmic derivative of the dependent
+variable). The error in this asymptotic expansion was measured in terms of the
+residual of the Riccati equation. We have shown that given a sufficiently
+slowly varying and large $\om$ and suficiently small $\g$, this residual
+converges geometrically for the first $k$ iterations, but at a rate that
+deteriorates with $k$. We formalised and proved this statement in \cref{TR},
+and illustrated this temporary convergence in a numerical experiment. Further
+numerical experiments confirmed the convergence of the overall algorithm and
+compared its performance with that of state-of-the-art and standard solvers.
 
 % Future work
+Within the scope of this work, we only allowed $\om^2 \geq 0$
 Allow for negative $\om$, evanescent solutions
 
 Boundary value problems by determining the switching points a priori
@@ -1549,6 +1574,13 @@ Fast quadrature of oscillatory functions?
 We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
 and Manas Rachh.
 The Flatiron Institute is a division of the Simons Foundation.
+
+% Some things left to do:
+% Figure for complex plane setup
+% Numerically stable iterations
+% Final description of stepsize algorithm 
+% Flowchart?
+% Cosmo stuff? (Paper is too long!)
 
 %\section{TODO}
 %Introduction
