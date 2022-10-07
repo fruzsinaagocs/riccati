@@ -113,7 +113,8 @@ frequency-independent runtime for highly oscillatory second order linear ODEs}
  \AB{Abs should mention apps plus that's a good excuse to motivate the switching. An idea:
    Linear second order ODEs have applications including
    special functions, quantum physics, and cosmology, and
-   transitions from highly oscillatory to evansescent (smooth) regions are common.} 
+   transitions from highly oscillatory to %evansescent
+   smooth regions are common.} 
   We introduce an efficient numerical method for second order linear ODEs of a
 single dependent variable posed as initial value problems, the solution of
 which may vary between being highly oscillatory to slowly changing over the
@@ -182,45 +183,85 @@ it to other state-of-the art numerical solvers for oscillatory problems.
 \section{Introduction}
 
 The efficient numerical solution of highly oscillatory ordinary differential
-equations (ODEs) has long been a challenge and focus of computational
-mathematics. A wide range of specialised methods exists for dealing with ODEs
-with different structures, thorough reviews of which are found in
+equations (ODEs) has long been a challenge.
+%and focus of computational mathematics.
+A wide range of specialised methods exists for dealing with ODEs
+with different structures,
+thorough reviews of which are found in
 \cite{petzold1997,engquist2009}. Due to the large number of ways oscillations
 in ODEs can arise, only a handful of methods have been designed to deal with any
-given type of oscillatory ODE.  
+given type of oscillatory ODE.
+\AB{I don't get this last ``ways'' - are you thinking of nonlin vs lin, or systems vs scalar, or nth-order vs 2nd-order? We know you need at least 2nd ord or 2 coupled 1st ord to get osc, but then there is only one mechanism}
 
-In this work we focus on ODEs of a particular form: the general, linear, second
-order ODE for a single variable in one dimension, or the generalised single harmonic oscillator.
+In this work we focus on ODEs of a \AB{particular $\to$ commonly occurring}
+form: the general, linear, second
+order ODE for a single variable in one dimension
+\AB{are the coeffs smooth, piecewise smooth, analytic, etc?}
+This is often  generalised single harmonic oscillator.
 Since approximation by harmonic oscillators is ubiquitous in physical models,
 this ODE, albeit simple-looking, is pivotal in many computational physics problems.
+\AB{need to back this up: can say that in early-universe sims need
+  to run millions of such ODE solns at different parameters, so solution needs to be very rapid.}
+\AB{Can you cite apps: your cosmo, 1D QM eg book, variable-parameter oscillators.}
+\AB{other apps ideas - please check them out to see if appropriate:
+https://www.sciencedirect.com/science/article/pii/S0167268196008761
+https://www.sciencedirect.com/science/article/abs/pii/S0375960117311714
+Refs inside here (not the thing itself):
+https://apps.dtic.mil/sti/pdfs/ADA267246.pdf
+}
 
 The ODE of interest takes the form
 %We are interested in efficient numerical solution of
 %the oscillatory linear 2nd-order ordinary differential equation (ODE)
 \be
-u''(t) + 2\g(t) u'(t) + \om^2(t)u(t) = 0, \qquad t \in (t_0,t_1).
+u''(t) + 2\g(t) u'(t) + \om^2(t)u(t) = 0, \qquad t \in (t_0,t_1),
 \label{ode}
 \ee
-We choose to solve the ODE as an initial value problem (IVP) by specifying the initial conditions
+\AB{where $\g$ is a given smooth ($C^\infty$) {\em damping} function,
+  and $\om$ is a given smooth, and possibly large, real-valued
+  {\em local frequency} function.}
+\AB{discuss if $\om$ is pure real or pure im.
+  Tricky if we don't allow pure im, ie $\om^2<0$ then we don't get to
+  talk about evanescent regions which are ubiquitous in QM apps.
+  The word ``general''
+   that you use to describe the problem needs to be carefully specified instead. ``General'' could mean anything... stochastic coeffs, god knows what. Physicists tend to use ``general'' but math ppl know better since it doesn't mean a lot just sounds good :)}
+  \footnote{If coefficients are merely piecewise smooth, then solution may
+  be simply patched together at the breakpoints; we do not discuss this situation further.}
+  
+We solve the initial value problem (IVP) by specifying the initial conditions
 \begin{align} % \ba, \ea doesn't work here, LaTeX complains
     u(t_0) &= u_0, \label{ic0} \\
-    u'(t_0) &= u'_0. \label{ic1}
+    u'(t_0) &= u'_0, \label{ic1}
 \end{align}
+\AB{although we note that the adaptive frequency-independent
+  methods we present could easily be applied to two-point boundary value
+  problems.}
 %Here the local frequency function $\om(t)$ is purely real or purely imaginary.
+% AB: so is om(t) complex or real?
 In regions where $\om \gg 1$, the solution $u$ is oscillatory, meaning that on some local
-scale it is approximately $a e^{i\om_0t} + b e^{-i\om_0t}$, where $\om_0$ is the local value of $\om(t)$.
+scale it is approximately $a e^{i\om_0t} + b e^{-i\om_0t}$, where $\om_0$
+denotes a local value of $\om(t)$.
 Conventional ODE integrators then require discretization with several
-time-points per local period $2\pi/\om$, which can be prohibitively slow.
+time-points
+\AB{grid or discretization points/nodes, is more usual}
+per local period $2\pi/\om$, which can be prohibitively slow.
 This has led to the development of more efficient solvers for this
-high-frequency case. However, as we will review later, none of these methods so
-far has been robust or general enough to solve the general ODE efficiently at an arbitrarily
-low tolerance in both the highly oscillatory and the slowly-varying regime.   
+high-frequency case
+\AB{that exploit new representations of the solution (maybe: to allow many periods per node}.
+However, as we will review later, none of these methods so
+far has been robust or general enough to
+\AB{tackle the above problem}
+solve the general ODE efficiently at an arbitrarily
+\AB{sure not arb high tol? you mean close to machine accuracy?}
+high
+tolerance when the solution has highly oscillatory and smooth regimes. % AB
 
 In this work we only consider regions where $\om(t)$ and $\g(t)$ are real-valued and $\om(t)$ is positive, but 
 one may also consider $q(t):=\om^2(t)$ real and allow evanescent
 $q<0$ regions, where the solution $u$ has rapid growth and decay.
-%For now we ignore the real-valued damping function $\g(t)$,
-%setting $\g \equiv =0$. *** to include.
+\AB{THat should group with the statement of the problem, which is above.
+  Do we believe any prob with $\om^2 <0$ ?  Or just we don't test it.
+  Maybe just say $\om^2$ real, and maybe we throw in a test for evan case?}
 
 % Asymptotic methods: WKB, oscode, QLM
 % Not asymptotics: Bremer
