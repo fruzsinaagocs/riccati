@@ -5,6 +5,7 @@
 \textheight 8.5in
 
 \usepackage{graphicx,bm,amssymb,amsmath,amsthm} % Figures and maths
+\usepackage{xcolor}
 \usepackage[colorlinks]{hyperref} % Hyperlinks
 \usepackage[capitalise, nameinlink]{cleveref} % Better referencing
 \usepackage{array}
@@ -83,43 +84,100 @@
 \newcommand{\te}{\tilde\eta}
 \crefalias{prop}{Proposition}
 % Review
-\newcommand{\Alex}[1]{{\color{orange}#1}}
+\newcommand{\AB}[1]{{\color{orange}#1}}
 \newcommand{\Fruzsi}[1]{{\color{blue}#1}}
 
 \begin{document}
 
 \title{An arbitrarily high order accurate numerical method with
 frequency-independent runtime for highly oscillatory second order linear ODEs}
-%\title{Analysis of an iteration for non-oscillatory solutions to the Riccati form of the phase function for 2nd-order linear ODEs}
+%\title{Analysis of an iteration for non-oscillatory solutions to the Riccati form of the phase function for 2nd-order linear ODEs} % glad you killed the version starting "Analysis..." :)
+
 
 \author{Fruzsina J.\ Agocs and Alex H.\ Barnett}
-\date{\today}
+\date{\today
+\AB{title bit long. how can make shorter \& catchier? (``high'' appears twice.)
+  To me the new ideas are: phase function iteration (defect correction), spectral (= arb high ord); adaptivity; switching; damping term.
+  So how about:
+  An adaptive switching spectral method
+  for oscillatory second-order linear ODEs with frequency-independent cost.
+  Try rearranging the words a lot.
+  An iterative (Riccati) phase function spectral solver
+  for oscillatory second-order linear ODEs with frequency-independent cost.
+  ETC
+}  
+}
 \maketitle
 
 \begin{abstract}
-We introduce an efficient numerical method for second order linear ODEs of a
+ \AB{Abs should mention apps plus that's a good excuse to motivate the switching. An idea:
+   Linear second order ODEs have applications including
+   special functions, quantum physics, and cosmology, and
+   transitions from highly oscillatory to evansescent (smooth) regions are common.} 
+  We introduce an efficient numerical method for second order linear ODEs of a
 single dependent variable posed as initial value problems, the solution of
 which may vary between being highly oscillatory to slowly changing over the
-course of the solution interval. 
+course of the solution interval. \AB{this opening makes the range of application sound narrow. We want to say it is wide. Eg, no need to emphasize "single dep var": it is assumed unless you say "system of ODEs". We are selling a new idea that maybe could be generalized?}
+\AB{Our contrib is mainly the Riccati method, so I think that should go first,
+  before describing switching or the (standard) smooth spectral part.}
+\AB{We should summarize key ideas that I think are new, specific, and will set the paper apart from previous work:
+  In oscillatory regions
+  a {\em phase function} representation
+  for a solution pair $u(t) = e^{\pm z(t)}$ is used,
+  so that $z'$ satisfies a nonlinear Riccati equation.
+  %Note how we pack in teaching the reader the connections here
+  We introduce % key word to say what is new
+  a defect-correction iteration that gives an asymptotic series for
+  a {\em non-oscillatory}
+  Riccati solution on an interval;
+  this iteration may thus may be spectrally approximated on a
+  Chebychev grid with a small
+  number of nodes.  % thus since non-osc -> small nodes
+  % I'm trying to pack info about our core contrib.
+  For analytic coefficients
+  we prove the asymptotic convergence of the resulting residual,
+  with explicit error bounds given the number of terms.
+}
 The algorithm automatically switches between two methods for dealing with the
-two types of behaviour and has $\bigO(1)$ runtime in terms of the frequency
-of oscillations in the highly oscillatory regime. It is arbitrarily high
-order accurate in both the oscillatory and the slowly changing regime.
-When the solution changes slowly a spectral methods based on Chebyshev
+two types of behaviour and has $\bigO(1)$ runtime with respect to
+the frequency
+%of oscillations % don't need
+in the highly oscillatory regime.
+% apart from switching, this repeats title -> cut.
+It is %arbitrarily high order = spectral
+\AB{spectrally}
+accurate in both the oscillatory and the %slowly changing
+smooth
+regimes.
+When the solution changes slowly a spectral method based on Chebyshev
 nodes is used, where the number of nodes is changed adaptively to ensure the local error is
-within a user specified tolerance. During a highly oscillatory phase, the
+within a user specified tolerance.
+During a highly oscillatory phase, the
 ODE is converted to Riccati form and a non-oscillory solution is
 constructed for the logarithmic derivative of the dependent variable (the
-``phase function'') via an asymptotic series. The number of terms included
-in the series is also adaptive. 
+phase function) via an asymptotic series. % note inline formula conveys this more easily to the reader
+\AB{This is fine but see above too.}
+The number of terms included
+in the series is also adaptive.
 We describe in detail each method making up the algorithm and analyse their
-error. We prove that the asymptotic series achieves temporary
+error.
+\AB{well, we only analyze the Riccati error - might be better to place that statment right after Riccati method - see above.}
+We prove that the asymptotic series achieves temporary
 geometric convergence in terms of the residual of the Riccati equation with a
 rate that improves as the rate of change of the frequency gets smaller
-relative to its magnitude. We demonstrate the efficiency and applications of
+relative to its magnitude.
+\AB{Great. need to say: for analytic coefficients. Can merge that into the above?}
+We demonstrate the \AB{its} efficiency and applications
+\AB{I think better to say ``in apps'' rather than ``and apps''}
+of
 the algorithm through several numerical examples in which we also compare
 it to other state-of-the art numerical solvers for oscillatory problems.
+\AB{long sentence; split. Can you also be specific about metric, eg number of func evals, or CPU time?}
+\AB{Can we say our solver has advantages over previous frequency-indep
+  methods esp when demanding high accuracy? Again aim for specificity but in the minimum number of words.}
 \end{abstract}
+
+ 
 
 \section{Introduction}
 
@@ -695,7 +753,7 @@ in detail in the next section.
 At each timestep $t_i$, a decision needs to be made about whether to attempt a
 step using the spectral method or the asymptotic exansion. The two types of
 steps could be attempted simultaneously and the decision could be made based on
-their estimated error (as done in \cite{agocs2020efficient,}), but in order to minimise
+their estimated error (as done in \cite{agocs2020efficient}), but in order to minimise
 computation time, we estimate whether the asymptotic expansion would
 converge quickly enough first. Inspecting the first few iterates of the asymptotic
 method from \cref{init,iter}, and noting that the convergence rate is
@@ -1210,15 +1268,21 @@ created specifically for highly oscillatory ODEs. We compare the performance of
 the present solver with theirs in this section. For reference, a short
 description of the available numerical solvers is found below, along with the
 names by which they will be referred to hereafter. 
+\AB{maybe we should give ``this work'' a name: Riccati defect correciton (RDC) or something}
 %
 \begin{description}
-    \item[The phase function method]{is an arbitrarily high-order solver
-        described in \cite{bremer2018}, specifically created for highly
+\item[The \AB{Kummer?}
+  phase function method]{is an arbitrarily high-order solver
+        described by Bremer \cite{bremer2018}, specifically created for highly
         oscillatory problems, operating near machine precision. Its main
         drawbacks are the lack of generalisability to include a friction term
         and to operate at low frequencies or non-oscillatory regions of the
-        solution. The method is callable from \texttt{Fortran 90}.}
-    \item[\texttt{\textbf{oscode}}]{is a low-order numerical solver
+        solution. Bremer provides a \texttt{Fortran 90} implementation.
+        % note the "method" is not specific to F90 !
+        }
+\item[oscode]   % sorry gives tex errs for me, will work on
+  %\texttt{\textbf{oscode}}
+{is a low-order numerical solver
         \cite{agocs2020efficient,agocs2020dense} that can accommodate a
         friction term and nonoscillatory regions in the solution. It requires
         only requires the user to specify $\om$ and $\g$, which can be given as
@@ -1231,7 +1295,9 @@ names by which they will be referred to hereafter.
         method. Its convergence order in the oscillatory regions is one higher
         than that of \texttt{oscode}, but does not (easily) generalise to
         include a $\g$ term. It further requires the user to specify the
-        derivatives of $\om$ by hand, up to $\om^{(5)}$. It is implemented in \texttt{MATLAB}.}
+        derivatives of $\om$ by hand, up to $\om^{(5)}$. It is implemented in \texttt{MATLAB}.
+        \AB{Emphasize it's recent?}
+    }
 \end{description}
 %
 Since solvers not created specifically for oscillatory problems typically have
