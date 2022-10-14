@@ -8,6 +8,7 @@
 \usepackage{xcolor}
 \usepackage[colorlinks]{hyperref} % Hyperlinks
 \usepackage[capitalise, nameinlink]{cleveref} % Better referencing
+\crefname{equation}{}{} % Cref shows eqs as (n) rather than Eq. (n)
 \usepackage{array}
 \usepackage{showlabels} % Shows eq, fig, etc labels
 \usepackage{siunitx} % SI units
@@ -89,109 +90,38 @@
 
 \begin{document}
 
-
-
-%Some notes:
-
-%There are some commented lines just before the bibliography (starting '% Some things left to do') which I think would be worth doing, but I'd like your opinion on this.
-
-%There is an entire subsection dedicated to the cosmology example you've seen before, commented out. I didn't have a good place for this and the paper is already over 20 pages long.
-
-
-
-\title{An arbitrarily high order accurate numerical method with
-frequency-independent runtime for highly oscillatory second order linear ODEs}
-%\title{Analysis of an iteration for non-oscillatory solutions to the Riccati form of the phase function for 2nd-order linear ODEs} % glad you killed the version starting "Analysis..." :)
-
+\title{An adaptive spectral method for oscillatory second-order linear ODEs with frequency-independent cost }
 
 \author{Fruzsina J.\ Agocs and Alex H.\ Barnett}
-\date{\today
-\AB{title bit long. how can make shorter \& catchier? (``high'' appears twice.)
-  To me the new ideas are: phase function iteration (defect correction), spectral (= arb high ord); adaptivity; switching; damping term.
-  So how about:
-  An adaptive switching spectral method
-  for oscillatory second-order linear ODEs with frequency-independent cost.
-  Try rearranging the words a lot.
-  An iterative (Riccati) phase function spectral solver
-  for oscillatory second-order linear ODEs with frequency-independent cost.
-  ETC
-}  
-}
 \maketitle
 
 \begin{abstract}
- \AB{Abs should mention apps plus that's a good excuse to motivate the switching. An idea:
-   Linear second order ODEs have applications including
-   special functions, quantum physics, and cosmology, and
-   transitions from highly oscillatory to %evansescent
-   smooth regions are common.} 
-  We introduce an efficient numerical method for second order linear ODEs of a
-single dependent variable posed as initial value problems, the solution of
-which may vary between being highly oscillatory to slowly changing over the
-course of the solution interval. \AB{this opening makes the range of application sound narrow. We want to say it is wide. Eg, no need to emphasize "single dep var": it is assumed unless you say "system of ODEs". We are selling a new idea that maybe could be generalized?}
-\AB{Our contrib is mainly the Riccati method, so I think that should go first,
-  before describing switching or the (standard) smooth spectral part.}
-\AB{We should summarize key ideas that I think are new, specific, and will set the paper apart from previous work:
-  In oscillatory regions
-  a {\em phase function} representation
-  for a solution pair $u(t) = e^{\pm z(t)}$ is used,
-  so that $z'$ satisfies a nonlinear Riccati equation.
-  %Note how we pack in teaching the reader the connections here
-  We introduce % key word to say what is new
-  a defect-correction iteration that gives an asymptotic series for
-  a {\em non-oscillatory}
-  Riccati solution on an interval;
-  this iteration may thus may be spectrally approximated on a
-  Chebychev grid with a small
-  number of nodes.  % thus since non-osc -> small nodes
-  % I'm trying to pack info about our core contrib.
-  For analytic coefficients
-  we prove the asymptotic convergence of the resulting residual,
-  with explicit error bounds given the number of terms.
-}
-The algorithm automatically switches between two methods for dealing with the
-two types of behaviour and has $\bigO(1)$ runtime with respect to
-the frequency
-%of oscillations % don't need
-in the highly oscillatory regime.
-% apart from switching, this repeats title -> cut.
-It is %arbitrarily high order = spectral
-\AB{spectrally}
-accurate in both the oscillatory and the %slowly changing
-smooth
-regimes.
+Second order linear ODEs occur in a wide range of applications including the
+evaluation of special functions, quantum mechanics, and cosmology.
+Transitions between highly oscillatory to slowly-varying regions in their
+solutions are common but pose a challenge for both standard and specialised
+oscillatory numerical solvers.
+We introduce an efficient numerical method for second order linear ODEs posed
+as initial value problems (but note that the method may be generalised to
+solve boundary value problems), the solution of which may vary between
+being highly oscillatory to slowly changing over the course of the solution interval.
+In oscillatory regions
+a \emph{phase function} representation for a solution pair $u(t) = e^{\pm
+z(t)}$ is used, where $u(t)$ is the dependent variable appearing in the ODE
+to be solved, so that $z'$ satisfies a nonlinear Riccati equation.  We
+introduce a defect-correction iteration that gives an asymptotic series for
+a \emph{non-oscillatory} Riccati solution on an interval; this iteration may
+thus may be spectrally approximated on a Chebyshev grid with a small number
+of nodes. For the case of the ODE having analytic coefficients, we prove
+the asymptotic convergence of the Riccati equation's residual at a rate that improves as the rate of change of the frequency gets smaller relative to its magnitude. 
+We also provide explicit error bounds given the number of terms in the asymptotic series.
 When the solution changes slowly a spectral method based on Chebyshev
-nodes is used, where the number of nodes is changed adaptively to ensure the local error is
-within a user specified tolerance.
-During a highly oscillatory phase, the
-ODE is converted to Riccati form and a non-oscillory solution is
-constructed for the logarithmic derivative of the dependent variable (the
-phase function) via an asymptotic series. % note inline formula conveys this more easily to the reader
-\AB{This is fine but see above too.}
-The number of terms included
-in the series is also adaptive.
-We describe in detail each method making up the algorithm and analyse their
-error.
-\AB{well, we only analyze the Riccati error - might be better to place that statment right after Riccati method - see above.}
-We prove that the asymptotic series achieves temporary
-geometric convergence in terms of the residual of the Riccati equation with a
-rate that improves as the rate of change of the frequency gets smaller
-relative to its magnitude.
-\AB{Great. need to say: for analytic coefficients. Can merge that into the above?}
-We demonstrate the \AB{its} efficiency and applications
-\AB{I think better to say ``in apps'' rather than ``and apps''}
-of
-the algorithm through several numerical examples in which we also compare
-it to other state-of-the art numerical solvers for oscillatory problems.
-\AB{long sentence; split. Can you also be specific about metric, eg number of func evals, or CPU time?}
-\AB{Can we say our solver has advantages over previous frequency-indep
-  methods esp when demanding high accuracy? Again aim for specificity but in the minimum number of words.}
+nodes is used, where the number of nodes is changed adaptively. The algorithm switches automatically between the above two methods depending on the behaviour of the solution.
+We demonstrate the algorithm's efficiency in applications through several numerical examples.
+We compare its performance to that of other state-of-the art numerical solvers for oscillatory problems by measuring the achieved accuracy, CPU time, number of function evaluations, and other metrics. 
+The experiments show that our solver outperforms existing existing algorithms with a frequency-independent runtime, most significantly at low-to-intermediate frequencies and at low tolerances, where our method
+performs as much as $10^6$ times fewer function evaluations. Even at high frequencies, our method is on average $10$ times faster than other specialised solvers.
 \end{abstract}
-
- 
-\AB{overall: is there a way to make \cref not write Eq.~(3) but instead
-  write (3)? This is standard; Eq. everywhere is arcane.}
-
 
 \section{Introduction}
 
@@ -201,48 +131,45 @@ equations (ODEs) has long been a challenge.
 A wide range of specialised methods exists for dealing with ODEs
 with different structures,
 thorough reviews of which are found in
-\cite{petzold1997,engquist2009}. Due to the large number of ways oscillations
-in ODEs can arise, only a handful of methods have been designed to deal with any
-given type of oscillatory ODE.
-\AB{I don't get this last ``ways'' - are you thinking of nonlin vs lin, or systems vs scalar, or nth-order vs 2nd-order? We know you need at least 2nd ord or 2 coupled 1st ord to get osc, but then there is only one mechanism. Suggest cut.}
-
-In this work we focus on ODEs of a \AB{particular $\to$ commonly occurring}
-form: the general \AB{$\to$ variable-coefficient} linear, second
-order ODE for a single variable in one dimension
-\AB{are the coeffs smooth, piecewise smooth, analytic, etc?},
+\cite{petzold1997,engquist2009}. 
+In this work we focus on ODEs of a commonly occurring
+form: the variable-coefficient, linear, second
+order ODE with \Fruzsi{analytic} coefficients
 which includes the time-dependent or generalised single harmonic oscillator.
 Since approximation by harmonic oscillators is ubiquitous in physical models,
 this ODE, albeit simple-looking, is pivotal in many computational physics problems.
-\AB{need to back this up: can say that in early-universe sims need
-  to run millions of such ODE solns at different parameters, so solution needs to be very rapid. People tend to assume ODEs are solved, so some modern motivation needed.}
-\AB{Can you cite apps: your cosmo, 1D QM eg book, variable-parameter oscillators?}
-\AB{other apps ideas - please check them out to see if appropriate:
-https://www.sciencedirect.com/science/article/pii/S0167268196008761
-https://www.sciencedirect.com/science/article/abs/pii/S0375960117311714
-Refs inside here (not the thing itself):
-https://apps.dtic.mil/sti/pdfs/ADA267246.pdf
-Ah, this one has some refs in the intro, maybe add a couple of the
-most compelling ones:
-https://arxiv.org/pdf/2205.01781.pdf
-}
-\AB{Maybe something on (or in concl):
-  our proposed method could give a simple and efficient numerical
-  replacement for complicated asymptotic analytic methods:
-%  https://www.math.leidenuniv.nl/~vivi/stud_sem2011/BosleyKevorkian92.pdf  latex fail
- https://arxiv.org/pdf/2205.01781.pdf
-}
+As an example, models of cosmology are compared and their parameters estimated
+via Bayesian inference. If the model involves inflation, an early phase of
+accelerated expansion, then the relevant equation of motion describing the
+time-evolution of perturbations in matter density (and spacetime curvature)
+takes the form described above with solutions that typically start off smooth,
+become highly oscillatory, then turn smooth again (see, for example,
+\cite{agocs2020dense}). This equation needs to be solved $\approx 10^3$ times
+for different perturbation Fourier components, with the ODE having different
+coefficients that depend on the wavenumber. This process is repeated for each
+different set of values for the parameters defining the cosmological model,
+until their posterior distribution (conditioned on some observations) is
+mapped, typically costing $10^6$ likelihood evaluations. This totals to
+$\mathcal{O}(10^9)$ solutions of the highly oscillatory ODE, which is only
+feasible if an extremely efficient numerical method is used.
+Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this type of ODEs appear in
+Hamiltonian dynamics \cite{Pritula2018,fiore2022}, particle accelerators and plasma physics
+\cite{courant1958,davidson2001,hazeltine2003,lewis1968}, electric circuits
+\cite{likharev2022}, satellite systems \cite{saxena2020}, acoustics and gravity waves \cite{filippi1998,einaudi1970}, quantum mechanics \cite{griffiths2018,adhikari1988,arnold2011wkb,cea1982}, and other fields.
+In several of the above references, our proposed method could give a simple an efficient numerical replacement for
+asymptotic analytic methods which at high order can become cumbersome to apply.
+%  https://www.math.leidenuniv.nl/~vivi/stud_sem2011/BosleyKevorkian92.pdf  latex fail -> coupled oscillators
   
 
 The ODE of interest takes the form
-%We are interested in efficient numerical solution of
-%the oscillatory linear 2nd-order ordinary differential equation (ODE)
 \be
 u''(t) + 2\g(t) u'(t) + \om^2(t)u(t) = 0, \qquad t \in (t_0,t_1),
 \label{ode}
 \ee
-\AB{where $\g$ is a given smooth ($C^\infty$) {\em damping} function,
-  and $\om$ is a given smooth, and possibly large, real-valued
-  {\em local frequency} function.}
+where $\g$ is a given smooth ($C^\infty$) \emph{damping} function,
+and $\om$ is a given smooth, and possibly large, real-valued
+\emph{local frequency} function.
+For now, we only consider the case when $\om$ is purely real, 
 \AB{discuss if $\om$ is pure real or pure im.
   Tricky if we don't allow pure im, ie $\om^2<0$ then we don't get to
   talk about evanescent regions which are ubiquitous in QM apps.
@@ -316,15 +243,12 @@ and make the substitutions $u = e^{z/\varepsilon}$, $z' = x$ to get the Riccati 
 \AB{Note this is a great opportunity to set up the notation for our method here, ie to make this {ricc}. Then set $g\equiv 0$ for the WKB only tutorial.}
 Then try the regular perturbation expansion
 \be\label{wkbexpansion}
-x = \sum_{i=0}^{N} x_i\varepsilon^i,
+x = \sum_{j=0}^{N} x_j\varepsilon^i,
 \ee
 and match powers of $\varepsilon$ in \cref{odewkb} to obtain the recursion relation
-\begin{align}\label{wkbrecur}
-    x_0 &= \pm i\om,\\
-    x_i &= -\frac{1}{2x_0}\left( \dot{x}_{i-1} + \sum_{k = 1}^{i-1}x_k x_{i-k} \right). \mbox{\AB{is this for $i=1,2\dots$ ?  And could combine on one line to make this WKB section more compact}}
-\end{align}
-\AB{Notation: better to use $j$ not $i$ here, since that's the symbol
-  we use for iteration later. Always keep a symbol consistent when possible to reduce confusion}
+\begin{equation}\label{wkbrecur}
+    x_0 = \pm i\om, \quad x_j = -\frac{1}{2x_0}\left( \dot{x}_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots, N.
+\end{equation}
 Although originally an analytic tool,
 WKB has recently been exploited in numerical methods.  % note the pivot, since it's a surprise
 It forms the basis of the method described in
@@ -1573,11 +1497,11 @@ The quantities tabulated are described in detail below.
         comparison for the methods presented, since even though the ODE solves
         were timed on the same machine, the methods have been implemented in
         different programming languages.}
-    \item[$\bm{t_{\mathrm{eval}}}$:]{Time it takes for the program to evaluate
-        the solution at an arbitrary point other than the internal timesteps.
-        This time should be compared to the ``average phase function evaluation
-        time'' of Table 1 \cite{bremer2018}, but as all runtimes, should not be
-        used for the sake of comparison on its own.}
+%    \item[$\bm{t_{\mathrm{eval}}}$:]{Time it takes for the program to evaluate
+%        the solution at an arbitrary point other than the internal timesteps.
+%        This time should be compared to the ``average phase function evaluation
+%        time'' of Table 1 \cite{bremer2018}, but as all runtimes, should not be
+%        used for the sake of comparison on its own.}
     \item[$\bm{n_{\mathrm{s,osc}}}$:]{Number of steps taken by the solver with
         a specialised method in the oscillatory regime. This quantity is only
         applicable for the present solver, \texttt{oscode}, and the WKB
@@ -1646,8 +1570,7 @@ compute said derivatives numerically. Three methods (the present solver, the
 phase function method, and \texttt{oscode}) offer a dense output option, \ie
 can perform interpolation and compute the numerical solution in-between
 internal steps, and do so by interpolating a slowly-varying phase function,
-therefore they all have evaluation times of $t_{\text{eval}} =
-\mathcal{O}(10^{-6})$ \si{\s}.  
+therefore they all have evaluation times of $\mathcal{O}(10^{-6})$ \si{\s}.  
 
 \begin{figure}[tb]
     \centering
@@ -1699,9 +1622,6 @@ function $x$ in $\bigO(1)$ time, independently of the order $n$ in \cref{legendr
     headers are identical to those in \cref{bremer237tab} and are explained in
     the text. \label{legendre-results}}
 \end{table*}
-
-
-
 
 
 %\subsection{An example from cosmology \label{cosmo-example-sec}}
@@ -1908,7 +1828,7 @@ We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
 and Manas Rachh.
 The Flatiron Institute is a division of the Simons Foundation.
 
-% Some things left to do:  (are this FA or AB ones? Are some obsolete?)
+% Some things left to do:  (are this FA or AB ones? Are some obsolete?) These are for FA! Some may be obsolete.
 % AB comments with "-"
 
 % Figure for complex plane setup for proof of thm 3
@@ -1944,6 +1864,37 @@ The Flatiron Institute is a division of the Simons Foundation.
 % - just in intro
 
 % BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+\Fruzsi{
+\section{List of changes}
+
+\begin{itemize}
+    \item{General
+        \begin{itemize}
+            \item{Formatted cref so that equations appear in brackets without the ``Eq.'' in front.}
+            \item{Removed $t_{\mathrm{eval}}$ from tables and text since not measured.}
+        \end{itemize}
+    }
+    \item{Introduction
+        \begin{itemize}
+            \item{Removed bit on oscillatory behaviour in ODEs arising in different ways (was thinking about oscillatory forcing terms, coupled first-order ODEs, etc).}
+            \item{Added examples for ODEs of interest in areas of physics and engineering, with citations. Added argument that our method could replace analytic asymptotics applied by hand.}
+            \item{Changed criteria on $\om$, $\gamma$ as per suggestion.}
+            \item{Notation change $i \to j$ in WKB ansatz, also compressed to one line.}
+        \end{itemize}
+    }
+
+    \item{Abstract
+        \begin{itemize}
+            \item{Changed title to be shorter, ``arbitrarily high-order'' to spectral, added adaptivity.}
+            \item{Scope of work sounded too narrow, so removed ``ODE of a single dependent variable'', and added BVPs.}
+            \item{Reordered introduction to methods and added more detail for Riccati steps.}
+            \item{Added comparison to other solvers.}
+        \end{itemize}
+    }
+    \item{}
+\end{itemize}
+
+}
 \bibliographystyle{abbrv}
 \bibliography{refs}
 \end{document}
