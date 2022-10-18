@@ -220,7 +220,7 @@ u'' + 2\gamma u' + \om_0^2 \Omega^2 u = 0,
 \ee
 and make the substitutions $u = e^{\om_0 z}$, $z' = x$ to get the Riccati form of the equation,
 \be\label{riccwkb}
-\varepsilon x' + 2\gamma x + \om_0 x^2 + \om_0 \Omega^2 = 0.
+x' + 2\gamma x + \om_0 x^2 + \om_0 \Omega^2 = 0.
 \ee
 Then try the regular perturbation expansion
 \be\label{wkbexpansion}
@@ -231,14 +231,16 @@ and match powers of $\om_0$ in \cref{odewkb} to obtain the recursion relation (w
     x_0 = \pm i\Omega, \quad x_j = -\frac{1}{2x_0}\left( \dot{x}_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots, N.
 \end{equation}
 Although originally an analytic tool,
-WKB has recently been exploited in numerical methods.  % note the pivot, since it's a surprise
-It forms the basis of the method described in
+WKB has recently been exploited in numerical methods. These algorithms achieve
+$\bigO(1)$ (frequency-independent) runtime in regions where the asymptotic
+series is a sufficiently good approximation.
+% note the pivot, since it's a surprise
+WKB forms the basis of the method described in
 \cite{agocs2020efficient,agocs2020dense}, and associated open-source software
 package \texttt{oscode} \cite{agocs2020joss}. This uses the expansion
 \cref{wkbexpansion} up to and including $x_3$ to advance the numerical solution
 for $u(t)$ in a time-stepping context, but has the ability to switch to a 4,5th
-order Runge--Kutta pair if the asymptotic expansion isn't accurate enough. 
-In \cite{arnold2011wkb,korner2022wkb} the ``WKB marching method'' uses the same
+order Runge--Kutta pair if the asymptotic expansion isn't accurate enough. In \cite{arnold2011wkb,korner2022wkb} the ``WKB marching method'' uses the same
 expansion truncated after $x_2$ to transform \cref{odewkb} into a smoother
 problem in the highly oscillatory regions, otherwise switching to a 4,5th order
 Runge--Kutta method.
@@ -260,7 +262,7 @@ A consequence of these two methods having low $h$-order and fixed asymptotic
 order is that they are forced to take very small stepsizes at low tolerances,
 %which in turn causes them to switch over to their respective Runge--Kutta solvers 
 even if the solution is oscillatory. They are therefore only efficient if no more than about 6 digits of accuracy
-are required, and can suffer at low-to-intermediate frequencies. Our method, on the other hand, is spectrally accurate and 
+are required, and can suffer at low-to-intermediate frequencies where more asymptotic terms would be required. Our method, on the other hand, is both spectrally accurate and 
 adaptive in the number of terms in its asymptotic expansion.
 
 %The local error of our proposed
@@ -282,7 +284,7 @@ of \cref{riccwkb} with a series of iterates $x_i(t)$ by converting it to a set
 of recurrence differential equations
 \begin{gather}\label{qlmode}
 x_0 = \pm i\om, \\
-    \varepsilon x_j' - x_{j-1}^2 + 2x_j x_{j-1} + \om^2 = 0, \quad \text{for } j = 1, 2, \ldots, N, 
+    x_j' - x_{j-1}^2 + 2x_j x_{j-1} + \om^2 = 0, \quad \text{for } j = 1, 2, \ldots, N, 
 \end{gather}
 and either solving them analytically, \eg in \cite{mandelzweig2004,krivec2006}
 or numerically \cite{krivec2008,krivec2014}. The semi-analytic approach
@@ -294,54 +296,45 @@ since \cref{qlmode} itself is also oscillatory.
 % Accuracy?
 % arbitrarily high order
 Recently Bremer \cite{bremer2018} following \cite{heitman2015,bremer2016} has proposed an efficient
-method for solving \cref{ode}, in the special case $\g\equiv 0$,
-in the high frequency regime that runs
-in $\bigO(1)$ time, independently of the magnitude of the frequency of
-oscillations $\lambda$,
-\AB{Is this distinct from the WKB methods just described?
-  Ie, don't they also run in $\bigO(1)$ time?
-  In which case I suggest we state that above, and not make it a new property here.
-  To me the Bremer innovation is high-order approximation of phase func
-  on intervals,
-  plus convergence, plus code.}
-which they define as $\om^2 = \lambda^2 q(t)$.
-\AB{I suggest we don't introduce another symbol,
-  just because Bremer does. I know that's common in physics since
-  the symbols themselves are sacrosanct. In math it's less so.
-  It would give a clearer comparison to our later statments
-  if we said $\om^2(t) = \om_0^2 q(t)$, where $q(t)$ is of order unity.}
-  The method aims to find a nonoscillatory phase function $\alpha(t)$, defined
-via Kummer's equation, a nonlinear and generally oscillatory ODE, and will therefore be
+method for solving \cref{ode}, in the special case $\g = 0$, in the high frequency regime. 
+%\AB{Is this distinct from the WKB methods just described?
+%  Ie, don't they also run in $\bigO(1)$ time?
+%  In which case I suggest we state that above, and not make it a new property here.
+%  To me the Bremer innovation is high-order approximation of phase func
+%  on intervals,
+%  plus convergence, plus code.}
+The method aims to find a nonoscillatory phase function $\alpha(t)$, defined
+via Kummer's equation,
+\be
+\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
+\om(t)^2 = 0,
+\label{kummer}
+\ee
+a nonlinear and generally oscillatory ODE, and will therefore be
 referred to as the phase function method hereafter.
-\AB{I think you should move eq {kummer} here otherwise reader doesn't know what it is}.
+%\AB{I think you should move eq {kummer} here otherwise reader doesn't know what it is}.
 The nonoscillatory phase function $\alpha$ can be used to compute an approximation
-of the solution of \cref{ode} accurate to within
-$\bigO((\mu\lambda)^{-1}\exp(-\mu\lambda))$, where $\mu$ is a constant that depends on $q(t)$ but not $\lambda$.
-\AB{need to add: asymptotically as  $\lambda\to\infty$. But we rephrase
-in terms of $\om_0$ instead.}
-The proposed algorithm itself generates $\tilde{\alpha}$, an
-\emph{approximation}
-\AB{not sure why emph here?}
+of the solution of \cref{riccwkb} accurate to within
+$\bigO((\mu\om_0)^{-1}\exp(-\mu\om_0))$ as $\om_0 \to \infty$, where $\mu$ is a constant that depends on $\Omega(t)$ but not $\om_0$.
+The proposed algorithm itself generates $\tilde{\alpha}$, an approximation
 of $\alpha$, such that the logarithm form of Kummer's
-equation is satisfied to within $\bigO(-\tfrac{1}{2}\mu\lambda)$. These
+equation is satisfied to within $\bigO(-\tfrac{1}{2}\mu\om_0)$. These
 generated phase functions are nonoscillatory in the sense that they can be
 accurately represented using a series expansion (\eg via Chebyshev polynomials)
-with $\bigO(1)$ terms, independently of $\lambda$.
-The basis of the method are the observations
-\AB{proof not obs}
-of \cite{heitman2015,bremer2016}
-that prove the existence of such nonoscillatory phase functions if $q(t)$ is
-nonoscillatory, in the sense that the Fourier transform of $\log q$ is smooth
+with $\bigO(1)$ terms, independently of $\om_0$.
+The basis of the method are the results of \cite{heitman2015,bremer2016}
+that prove the existence of such nonoscillatory phase functions if $\Omega(t)$ is
+nonoscillatory, in the sense that the Fourier transform of $\log \Omega$ is smooth
 and rapidly decaying.
 Finding initial conditions on the phase function leading to
 a nonoscillatory solution is, however, challenging.
 The authors of \cite{bremer2018} proposed a ``windowing'' method to numerically find such a global phase function
 on an interval:
-the idea is to first transform the interval $t \in [a,b]$ to $[0, 1]$, then use a $C^\infty$ partition of unity near $t=1$ to smoothly ``blend'' $q$ to
+the idea is to first transform the interval $t \in [a,b]$ to $[0, 1]$, then use a $C^\infty$ partition of unity near $t=1$ to smoothly ``blend'' $\Omega$ to
 a constant function, integrate backwards from the constant region
-down to $t = 0$, and finally integrating $t \in [0,1]$ forward using the original $q$.
+down to $t = 0$, and finally integrating $t \in [0,1]$ forward using the original $\Omega$.
 This exploits the facts that a nonoscillatory phase function for
-the constant case $q(t) = \om_0^2$ is simple to write down; and
+the constant case $\Omega(t) = 1$ is simple to write down; and
 that the smooth window allows
 the nonlinear Kummer oscillator to make a smooth 
 %(in physics terminology ``adiabatic'') 
@@ -349,18 +342,26 @@ transition which excites only an exponentially small oscillation amplitude.
 \AB{something about windowing involves parameter choices.
   Nevertheless Bremer's is the most efficient
   and accurate prior method known to the authors.}
+\Fruzsi{Need clarification about this comment.}
 
 Here we present an approach using an asymptotic expansion for a nonoscillatory Riccati phase function,
 meaning simply that the
 phase function is the logarithmic derivative $x(t) = (\log u(t))'$ from \cref{riccwkb}.
-%\AB{good that you tied it into prior equation. It will be perfect
-%  when we fix that prior eqn to be \{ricc\}.}
 %
-The expansion does not introduce oscillatory contributions,
+The series representing the phase function is constructed via a defect
+correction scheme, see \cite{bohmer1984} and references therein. It is,
+however, asymptotic not convergent, thus only a limited number of iterates may
+be used before it becomes unstable, which we address numerically.  
+%
+Our algorithm is capable of handling a non-zero damping term $\g \neq 0$,
+allowing for the direct solution of a wider range of second order, linear ODEs
+than the WKB-marching and the phase function method. 
+%
+The expansion we use does not introduce oscillatory contributions,
 hence finds a nonoscillatory approximate phase function without
-reference to initial conditions, in contrast to the phase function method.
+reference to initial conditions, in contrast to the phase function method. 
 %
-Another crucial difference from the phase function method is that $x(t)$ is solved for
+Another crucial difference from the latter is that $x(t)$ is solved for
 locally on an interval with an adaptively-chosen length, rather than globally.
 Solutions to \cref{ode,ic0,ic1} are then constructed by time-stepping over the
 integration range and matching Cauchy boundary data over adjacent intervals.
@@ -371,19 +372,15 @@ involves the previous term $x_{i-1}$ as opposed to all past terms in
 \cref{wkbrecur}. 
 %
 The simplicity of the recursion relation makes it
-computationally simpler for the method to be adaptive in the number of terms it
-uses in the asymptotic expansion, which allows it to outcompete the
-fixed-asymptotic-order WKB-marching method \cite{korner2022wkb,arnold2011wkb}
-and \texttt{oscode} \cite{agocs2020efficient,agocs2020dense} in regions of low-to-intermediate $\omega$.
-\AB{This is great. Discuss high-accuracy regime too where WKB is only
-  1st-order, or combine with the critique of WKB/QLM above}
+computationally simpler for the method to be adaptive in the number of terms 
+used in the asymptotic expansion.
 %
 The expansion presented here has similar accuracy, and
 exhibits geometric convergence for the first few iterations, which we show
 formally in \cref{errorana}. The iterations are computed using high-order
 numerical differentiation, rather than algebraically as the WKB expansion is
 usually applied.
-
+%
 The phase function method, as with WKB or QLM methods,
 is naturally only applicable in the high frequency regime.
 Thus, in the present work, we borrow ideas from \cite{agocs2020efficient} to
@@ -396,11 +393,6 @@ spectral method on the fly as the solver
 steps through the full user-requested interval $[t_0, t_1]$.
 
 %
-A final advantage of the present method over \eg WKB-marching and the phase function method
-is that it includes a damping term $\g(t)$, allowing direct solution of a wider
-range of second order, linear ODEs.
-\AB{say this early in the ``our proposal'' para instead.}
-\AB{around here say our iteration is a type of defect correction scheme and cite it. However, it is {\em asymptotic} not convergent, thus only a limited number of iterates may be used before going unstable, and we address that numerically.}
 
 %Structure
 This paper is structured as follows. \cref{methods} describes the various
@@ -425,9 +417,9 @@ suggestions for future work.
 \subsection{Riccati phase function solution on a
   single interval \label{phasefun}}
 
-\AB{The following will be cut down quite a bit by moving ricc, kummer,
-  eqns etc to intro as discussed there, and referring back. No eqn need appear
-twice, and repetition is generally avoided}
+%\AB{The following will be cut down quite a bit by moving ricc, kummer,
+%  eqns etc to intro as discussed there, and referring back. No eqn need appear
+%twice, and repetition is generally avoided}
 
 We will use prime to denote differentiation with respect to time $t$.
 We consider an interval $t\in[a,b]$ lying in $[0,1]$.  
@@ -441,14 +433,14 @@ x' + x^2 + 2\g(t)x + \om(t)^2 = 0.
 %For the sake of simplicity, let us set $\g(t) = 0$ for the time being.
 Almost all solutions to \cref{ricc} are oscillatory,
 as the presence of $\om(t)$ would suggest.
-This is illustrated by the case of constant $\om(t) = \om_0^2$
-and $\g(t)\equiv0$,
+This is illustrated by the case of constant $\om(t) = \om_0$
+and $\g(t)\equiv 0$,
 which has only the family of analytic solutions
 $x(t) = \om_0 \tan(\alpha - \om_0t)$ parameterized by $\alpha\in\C$,
 where $\re \alpha$ is interpreted as a phase shift and $\im \alpha$
 controls the amplitude. Their oscillation frequency is $2\om_0$.
-\AB{note the $\om_0$ then reinforces using this instead of $\lambda$
-  in the intro for Bremer.}
+%\AB{note the $\om_0$ then reinforces using this instead of $\lambda$
+%  in the intro for Bremer.}
 However, the limit $\im \alpha \to \pm \infty$ produces
 the only two nonoscillatory solutions $x(t) = \pm i\om_0$.
 The picture is similar
@@ -457,13 +449,13 @@ it has recently been proved that there exist nonoscillatory phase functions
 (in a precise sense for $\om\gg 1$ involving exponential decay of the Fourier
 transform) in that case \cite{heitman2015,bremer2016}.
 In fact this result was proven
-for the related real-valued Kummer's equation
-\AB{now we move Kummer back to intro and refer to that}
-\be
-\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
-\om(t)^2 = 0,
-\label{kummer}
-\ee
+for the related real-valued Kummer's equation \cref{kummer},
+%\AB{now we move Kummer back to intro and refer to that}
+%\be
+%\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
+%\om(t)^2 = 0,
+%\label{kummer}
+%\ee
 corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
 but the existence of a nonoscillatory Kummer's solution implies the same for
 a Riccati solution.
