@@ -580,7 +580,7 @@ are met the residual convergences geometrically for the first few iterations wit
 rate that gets better with larger $\om$. We show this formally in \cref{TR}.
 
 \AB{there is currently a problem of ordering in that Fig 1 can't be understood until the Cheby discr method is explained. (Or is Fig 1 not done via Cheby - surely must be). In which case Cheby must come before the demo. I made a crude attempt at this.}
-
+\Fruzsi{I don't think the reader needs to know the details of the Cheby discretization until later, this might be adding too much detail too soon, but I'm happy to keep this paragraph here.}
 The numerical evaluation of the asymptotic solution $x(t)$, and the solution of
 the original ODE $u(t)$ requires repeated differentiation (as part of each
 correction term) and quadrature (since $u(t) = \exp \int^t x(\sigma)
@@ -626,9 +626,9 @@ linear system \cref{scaledDdef}.
 
 
 \subsection{Numerical demonstration of Riccati defect correction iteration}
-\AB{swtiching from presenting the method to testing it makes a needed subsec break here}
+%\AB{swtiching from presenting the method to testing it makes a needed subsec break here}
 
-Here we demonstrate the temporary convergence of the residual by example: in \cref{convergence-plot}, we apply
+Here we demonstrate the temporary convergence of the residual by example: in the left panel of \cref{convergence-plot}, we apply
 the iteration from \cref{init,iter} to the equation 
 \begin{equation}\label{bursteq}
     u'' + \frac{m^2 - 1}{(1+t^2)^2}u = 0,  
@@ -679,8 +679,8 @@ accuracy threshold $\varepsilon$, approximately $k_{\varepsilon} \approx
 
 
 \subsection{Matching Riccati intervals}
-\AB{short but probblay seperate subsec like this, since confusing before
-  the demo of Fig.1}
+%\AB{short but probblay seperate subsec like this, since confusing before
+%  the demo of Fig.1}
 
 We ensure continuity of the solution and its derivative across timestep
 boundaries by treating $u(t_i)$ and $u'(t_i)$ as initial conditions in the step
@@ -977,6 +977,15 @@ and sufficiently large throughout some neighborhood of $t$.
   \label{Rjbnd}
   \ee
 \end{thm}
+%
+\begin{figure*}[tb]
+    \centering
+    \subfloat{\includegraphics[width=0.5\textwidth]{plots/complexsetup.pdf}}
+    %\label{residual-reduction}
+    \subfloat{\includegraphics{plots/convergence.pdf}}
+    \caption{\label{complex-setup} Bla }
+\end{figure*}
+%
 This shows, for $\om$ of sufficiently small derivative
 relative to its magnitude,
 temporary geometric convergence up to $k$ iterations,
@@ -1264,6 +1273,16 @@ oscillation the solution of the ODE has traversed.
     exist or be available.
 \end{defn}
 
+\begin{cor}[Maximum achievable accuracy]\label{mineps}
+In the case of an ODE being solved numerically, the smallest possible
+perturbation to the input data of the system is the (finite) precision with
+which numbers are represented, which is $\varepsilon_{\mathrm{mach}}$, machine
+precision. The best achievable accuracy with any given numerical method on an
+IVP with condition number $\kappa$ is 
+\be
+\varepsilon \geq \kappa \cdot \varepsilon_{\mathrm{mach}}.
+\ee
+\end{cor}
 
 \subsection{The Airy equation}
 
@@ -1275,31 +1294,31 @@ with initial conditions
 \be
 u(1) = \text{Ai}(-1) + i\text{Bi}(-1), \quad u'(1) = - \text{Ai}'(-1) -i\text{Bi}'(-1).
 \ee
-\AB{where Ai, Bi are the Airy functions of types whatever cite DLMF.}
-\AB{Its unique solution is $$u(t) = Ai(-t)$$ or something - crucial to state this :)}
-\AB{Good aim to explain why a good test here. I think we need to refine the
-  points though}
-It serves as a good test case because it is maximally
-\AB{surely any osc soln is equally bad for std methods?}
-hard for standard
-numerical methods due to the frequency growing with time, but should prove to
-be maximally easy for specialised oscillatory methods for the rate of change of
-the frequency decreases with time, making $A\cos(\om t) + B\sin(\om t)$
+where Ai, Bi are the Airy functions of type ...\Fruzsi{cite DLMF/AbramoviczStegun}
+Its unique solution is
+\be
+u(t) = Ai(-t) + iBi(-t).
+\ee
+%\AB{Good aim to explain why a good test here. I think we need to refine the
+%  points though}
+It serves as a good test case because not only is it hard
+%\AB{surely any osc soln is equally bad for std methods?}
+ for standard numerical methods due to the frequency $\om(t)$ growing with time, but should prove to
+be easy for specialised oscillatory methods since the change in $\om(t)$ per wavelength becomes arbitrarily small, making an asymptotic approximation (such as WKB) 
 %-- the zeroth order solution --
-an increasingly good local approximation.
-\AB{We're dancing between a precise and merely intuitive claim here.
-  Maybe rather than state a formula that is not really right since $\om(t)$
-  changes, why not just state in words that the relative
-  change in $\omega(t)$ per wavelength becomes arbitrarily small as $t$ grows?
-  ``Zero order'' sounds precise but I don't think is since what's the expansion, WKB?}
+an increasingly good local appoximation.
+%\AB{We're dancing between a precise and merely intuitive claim here.
+%  Maybe rather than state a formula that is not really right since $\om(t)$
+%  changes, why not just state in words that the relative
+%  change in $\omega(t)$ per wavelength becomes arbitrarily small as $t$ grows?
+%  ``Zero order'' sounds precise but I don't think is since what's the expansion, WKB?}
 With this test
 case one can check whether the method adapts its stepsize correctly and
-achieves the maximum possible accuracy, given by the condition number $\kappa$ of
-the problem from \cref{conditionnodef} times machine precision $\varepsilon_{\text{mach}}$.
-\AB{that last point applies to any osc ode, right?}
+achieves the maximum possible accuracy, defined in \cref{mineps}.
+%\AB{that last point applies to any osc ode, right?}
 
 
-\AB{new para since presenting results now}
+%\AB{new para since presenting results now}
 \cref{airy-results} shows the
 internal steps our numerical solver takes while solving the Airy equation,
 colour-coded by step type, as well as the progression of stepsizes, numerical
@@ -1311,6 +1330,7 @@ within a digit. The number of oscillations traversed per step can be derived
 from $h(t)$: $n_{\text{osc}} \propto \om h \propto t^{3/2}$, which again is
 clearly seen in \cref{airy-results}.
 
+An essential standard measure of robustness for any numerical method is convergence, a plot of accuracy achieved against accuracy demanded. The right panel of \cref{convergence-plot} demonstrates convergence of our method on the Airy equation for different solution interval lengths, achieved by varying $t_1$.
 
 \begin{figure}[tb]
     \centering
@@ -1339,10 +1359,11 @@ created specifically for highly oscillatory ODEs. We compare the performance of
 the present solver with theirs in this section. For reference, a short
 description of the available numerical solvers is found below, along with the
 names by which they will be referred to hereafter. 
-\AB{maybe we should give ``this work'' a name: Riccati defect correciton (RDC) or something}
+%\AB{maybe we should give ``this work'' a name: Riccati defect correciton (RDC) or something}
 %
+\Fruzsi{TODO: give this method a name: RDC (Riccati defect correction), and fix plots).}
 \begin{description}
-\item[The \AB{Kummer?}
+\item[The %\AB{Kummer?}
   phase function method]{is an arbitrarily high-order solver
         described by Bremer \cite{bremer2018}, specifically created for highly
         oscillatory problems, operating near machine precision. Its main
@@ -1832,7 +1853,13 @@ The Flatiron Institute is a division of the Simons Foundation.
         \end{itemize}
     }
 
-    \item{}
+    \item{Numerical results
+        \begin{itemize}
+            \item{Added Corollary after $\kappa$ definition to state maximum achievable accuracy, and referred to this from the Airy equation subsection.}
+            \item{Airy equation: refined justification of this test case, addded new paragraph to point to the convergence plot (right panel of \cref{convergence-plot}.}
+            \item{Going to refer to Bremer's work as phase function method rather than Kummer's phase function method, I think that would be too long.} 
+        \end{itemize}
+    }
 \end{itemize}
 
 }
