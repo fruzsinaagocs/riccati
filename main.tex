@@ -585,8 +585,7 @@ However, the iteration is numerically useful since when the right conditions
 are met the residual convergences geometrically for the first few iterations with a
 rate that gets better with larger $\om$. We show this formally in \cref{TR}.
 
-\AB{there is currently a problem of ordering in that Fig 1 can't be understood until the Cheby discr method is explained. (Or is Fig 1 not done via Cheby - surely must be). In which case Cheby must come before the demo. I made a crude attempt at this.}
-\Fruzsi{I don't think the reader needs to know the details of the Cheby discretization until later, this might be adding too much detail too soon, but I'm happy to keep this paragraph here.}
+%\AB{there is currently a problem of ordering in that Fig 1 can't be understood until the Cheby discr method is explained. (Or is Fig 1 not done via Cheby - surely must be). In which case Cheby must come before the demo. I made a crude attempt at this.}
 The numerical evaluation of the asymptotic solution $x(t)$, and the solution of
 the original ODE $u(t)$ requires repeated differentiation (as part of each
 correction term) and quadrature (since $u(t) = \exp \int^t x(\sigma)
@@ -1373,11 +1372,10 @@ created specifically for highly oscillatory ODEs. We compare the performance of
 the present solver with theirs in this section. For reference, a short
 description of the available numerical solvers is found below, along with the
 names by which they will be referred to hereafter. The method we propose will
-be referred to as \texttt{chasm}, the name of the open-source software
-implementing it.
+be referred to as \texttt{cascade}, named after the open-source software
+implementing it\footnote{\texttt{cascade}: \textbf{c}ode for \textbf{a}daptive \textbf{s}pectral Ric\textbf{ca}ti \textbf{d}efect corr\textbf{e}ction.}.
 %\AB{maybe we should give ``this work'' a name: Riccati defect correciton (RDC) or something}
 %
-\Fruzsi{TODO: give this method a name: RDC (Riccati defect correction), and fix plots).}
 \begin{description}
 \item[The %\AB{Kummer?}
   phase function method]{is an arbitrarily high-order solver
@@ -1403,8 +1401,9 @@ implementing it.
         method. Its convergence order in the oscillatory regions is one higher
         than that of \texttt{oscode}, but does not (easily) generalise to
         include a $\g$ term. It further requires the user to specify the
-        derivatives of $\om$ by hand, up to $\om^{(5)}$. It is implemented in \texttt{MATLAB}.
-        \AB{Emphasize it's recent?}
+        derivatives of $\om$ by hand, up to $\om^{(5)}$. This recently
+        developed method is implemented in \texttt{MATLAB}.
+        %\AB{Emphasize it's recent?}
     }
 \end{description}
 %
@@ -1847,6 +1846,7 @@ The Flatiron Institute is a division of the Simons Foundation.
             \item{Formatted cref so that equations appear in brackets without the ``Eq.'' in front.}
             \item{Removed $t_{\mathrm{eval}}$ from tables and text since not measured.}
             \item{Added a two-panel figure showing 1) a flowchart of the algorithm and 2) the complex plane setup for the proof of the convergence of Riccati iteration.}
+            \item{Our method has a name now! \texttt{cascade}:\texttt{cascade}: \textbf{c}ode for \textbf{a}daptive \textbf{s}pectral Ric\textbf{ca}ti \textbf{d}efect corr\textbf{e}ction. Used this in the legend in \cref{bremer237-timing}. }
         \end{itemize}
     }
     \item{Abstract
