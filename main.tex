@@ -16,6 +16,12 @@
 \usepackage{bold-extra} % bold for texttt
 \usepackage{bm} % bold for maths 
 \usepackage{tabularx} % for nice tables
+\usepackage[export]{adjustbox} % for adjusting the alignment of subfigures
+% Tikz figures
+\usepackage{tikz}
+\usepackage[most]{tcolorbox}
+\usetikzlibrary{positioning}
+
 
 
 % SI unit definitions
@@ -579,8 +585,7 @@ However, the iteration is numerically useful since when the right conditions
 are met the residual convergences geometrically for the first few iterations with a
 rate that gets better with larger $\om$. We show this formally in \cref{TR}.
 
-\AB{there is currently a problem of ordering in that Fig 1 can't be understood until the Cheby discr method is explained. (Or is Fig 1 not done via Cheby - surely must be). In which case Cheby must come before the demo. I made a crude attempt at this.}
-\Fruzsi{I don't think the reader needs to know the details of the Cheby discretization until later, this might be adding too much detail too soon, but I'm happy to keep this paragraph here.}
+%\AB{there is currently a problem of ordering in that Fig 1 can't be understood until the Cheby discr method is explained. (Or is Fig 1 not done via Cheby - surely must be). In which case Cheby must come before the demo. I made a crude attempt at this.}
 The numerical evaluation of the asymptotic solution $x(t)$, and the solution of
 the original ODE $u(t)$ requires repeated differentiation (as part of each
 correction term) and quadrature (since $u(t) = \exp \int^t x(\sigma)
@@ -924,6 +929,9 @@ then estimated and the number of nodes, as well as the stepsize, is
 adapted until a local error value of at most $\varepsilon$ is reached, as described in
 \cref{chebysteps}.
 
+A flowchart showing how estimating the stepsizes and choosing the steptype ties
+together is shown in the left panel of \cref{balls-flowchart}.
+
 
 % EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 \section{Error analysis for the Riccati iteration\label{errorana}}
@@ -980,10 +988,14 @@ and sufficiently large throughout some neighborhood of $t$.
 %
 \begin{figure*}[tb]
     \centering
-    \subfloat{\includegraphics[width=0.5\textwidth]{plots/complexsetup.pdf}}
-    %\label{residual-reduction}
-    \subfloat{\includegraphics{plots/convergence.pdf}}
-    \caption{\label{complex-setup} Bla }
+    \subfloat{\begin{adjustbox}{width=\width, valign=c}\input{plots/flowchart.tikz}\end{adjustbox}}
+    \hfill
+    \subfloat{\includegraphics[width=0.5\textwidth, valign=c]{plots/complexsetup.pdf}}
+    \caption{\label{balls-flowchart} Left: Visualization of the nested set of
+    closed balls in the complex plane for the proof of \cref{TR}, centered on
+    $t = t_j$. Right: Flowchart showing stepsize refinement and the logic
+    behind choosing the steptype in our proposed algorithm for a step from
+    $t_j$ of size $h$.}
 \end{figure*}
 %
 This shows, for $\om$ of sufficiently small derivative
@@ -1015,7 +1027,8 @@ must be in a sufficiently oscillatory region for the original ODE.
   Define the concentric nested set of closed balls $B_j := B_{\rho_j}(t)$,
   with radii $\rho_j := (1-j/k)\rho$, $j=0,1,\dots,k$. Note that
   $B_0$ is the original ball in the statement of the theorem, while
-  $B_k = \{t\}$ is the single point of interest.
+    $B_k = \{t\}$ is the single point of interest. This setup is shown in the
+    right panel of \cref{balls-flowchart}.
   For any function $f$ analytic in $B_j$ we abbreviate the $\infty$-norm by
   $\|f\|_j := \max_{z \in B_j}|f(z)|$.
   We will need a bound for $f'$ in $B_{j+1}$ in terms of $\|f\|_j$ by
@@ -1294,7 +1307,7 @@ with initial conditions
 \be
 u(1) = \text{Ai}(-1) + i\text{Bi}(-1), \quad u'(1) = - \text{Ai}'(-1) -i\text{Bi}'(-1).
 \ee
-where Ai, Bi are the Airy functions of type ...\Fruzsi{cite DLMF/AbramoviczStegun}
+where Ai, Bi are the Airy functions \cite[Chapter~9]{DLMFairy}
 Its unique solution is
 \be
 u(t) = Ai(-t) + iBi(-t).
@@ -1358,10 +1371,11 @@ As reviewed in the introduction, a number of numerical methods have been
 created specifically for highly oscillatory ODEs. We compare the performance of
 the present solver with theirs in this section. For reference, a short
 description of the available numerical solvers is found below, along with the
-names by which they will be referred to hereafter. 
+names by which they will be referred to hereafter. The method we propose will
+be referred to as \texttt{cascade}, named after the open-source software
+implementing it\footnote{\texttt{cascade}: \textbf{c}ode for \textbf{a}daptive \textbf{s}pectral Ric\textbf{ca}ti \textbf{d}efect corr\textbf{e}ction.}.
 %\AB{maybe we should give ``this work'' a name: Riccati defect correciton (RDC) or something}
 %
-\Fruzsi{TODO: give this method a name: RDC (Riccati defect correction), and fix plots).}
 \begin{description}
 \item[The %\AB{Kummer?}
   phase function method]{is an arbitrarily high-order solver
@@ -1387,8 +1401,9 @@ names by which they will be referred to hereafter.
         method. Its convergence order in the oscillatory regions is one higher
         than that of \texttt{oscode}, but does not (easily) generalise to
         include a $\g$ term. It further requires the user to specify the
-        derivatives of $\om$ by hand, up to $\om^{(5)}$. It is implemented in \texttt{MATLAB}.
-        \AB{Emphasize it's recent?}
+        derivatives of $\om$ by hand, up to $\om^{(5)}$. This recently
+        developed method is implemented in \texttt{MATLAB}.
+        %\AB{Emphasize it's recent?}
     }
 \end{description}
 %
@@ -1830,6 +1845,8 @@ The Flatiron Institute is a division of the Simons Foundation.
         \begin{itemize}
             \item{Formatted cref so that equations appear in brackets without the ``Eq.'' in front.}
             \item{Removed $t_{\mathrm{eval}}$ from tables and text since not measured.}
+            \item{Added a two-panel figure showing 1) a flowchart of the algorithm and 2) the complex plane setup for the proof of the convergence of Riccati iteration.}
+            \item{Our method has a name now! \texttt{cascade}:\texttt{cascade}: \textbf{c}ode for \textbf{a}daptive \textbf{s}pectral Ric\textbf{ca}ti \textbf{d}efect corr\textbf{e}ction. Used this in the legend in \cref{bremer237-timing}. }
         \end{itemize}
     }
     \item{Abstract
@@ -1856,8 +1873,9 @@ The Flatiron Institute is a division of the Simons Foundation.
     \item{Numerical results
         \begin{itemize}
             \item{Added Corollary after $\kappa$ definition to state maximum achievable accuracy, and referred to this from the Airy equation subsection.}
-            \item{Airy equation: refined justification of this test case, addded new paragraph to point to the convergence plot (right panel of \cref{convergence-plot}.}
+            \item{Airy equation: refined justification of this test case, addded new paragraph to point to the convergence plot (right panel of \cref{convergence-plot}).}
             \item{Going to refer to Bremer's work as phase function method rather than Kummer's phase function method, I think that would be too long.} 
+            \item{Added DLMF citation to Airy functions.}
         \end{itemize}
     }
 \end{itemize}
