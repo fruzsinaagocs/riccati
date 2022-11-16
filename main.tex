@@ -133,114 +133,142 @@ performs as much as $10^6$ times fewer function evaluations. Even at high freque
 
 The efficient numerical solution of highly oscillatory ordinary differential
 equations (ODEs) has long been a challenge.
-%and focus of computational mathematics.
 A wide range of specialised methods exists for dealing with ODEs
-with different structures,
-thorough reviews of which are found in
-\cite{petzold1997,engquist2009}. 
-In this work we focus on ODEs of a commonly occurring
-form: the variable-coefficient, linear, second
-order ODE with \Fruzsi{analytic} coefficients
-which includes the time-dependent or generalised single harmonic oscillator.
-Since approximation by harmonic oscillators is ubiquitous in physical models,
-this ODE, albeit simple-looking, is pivotal in many computational physics problems.
-As an example, models of cosmology are compared and their parameters estimated
-via Bayesian inference. If the model involves inflation, an early phase of
-accelerated expansion, then the relevant equation of motion describing the
-time-evolution of perturbations in matter density (and spacetime curvature)
-takes the form described above with solutions that typically start off smooth,
-become highly oscillatory, then turn smooth again (see, for example,
-\cite{agocs2020dense}). This equation needs to be solved $\approx 10^3$ times
-for different perturbation Fourier components, with the ODE having different
-coefficients that depend on the wavenumber. This process is repeated for each
-different set of values for the parameters defining the cosmological model,
-until their posterior distribution (conditioned on some observations) is
-mapped, typically costing $10^6$ likelihood evaluations. This totals to
-$\mathcal{O}(10^9)$ solutions of the highly oscillatory ODE, which is only
-feasible if an extremely efficient numerical method is used.
-Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this type of ODEs appear in
+with various structures;
+see \cite{petzold1997,engquist2009} for thorough reviews.
+In this work we handle a commonly occurring
+form, the variable-coefficient, linear, second
+order ODE with
+% \Fruzsi{analytic} % numerical method could handle merely smooth.
+smooth coefficients.
+This includes simple % you didn't mean "single", right?
+harmonic oscillators with time-dependent coefficients,
+thus is pivotal in many computational physics problems.
+% note I cut "simple-looking". not needed
+One application in which an extremely fast numerical solution is needed
+is Bayesian parameter estimation in cosmology.
+Specifically, each spatial Fourier mode of the density pertubations
+obeys an ODE in time of this form,
+with solutions that may change repeatedly between smooth and
+highly oscillatory characters \cite{agocs2020dense}.
+Of order $10^3$ modes are needed, and this must be repeated for
+up to $10^6$ trial parameter choices; thus the ODE solver
+may be called a billion times, and an efficient frequency-independent
+solver is crucial.
+Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this class of ODE also appears in
 Hamiltonian dynamics \cite{Pritula2018,fiore2022}, particle accelerators and plasma physics
 \cite{courant1958,davidson2001,hazeltine2003,lewis1968}, electric circuits
-\cite{likharev2022}, satellite systems \cite{saxena2020}, acoustics and gravity waves \cite{filippi1998,einaudi1970}, quantum mechanics \cite{griffiths2018,adhikari1988,arnold2011wkb,cea1982}, and other fields.
-In several of the above references, our proposed method could give a simple an efficient numerical replacement for
+\cite{likharev2022}, satellite systems \cite{saxena2020}, acoustics and gravity waves \cite{filippi1998,einaudi1970}, and quantum mechanics \cite{griffiths2018,adhikari1988,arnold2011wkb,cea1982}.
+In may of these fields our proposed method could supply a simple and efficient
+numerical replacement for
 asymptotic analytic methods which at high order can become cumbersome to apply.
 %  https://www.math.leidenuniv.nl/~vivi/stud_sem2011/BosleyKevorkian92.pdf  latex fail -> coupled oscillators
-  
 
-The ODE of interest takes the form
+% Define the problem completely before you start getting into details about complex omega:
+The ODE under study has the form
 \be
-u''(t) + 2\g(t) u'(t) + \om^2(t)u(t) = 0, \qquad t \in (t_0,t_1),
+u''(t) + 2\g(t) u'(t) + \om^2(t)u(t) = 0, \qquad t \in (t_0,t_1) \subset \R,
 \label{ode}
 \ee
-where $\g$ is a given smooth ($C^\infty$) \emph{damping} function,
-and $\om$ is a given smooth, and possibly large, real-valued
-\emph{local frequency} function\footnote{If coefficients are merely piecewise smooth, then solution may
-be simply patched together at the breakpoints; we do not discuss this situation further.}.
-For now, we only consider the case when $\om$ is purely real, but note that our
-asymptotic approximation for the Riccati phase function described in
-\cref{phasefun} is applicable to complex $\om$. Care needs to be taken in
-regions of $\Im(\om) \neq 0$ if any other method is used, however, since due to
-roundoff error some of the exponentially growing solution will inevitably be
-picked up and will dominate over the evanescent solution\footnote{In quantum
-mechanical applications where having a purely imaginary $\om$ is ubiquitous, a
-workaround is to integrate the ODE from outside the edges of the potential well
-towards the inside.}. We defer allowing for complex $\om$ to future work.
-
-  
-We solve the initial value problem (IVP) by specifying the initial conditions
+where $\g$ is a given smooth (by which we mean $C^\infty$) damping function,
+and $\om$ is a given smooth, but possibly very large, real-valued
+local frequency function\footnote{If coefficients are merely piecewise smooth, a solution may simply be patched together at the breakpoints, thus we do not discuss this situation further.}.
+We solve the initial value problem (IVP)
 \begin{align} % \ba, \ea doesn't work here, LaTeX complains
     u(t_0) &= u_0, \label{ic0} \\
     u'(t_0) &= u'_0, \label{ic1}
 \end{align}
-although we note that the methods we present could easily be applied to
+although we note that the methods that we present could easily be applied to
 two-point boundary value problems.
 %Here the local frequency function $\om(t)$ is purely real or purely imaginary.
 % AB: so is om(t) complex or real?
 % FA: technically it could be complex. The issue is when we try to use a spectral method over complex coefficients.
-In regions where $\om \gg 1$, the solution $u$ is oscillatory, meaning that on some local
-scale it is approximately $a e^{i\om_0t} + b e^{-i\om_0t}$, where $\om_0$
-denotes a local value of $\om(t)$.
+% AB: Hmmm, really, why does that go wrong?
+The restriction to real $\om$ is not crucial,
+but avoids complications with exponentially large dynamic ranges
+(e.g., deeply evanescent regions)
+that we leave for future study.
+%For now, we only consider the case when $\om$ is purely real, but note that our
+%asymptotic approximation for the Riccati phase function described in
+%\cref{phasefun} is applicable to complex $\om$.
+% consider cut or footnote. Notice it forced you to explain stuff we're going to explain shortly anyway, so it's confusing.
+%
+%Care needs to be taken in
+%regions of $\Im(\om) \neq 0$ if any other method is used, however, since due to
+%roundoff error some of the exponentially growing solution will inevitably be
+%picked up and will dominate over the evanescent solution\footnote{In quantum
+%mechanical applications where having a purely imaginary $\om$ is ubiquitous, a
+%workaround is to integrate the ODE from outside the edges of the potential well
+%towards the inside.}. We defer allowing for complex $\om$ to future work.
+
+In regions where $\om \gg 1$,
+the solution $u$ is oscillatory:
+loosely speaking,
+it has local approximate form $a e^{i\om_0t} + b e^{-i\om_0t}$, where $\om_0$
+is a local value of $\om(t)$.
 Conventional ODE integrators then require discretization with several
-grid points per local period $2\pi/\om$, which can be prohibitively slow.
-This has led to the development of more efficient solvers for this
-high-frequency case that exploit new representations of the solution to allow many periods between discretization nodes.
-However, as we will review later, none of these methods so
-far has been robust or general enough to
-tackle the above problem at spectral accuracy
-when the solution has highly oscillatory and smooth regimes. % AB
+grid points per local period $2\pi/\om_0$, forcing the overall
+cost to be $\bigO(\om_0)$, which can be prohibitively slow.
+This has led to the development of solvers
+that exploit new representations or asymptotic expansions of the solution, allowing many periods between discretization nodes.
+% AB: note the following waypoint to the reader re the big section about to happen:
+We now review such prior work,
+while noting that, to our knowledge, our proposal is the first
+tackle the problem adaptively with spectral accuracy
+when the solution has both highly oscillatory and smooth regimes.
+
+%more efficient solvers for this
+%high-frequency case that exploit new representations of the solution to allow m%any periods between discretization nodes. *** REFS.
+%However, as we will review later, none of these methods so
+%far has been robust or general enough to
 
 % Asymptotic methods: WKB, oscode, QLM
 % Not asymptotics: Bremer
-A class of efficient numerical solvers for highly oscillatory ODEs of the
-above form makes use of asymptotic expansions. 
+%One class of efficient numerical solvers for highly oscillatory ODEs of the
+%above form makes use of asymptotic expansions.  <- this feels redundant.
+
 % WKB
-Of these, the most commonly used is the Wentzel--Kramers--Brillouin (WKB), a
+The most common asymptotic expansion
+is the Wentzel--Kramers--Brillouin (WKB), a
 perturbation method applied to linear differential equations that contain some
-small parameter $\varepsilon$ \cite{logan,benderorszag}.
+small parameter $\varepsilon$ in the highest derivative
+\cite{benderorszag,logan}.
 This approximation arose in quantum mechanics where it is still widely
 applied for approximate analytic solutions of the Schr\"{o}dinger equation.
-Setting $\g = 0$ for
-the time being, one would start from \cref{ode} and the assumption that $\om$ is large and can be written as $\om(t) = \om_0\Omega(t)$, where $\om_0 \ll 1$ and $\Omega(t)$ is $\bigO(1)$,
+Writing $\om(t) = \om_0\Omega(t)$
+where $\Omega(t)$ is of unit size, and the asymptotic parameter
+is $\om_0 \gg 1$,    % AB: note how I cut down here
+% AB: oops not \ll
+% AB: note you don't set gam=0 until later, so I fixed that
+\cref{ode} becomes
 \be\label{odewkb}
-u'' + 2\gamma u' + \om_0^2 \Omega^2 u = 0,
+u'' + 2\gamma u' + \om_0^2 \Omega^2 u = 0.
 \ee
-and make the substitutions $u = e^{\om_0 z}$, $z' = x$ to get the Riccati form of the equation,
+Substituting $u(t) = e^{\om_0 z(t)}$ and defining $z'(t) = x(t)$
+% AB note how I cue the reader these are functions of t
+gives the Riccati equation (a nonlinear 1st-order ODE) for $x$, 
 \be\label{riccwkb}
+% AB *** please debug if om_0^2 here ???
 x' + 2\gamma x + \om_0 x^2 + \om_0 \Omega^2 = 0.
 \ee
-Then try the regular perturbation expansion
+Making a regular perturbation expansion in $1/\om_0$,
 \be\label{wkbexpansion}
-x = \sum_{j=0}^{N} x_j\om_0^{-j},
+x(t) = \sum_{j=0}^{N} \om_0^{-j} x_j(t)~,
+% AB note how I put consts before funcs (traditional) and cue the reader re funcs of t, not merely numbers.
 \ee
-and match powers of $\om_0$ in \cref{odewkb} to obtain the recursion relation (where we now set $\gamma = 0$)
+and matching powers of $\om_0$ in \cref{odewkb} gives the recursion relation
+for the functions $x_j(t)$
+(for simplicity we give only the $\gamma \equiv 0$ case),
 \begin{equation}\label{wkbrecur}
-    x_0 = \pm i\Omega, \quad x_j = -\frac{1}{2x_0}\left( \dot{x}_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots, N.
+  x_0 = \pm i\Omega, \quad x_j = -\frac{1}{2x_0}\left( \dot{x}_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots.
+  % *** AB: note I killed N since it is never referred to nor given later.
 \end{equation}
 Although originally an analytic tool,
-WKB has recently been exploited in numerical methods. These algorithms achieve
-$\bigO(1)$ (frequency-independent) runtime in regions where the asymptotic
+WKB has recently been exploited in numerical solvers.
+These algorithms achieve
+$\bigO(1)$ (i.e., $\om_0$-independent) runtime in regions where the asymptotic
 series is a sufficiently good approximation.
-% note the pivot, since it's a surprise
+% note the pivot, since it's a surprise   -> AB, yes, nice.
 WKB forms the basis of the method described in
 \cite{agocs2020efficient,agocs2020dense}, and associated open-source software
 package \texttt{oscode} \cite{agocs2020joss}. This uses the expansion
@@ -286,17 +314,23 @@ Instead of finding an approximation via a regular perturbative expansion, the
 ``quasilinearisation method''
 % note M stands for method, so approach was bit confusing
 (QLM) \cite{bellman1970} approximates the solution
-of \cref{riccwkb} with a series of iterates $x_i(t)$ by converting it to a set
-of recurrence differential equations
-\begin{gather}\label{qlmode}
-x_0 = \pm i\om, \\
-    x_j' - x_{j-1}^2 + 2x_j x_{j-1} + \om^2 = 0, \quad \text{for } j = 1, 2, \ldots, N, 
-\end{gather}
+of \cref{riccwkb} with a series of iterates $x_i(t)$ by converting it to a
+differential equation recurrence
+% AB: note word order
+% *** your labeling was wrong: (8) was just the x_0 which isn't an ODE
+% Thus I combined as you did for WKB.
+\be
+x_0 = \pm i\om,
+\quad
+x_j' - x_{j-1}^2 + 2x_j x_{j-1} + \om^2 = 0, \quad \text{for } j = 1, 2, \ldots
+% *** ditto N as above
+\label{qlmode}
+\ee
 and either solving them analytically, \eg in \cite{mandelzweig2004,krivec2006}
 or numerically \cite{krivec2008,krivec2014}. The semi-analytic approach
 requires increasing amounts of algebra as the iteration number grows and can
-become cumbersome. Integrating \cref{qlmode} numerically does not prove to be a better strategy 
-since \cref{qlmode} itself is also oscillatory. 
+become cumbersome. Integrating each ODE in \cref{qlmode} numerically does not prove to be a better strategy since each such ODE is itself oscillatory.
+% AB clarified
 
 % Bremer
 % Accuracy?
