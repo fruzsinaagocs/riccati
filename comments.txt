@@ -1,0 +1,62 @@
+Abstract: is clear, but now too long by factor 2 (compare those of
+other papers, eg SINUM).  Eg sentence 2 onwards of Abs read like Intro
+(have too much detail for Abs), could move there.
+
+Suggest you bullet-list the Abs, making eg 5 key pts.
+then write/compress afresh.
+
+Use \emph in Abs even more sparingly, ie no more than once.
+
+You cannot say most things, but just have to hit the key results, eg:
+
+"For the case of the ODE having analytic coefficients, we prove the
+asymptotic convergence of the Riccati equation’s residual at a rate
+that improves as the rate of change of the frequency gets smaller
+relative to its magnitude.  We also provide explicit error bounds
+given the number of terms in the asymptotic series."
+->
+"For analytic coefficients we prove that each iteration, up to a
+certain maximum, reduces the residual by a factor of order the local
+frequency."
+
+This has most of the content, but half the length.
+The rate of change of freq was dropped -- too much detail for Abs.
+
+It takes a lot of editing to make a good Abs!
+
+Last sentence of Abs excellent. 2nd-to-last, try to cut down.
+
+
+
+cascade name: not bad - feels like shoehorning to make a word,
+ie no letter combos in it remind me
+of ode, riccati, iteration, defect correction, phase func, adaptive...
+How about RPFDC or ARPFDC
+or RFPI
+
+
+
+INTRO
+
+para 1 great, just minor tweaks.
+It was 22 lines, and too wordy.
+I cut it to 16. See what you think - as always, one has to let go of
+detail that is not essential to the point of the paper at hand.
+(even though you'd like to say it in another paper..)
+
+Para 2-3: see .tex
+Point is, you need to be ruthless with cutting details, deciding what is essential for reader to be able to move on, and what not (which is cut or postponed to
+discussion later).
+
+p.2: you set gamma=0 in WKB but then leave that 
+
+p.2: You write "Then try... and match..."
+But this imperative tense is a bit casual, not used in academic
+writing.
+Suggest "One then tries... and matches..."
+or "Assuming ...  one then matches..."
+
+
+
+
+
