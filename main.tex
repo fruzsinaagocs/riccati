@@ -1414,8 +1414,7 @@ created specifically for highly oscillatory ODEs. We compare the performance of
 the present solver with theirs in this section. For reference, a short
 description of the available numerical solvers is found below, along with the
 names by which they will be referred to hereafter. The method we propose will
-be referred to as \texttt{cascade}, named after the open-source software
-implementing it\footnote{\texttt{cascade}: \textbf{c}ode for \textbf{a}daptive \textbf{s}pectral Ric\textbf{ca}ti \textbf{d}efect corr\textbf{e}ction.}.
+be referred to as RDC, short for Riccati defect correction.
 %\AB{maybe we should give ``this work'' a name: Riccati defect correciton (RDC) or something}
 %
 \begin{description}
@@ -1590,7 +1589,7 @@ therefore they all have evaluation times of $\mathcal{O}(10^{-6})$ \si{\s}.
 \begin{figure}[tb]
     \centering
     \includegraphics{plots/bremer237-timing.pdf}
-    \caption{\label{bremer237-timing} Performance comparison of our solver and
+    \caption{\label{bremer237-timing} Performance comparison of our solver (RDC) and
     other state-of-the-art algorithms on \cref{bremer237eq}. The left panel
     shows the total runtime of the solvers listed in \cref{solvercomp} as the
     frequency parameter $\lambda$ is varied, for two different relative
@@ -1888,7 +1887,7 @@ The Flatiron Institute is a division of the Simons Foundation.
             \item{Formatted cref so that equations appear in brackets without the ``Eq.'' in front.}
             \item{Removed $t_{\mathrm{eval}}$ from tables and text since not measured.}
             \item{Added a two-panel figure showing 1) a flowchart of the algorithm and 2) the complex plane setup for the proof of the convergence of Riccati iteration.}
-            \item{Our method has a name now! \texttt{cascade}:\texttt{cascade}: \textbf{c}ode for \textbf{a}daptive \textbf{s}pectral Ric\textbf{ca}ti \textbf{d}efect corr\textbf{e}ction. Used this in the legend in \cref{bremer237-timing}. }
+            \item{Our method has a name now! \texttt{cascade}: \textbf{c}ode for \textbf{a}daptive \textbf{s}pectral Ric\textbf{ca}ti \textbf{d}efect corr\textbf{e}ction. Used this in the legend in \cref{bremer237-timing}. $\to$ The code will probably be a part of \texttt{oscode}, so I dropped this and are just referring to the method in the relevant figure as RDC -- Riccati defect correction. }
         \end{itemize}
     }
     \item{Abstract
