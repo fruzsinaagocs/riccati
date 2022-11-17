@@ -102,31 +102,37 @@
 \maketitle
 
 \begin{abstract}
-Second order linear ODEs occur in a wide range of applications including the
-evaluation of special functions, quantum mechanics, and cosmology.
-Transitions between highly oscillatory to slowly-varying regions in their
-solutions are common but pose a challenge for both standard and specialised
-oscillatory numerical solvers.
-We introduce an efficient numerical method for second order linear ODEs posed
-as initial value problems (but note that the method may be generalised to
-solve boundary value problems), the solution of which may vary between
-being highly oscillatory to slowly changing over the course of the solution interval.
-In oscillatory regions
-a \emph{phase function} representation for a solution pair $u(t) = e^{\pm
-z(t)}$ is used, where $u(t)$ is the dependent variable appearing in the ODE
-to be solved, so that $z'$ satisfies a nonlinear Riccati equation.  We
-introduce a defect-correction iteration that gives an asymptotic series for
-a \emph{non-oscillatory} Riccati solution on an interval; this iteration may
-thus may be spectrally approximated on a Chebyshev grid with a small number
-of nodes. For the case of the ODE having analytic coefficients, we prove
-the asymptotic convergence of the Riccati equation's residual at a rate that improves as the rate of change of the frequency gets smaller relative to its magnitude. 
-We also provide explicit error bounds given the number of terms in the asymptotic series.
-When the solution changes slowly a spectral method based on Chebyshev
-nodes is used, where the number of nodes is changed adaptively. The algorithm switches automatically between the above two methods depending on the behaviour of the solution.
-We demonstrate the algorithm's efficiency in applications through several numerical examples.
-We compare its performance to that of other state-of-the art numerical solvers for oscillatory problems by measuring the achieved accuracy, CPU time, number of function evaluations, and other metrics. 
-The experiments show that our solver outperforms existing existing algorithms with a frequency-independent runtime, most significantly at low-to-intermediate frequencies and at low tolerances, where our method
-performs as much as $10^6$ times fewer function evaluations. Even at high frequencies, our method is on average $10$ times faster than other specialised solvers.
+
+% Main points to communicate:
+% * Presenting a method for second order linear ODEs whose solution may be highly oscillatory
+% * Spectral, adaptive -- can deal with oscillatory or slowly varying solutions
+% * Based on constructing a nonoscillatory phase function (which obeys the Riccati equation)
+% via defect correction which yields an asymptotic series,
+% geometric/exponential convergece in residual for first few iters
+% * Chebyshev spectral method is alternative solver
+% * We demonstrate performance with numerical examples, results
+
+% 168 words!
+
+We introduce an efficient numerical method for second order linear ODEs whose
+solution may vary between highly oscillatory and slowly changing over the solution interval.
+%
+In oscillatory regions the solution is generated via a nonoscillatory phase
+function that obeys the nonlinear Riccati equation. We introduce a
+defect-correction iteration that gives an asymptotic series for the phase
+function; this iteration is spectrally approximated on a Chebyshev grid with a small number of nodes. 
+%
+For analytic coefficients we prove that each iteration, up to a certain
+maximum, reduces the residual by a factor of order of the local frequency. 
+%
+When the solution changes slowly, the algorithm automatically switches to a
+spectral method based on an adaptively varied number of Chebyshev nodes.
+%
+In numerical experiments we find that out method outperforms other state-of-the-art
+oscillatory solvers, most significantly at low-to-intermediate
+frequencies and at low tolerances, where our method performs up to $10^6$
+times fewer function evaluations.  Even at high frequencies, our method is
+on average $10$ times faster than other specialised solvers.
 \end{abstract}
 
 \section{Introduction}
@@ -159,7 +165,7 @@ Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this cl
 Hamiltonian dynamics \cite{Pritula2018,fiore2022}, particle accelerators and plasma physics
 \cite{courant1958,davidson2001,hazeltine2003,lewis1968}, electric circuits
 \cite{likharev2022}, satellite systems \cite{saxena2020}, acoustics and gravity waves \cite{filippi1998,einaudi1970}, and quantum mechanics \cite{griffiths2018,adhikari1988,arnold2011wkb,cea1982}.
-In may of these fields our proposed method could supply a simple and efficient
+In many of these fields our proposed method could supply a simple and efficient
 numerical replacement for
 asymptotic analytic methods which at high order can become cumbersome to apply.
 %  https://www.math.leidenuniv.nl/~vivi/stud_sem2011/BosleyKevorkian92.pdf  latex fail -> coupled oscillators
@@ -184,6 +190,7 @@ two-point boundary value problems.
 % AB: so is om(t) complex or real?
 % FA: technically it could be complex. The issue is when we try to use a spectral method over complex coefficients.
 % AB: Hmmm, really, why does that go wrong?
+% FA: I would expect it to pick up the exponentially growing mode -- but not so sure now.
 The restriction to real $\om$ is not crucial,
 but avoids complications with exponentially large dynamic ranges
 (e.g., deeply evanescent regions)
@@ -249,6 +256,7 @@ Substituting $u(t) = e^{\om_0 z(t)}$ and defining $z'(t) = x(t)$
 gives the Riccati equation (a nonlinear 1st-order ODE) for $x$, 
 \be\label{riccwkb}
 % AB *** please debug if om_0^2 here ???
+% FA: No bugs here, note the exponent in the substitution contains om_0, which kills one factor of om_0.
 x' + 2\gamma x + \om_0 x^2 + \om_0 \Omega^2 = 0.
 \ee
 Making a regular perturbation expansion in $1/\om_0$,
