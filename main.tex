@@ -1033,11 +1033,11 @@ and sufficiently large throughout some neighborhood of $t$.
     \subfloat{\begin{adjustbox}{width=\width, valign=c}\input{plots/flowchart.tikz}\end{adjustbox}}
     \hfill
     \subfloat{\includegraphics[width=0.5\textwidth, valign=c]{plots/complexsetup.pdf}}
-    \caption{\label{balls-flowchart} Left: Visualization of the nested set of
-    closed balls in the complex plane for the proof of \cref{TR}, centered on
-    $t = t_j$. Right: Flowchart showing stepsize refinement and the logic
+    \caption{\label{balls-flowchart} Left: Flowchart showing stepsize refinement and the logic
     behind choosing the steptype in our proposed algorithm for a step from
-    $t_j$ of size $h$.}
+    $t_j$ of size $h$. Right: Visualization of the nested set of
+    closed balls in the complex plane for the proof of \cref{TR}, centered on
+    $t = t_j$.}
 \end{figure*}
 %
 This shows, for $\om$ of sufficiently small derivative
@@ -1605,7 +1605,9 @@ therefore they all have evaluation times of $\mathcal{O}(10^{-6})$ \si{\s}.
 
 
 
-\subsection{Evaluating special function evaluation: Legendre's equation}
+\subsection{Special function evaluation: Legendre's equation}
+% Previously: Evaluating special function evaluation: Legendre's equation
+% department of redundancy department
 
 Being able to solve highly oscillatory ODEs accurately means the solver can
 quickly evaluate high-order special functions that obey an ODE of the required
