@@ -366,7 +366,7 @@ over a domain in which the solutions is highly oscillatory.
 The method aims to find a global nonoscillatory phase function $\alpha(t)$
 satisfying Kummer's equation,
 \be
-\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
+\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{2\alpha} - \alpha^2 +
 \om(t)^2 = 0,
 \label{kummer}
 \ee
@@ -374,8 +374,8 @@ a nonlinear and generally oscillatory ODE.
 %and will therefore be referred to as the phase function method hereafter.
 % AB: our method is also a PF meth, so let's not do that ^.
 %
-From an antiderivative $a(t)$ of $\alpha(t)$ one reconstructs solutions
-via $u(t) = \sin(a(t) + c)/\sqrt{\alpha(t)}$.
+One then reconstructs solutions
+via $u(t) = \sin(\int \alpha(t) dt + c)/\sqrt{\alpha(t)}$.
 % AB: note the reader benefits from seeing how it relates to u
 %
 %The nonoscillatory phase function $\alpha$ can be used to compute an approximation
@@ -398,6 +398,8 @@ The results of \cite{heitman2015,bremer2016}
 prove the existence of such nonoscillatory phase functions when
 $\Omega(t)$ is
 nonoscillatory in the sense that the Fourier transform of $\log \Omega$ is smooth
+% *** AB check do you really mean smooth? since it has to be smooth in Fourier
+% due to compactness of interval. Please check.
 and rapidly decaying.
 Finding initial conditions on the phase function leading to
 a nonoscillatory solution is, however, challenging.
@@ -419,6 +421,7 @@ Nevertheless Bremer's is the most efficient
 and accurate prior method known to the authors.
 %\Fruzsi{Need clarification about this comment.} *** what do you want to say?
 
+% US
 Here we present an approach using an asymptotic expansion for a nonoscillatory Riccati phase function as in \cref{riccwkb}.
 %meaning simply that the
 %phase function is the logarithmic derivative $x(t) = (\log u(t))'$ obeying
@@ -501,27 +504,31 @@ suggestions for future work.
 %we will show that close to machine accuracy is easily reached in
 %intervals that contain many oscillations.
 
+
+
 \section{Methods \label{methods}}
 
 \subsection{Riccati phase function solution on a
   single interval \label{phasefun}}
 
-%\AB{The following will be cut down quite a bit by moving ricc, kummer,
-%  eqns etc to intro as discussed there, and referring back. No eqn need appear
-%twice, and repetition is generally avoided}
-
-We will use prime to denote differentiation with respect to time $t$.
-We consider an interval $t\in[a,b]$ lying in $[0,1]$.  
+%We will use prime to denote differentiation with respect to time $t$.
+% AB; that's clear by now
+%We consider an interval $t\in[a,b]$ lying in $[0,1]$.
+% AB: why needed? [a,b] comes only later and it can be anything, right?
+%
+We now present a new numerical method to find nonoscillatory
+solutions to the nonlinear Riccati equation \cref{ricc}.
 Writing $u = e^z$ where $z'(t) = x(t)$ is the phase function,
-then any nonvanishing $u(t)$ satisfies \cref{ode} if and only if
+any nonvanishing $u(t)$ satisfies \cref{ode} if and only if
 its complex phase function $x(t)$ satisfies the nonlinear Riccati equation
 \be
 x' + x^2 + 2\g(t)x + \om(t)^2 = 0.
 \label{ricc}
 \ee
-%For the sake of simplicity, let us set $\g(t) = 0$ for the time being.
-Almost all solutions to \cref{ricc} are oscillatory,
-as the presence of $\om(t)$ would suggest.
+(For convenience we now work without rescaling by $\om_0$ as in the
+Introduction.)
+A generic solution to \cref{ricc} is oscillatory
+on the local timescale $1/\om(t)$.
 This is illustrated by the case of constant $\om(t) = \om_0$
 and $\g(t)\equiv 0$,
 which has only the family of analytic solutions
@@ -530,90 +537,86 @@ where $\re \alpha$ is interpreted as a phase shift and $\im \alpha$
 controls the amplitude. Their oscillation frequency is $2\om_0$.
 %\AB{note the $\om_0$ then reinforces using this instead of $\lambda$
 %  in the intro for Bremer.}
-However, the limit $\im \alpha \to \pm \infty$ produces
-the only two nonoscillatory solutions $x(t) = \pm i\om_0$.
-The picture is similar
-for general analytic functions $\om(t)$:
-it has recently been proved that there exist nonoscillatory phase functions
-(in a precise sense for $\om\gg 1$ involving exponential decay of the Fourier
-transform) in that case \cite{heitman2015,bremer2016}.
-In fact this result was proven
-for the related real-valued Kummer's equation \cref{kummer},
-%\AB{now we move Kummer back to intro and refer to that}
-%\be
-%\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
-%\om(t)^2 = 0,
-%\label{kummer}
-%\ee
-corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
-but the existence of a nonoscillatory Kummer's solution implies the same for
-a Riccati solution.
-The latter is easy to show, since if $\alpha(t)$ satisfies \cref{kummer},
+However, taking the limit $\im \alpha \to \pm \infty$ produces
+the only two nonoscillatory (constant) solutions $x(t) = \pm i\om_0$.
+For general analytic frequency functions $\om(t)$ there
+also exist nonoscillatory solutions.
+These take the approximate form
+$x_{\pm}(t) \approx \pm i\om(t)$, leading to a conjugate pair of basis
+counter-rotating functions $u_{\pm}(t) := e^{\int x_\pm(t) \d t}$.
+The rigorous existence of nonoscillatory solutions
+(in the sense of decay of their Fourier transforms asymptotically
+for $\om\gg 1$)
+follows from the corresponding result
+for the Kummer's equation \cref{kummer} proven in
+\cite{heitman2015,bremer2016}.
+% AB this repeated stuff from the Intro - try to avoid repetition.
+The argument that existence of a real-valued Kummer phase function implies
+existence of a Riccati phase function goes as follows.%
+\footnote{We thank Jim Bremer for explaining this argument to us.}
+%corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
+If $\alpha(t)$ satisfies \cref{kummer},
 then defining $\beta = -\alpha'/2\alpha$ allows \cref{kummer}
 to be written
 $\beta' - \alpha^2 + \beta^2 + \om(t)^2 = 0$, and these last two equations
 are the real and imaginary parts of \cref{ricc}
-for $x = i\alpha + \beta$.
-\footnote{We thank Jim Bremer for explaining this argument.}
+with $x = i\alpha + \beta$.
 
-We now present a new numerical method to find nonoscillatory
-solutions to the nonlinear Riccati equation \cref{ricc}.
-%(in its most general form, \ie without imposing $\g(t) = 0$).
-When $\om\gg 1, \g$, there are two nonoscillatory solutions
-which take the approximate form
-$x_{\pm}(t) \approx \pm i\om(t)$, leading to a conjugate pair of basis
-counter-rotating functions $u_{\pm}(t) := e^{\int x_\pm(t) \d t}$.
-Given any trial solution $x$ to \cref{ricc}, its \textit{residual
-  function} is defined as the left-hand side of \cref{ricc}, namely
+% AB *** what did this mean?: When $\om\gg 1, \g$,
+% AB: the approx forms fit better above; are a distraction to the proposal here
+Given any trial solution $x$ to \cref{ricc}, we define its {\em residual}
+as the left-hand side of \cref{ricc}, namely
 \be
 \label{R}
 R[x](t) := x' + x^2 + 2\g(t)x + \om(t)^2.
 \ee
-Our proposal takes the following \textit{functional iteration}
+We propose the following iteration
 to generate a sequence of functions $x_0, x_1, \dots, x_k$
-on $t\in(a,b)$,
-using the above positive (say) approximation as a starting point:
+on a given interval,
+using the above positive (say) approximate form as a starting point:
 \begin{align}
-x_0(t) &= +i\om(t)
+x_0(t) &\;=\; +i\om(t),
 \label{init}
 \\
-    x_{j+1}(t) &= x_j(t) - \frac{R[x_j](t)}{2 \left( x_j(t) + \g(t) \right)}, \qquad j=0,1,\dots,k-1.
+    x_{j+1}(t) &\;=\; x_j(t) - \frac{R[x_j](t)}{2 \left( x_j(t) + \g(t) \right)}, \qquad j=0,1,\dots,k-1.
 \label{iter}
 \end{align}
-
-%with the functional $R$ defined as in \cref{R}.
-This may be justified heuristically as an approximate Newton
-iteration to reduce the residual function
-(noting that similar exact Newton iterations have been
-exploited for analysis \cite{heitman2015}).
-Namely, since
+This is justified heuristically as an {\em approximate} Newton
+iteration for \eqref{ricc} (noting that an exact Newton iteration has
+been used numerically \cite{krivec2008,krivec2014}
+and as an analysis tool \cite{heitman2015}).
+Namely, perturbing by a function $\delta(t)$ we get
 \begin{align}
     R[x_j + \delta] &= x_j' + \delta' + x_j^2 + 2 x_j \delta + \delta^2 
     + 2\g x_j + 2\g\delta + \om(t)^2 \nonumber \\
     &= R[x_j] + \delta' + 2x_j\delta + 2\g\delta + \bigO(\delta^2), \nonumber
 \end{align}
-by linearizing we get that $\delta$ solves the linear 1st-order ODE
-$\delta' + 2x_j(t) \delta + 2\g \delta  = -R[x_j](t)$,
-which has an analytic solution.
-Solving this exact Newton update symbolically is the basis of the quasilinearization method (QLM) \cite{bellman1970}.
+then by linearizing we get that $\delta$ solves the linear 1st-order ODE
+$\delta' + 2x_j(t) \delta + 2\g \delta  = -R[x_j](t)$.
+%which has an analytic solution. % AB <- why did you need this phrase.
+%Solving this exact Newton update symbolically is the basis of the quasilinearization method (QLM) \cite{bellman1970}.
+% AB; seems like Bellman too old here; it' the QLM on Schrod ppl we cite.
 However, this ODE is again generally oscillatory,
-with unknown initial condition needed for a nonoscillatory solution $\delta$.
-Yet if $\delta$ is nonoscillatory the first term $\delta'$ is
+with unknown initial condition needed to achieve a nonoscillatory
+solution $\delta(t)$.
+Yet if $\delta$ is nonoscillatory, the first term $\delta'$ is
 a factor $x_j = \bigO(\om)$ smaller than the second term, thus
 one might hope that by dropping it a useful reduction in residual might
 still result.
 %\footnote{\Fruzsi{[Strictly speaking, we should then be dropping the $\g$ term as well, since it's also an order of magnitude smaller...]}}. 
 This leads to the algebraic formula $2\left(x_j(t) + \g(t)\right) \delta(t) = -R[x_j](t)$
 which is solved pointwise for each $t$, and
-writing $x_{j+1} = x_j + \delta$ gives \cref{iter}.
-This is a type of defect correction scheme \cite{bohmer1984}.
-The result is nonoscillatory by construction, without explicit reference
+writing $x_{j+1} = x_j + \delta$ gives our proposed \cref{iter}.
+%This is a type of defect correction scheme \cite{bohmer1984}.
+% AB: you already said that but with Bellman as the ref!
+If $\om$ is a smooth function, then
+the result is nonoscillatory by construction, without explicit reference
 to initial conditions.
 
-The early iterates of \cref{init,iter} illustrate
-algebraically
-the type of residual reduction that occurs. We take $\g(t) = 0$ below for the
-sake of simplicity, but the results hold for the case of $\g(t) \neq 0$. The first few iterates and residuals are
+The early iterates of \eqref{init}--\eqref{iter} illustrate
+the residual reduction. We show the case $\g(t) \equiv 0$, for
+simplicity, but the results hold for the general case.
+The first few iterates and residuals are
 \begin{align}
     x_0 &=  i\om, &&R[x_0] = i\om' = \bigO(\om), \nonumber \\
 x_1 &= i\om - \frac{\om'}{2\om}, 
@@ -622,13 +625,14 @@ x_2 &= i\om - \frac{\om'}{2\om} + \delta_1, \mbox{ where }
     \delta_1 \equiv \frac{\frac{\om''}{2\om} - \frac{3\om'^2}{4\om^2}}{2i\om - \frac{\om'}{\om}}, \quad
     &&R[x_2] = \delta_1' + \delta_1^2 = \bigO(\om^{-1}). \nonumber
 \end{align}
-To measure the size of term we assume that $\om'$, $\om''$, \etc, are
+To interpret this, we assume that $\om'$, $\om''$, \etc, are
 of the same order as $\om$, because $\om(t)$ is smooth,
 and also assume that $\om$ has a lower bound of the same order. If we were to include $\g$, we would assume $\g = \bigO(1) $ in terms of $\om$, and that its derivatives are of the same order as $\g$ itself by the same reasoning as with $\om$. 
 Thus we see that each iteration the residual drops by a factor $\bigO(\om)$.
 However, each iteration also results in terms with
-one higher time-derivative of $\om$ (and $\g$).
-Despite the rapid growth in complexity, one can check that this
+one higher derivative of $\om$ (and $\g$).
+%Despite the rapid growth in complexity,
+Algebraically, one can check that this
 pattern continues
 by defining the $j$th correction function $\delta_j$,
 so that $x_{j+1} = x_j + \delta_j$, then using \cref{R} to write

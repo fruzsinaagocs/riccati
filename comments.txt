@@ -74,7 +74,9 @@ needed clarified
 
 * suggest Bremer's method is not called "the phase function method".
 
-* Check prefactor of al''/al in {kummer} .. 1/2 ?
+* I corrected prefactor of al''/al in {kummer} .. 1/2
+
+* Check "smoothness" of Fourier xform of log Omega.
 
 * Is our method an "expansion", an "iteration", a "series", a "defect correction" ? It is best to stick to one. I think "iteration" is clearest. Hence edits.
 
