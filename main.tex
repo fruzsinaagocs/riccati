@@ -118,9 +118,9 @@ We introduce an efficient numerical method for second order linear ODEs whose
 solution may vary between highly oscillatory and slowly changing over the solution interval.
 %
 In oscillatory regions the solution is generated via a nonoscillatory phase
-function that obeys the nonlinear Riccati equation. We introduce a
+function that obeys the nonlinear Riccati equation. Here we propose a
 defect-correction iteration that gives an asymptotic series for the phase
-function; this iteration is spectrally approximated on a Chebyshev grid with a small number of nodes. 
+function; this iteration is spectrally approximated on a Chebyshev grid with a small number of nodes.
 %
 For analytic coefficients we prove that each iteration, up to a certain
 maximum, reduces the residual by a factor of order of the local frequency. 
@@ -128,10 +128,12 @@ maximum, reduces the residual by a factor of order of the local frequency.
 When the solution changes slowly, the algorithm automatically switches to a
 spectral method based on an adaptively varied number of Chebyshev nodes.
 %
-In numerical experiments we find that out method outperforms other state-of-the-art
+In numerical experiments we find that our proposal outperforms other state-of-the-art
 oscillatory solvers, most significantly at low-to-intermediate
-frequencies and at low tolerances, where our method performs up to $10^6$
-times fewer function evaluations.  Even at high frequencies, our method is
+frequencies and at low tolerances, where it may use up to $10^6$
+times fewer function evaluations.  Even in high frequency regimes, our
+implementation is
+% AB: we have to be careful about claims re the method vs the implementation
 on average $10$ times faster than other specialised solvers.
 \end{abstract}
 
@@ -149,25 +151,26 @@ order ODE with
 smooth coefficients.
 This includes simple % you didn't mean "single", right?
 harmonic oscillators with time-dependent coefficients,
-thus is pivotal in many computational physics problems.
+which arise in many computational physics problems.
 % note I cut "simple-looking". not needed
 One application in which an extremely fast numerical solution is needed
 is Bayesian parameter estimation in cosmology.
 Specifically, each spatial Fourier mode of the density pertubations
-obeys an ODE in time of this form,
-with solutions that may change repeatedly between smooth and
+obeys such an ODE in time,
+with solutions that may switch repeatedly between smooth and
 highly oscillatory characters \cite{agocs2020dense}.
 Of order $10^3$ modes are needed, and this must be repeated for
 up to $10^6$ trial parameter choices; thus the ODE solver
 may be called a billion times, and an efficient frequency-independent
 solver is crucial.
-Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this class of ODE also appears in
+Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this class of ODE appears in
 Hamiltonian dynamics \cite{Pritula2018,fiore2022}, particle accelerators and plasma physics
 \cite{courant1958,davidson2001,hazeltine2003,lewis1968}, electric circuits
 \cite{likharev2022}, satellite systems \cite{saxena2020}, acoustics and gravity waves \cite{filippi1998,einaudi1970}, and quantum mechanics \cite{griffiths2018,adhikari1988,arnold2011wkb,cea1982}.
 In many of these fields our proposed method could supply a simple and efficient
 numerical replacement for
-asymptotic analytic methods which at high order can become cumbersome to apply.
+uncontrolled approximate asymptotic methods.
+%which at high order can become cumbersome to apply.
 %  https://www.math.leidenuniv.nl/~vivi/stud_sem2011/BosleyKevorkian92.pdf  latex fail -> coupled oscillators
 
 % Define the problem completely before you start getting into details about complex omega:
@@ -242,9 +245,9 @@ small parameter $\varepsilon$ in the highest derivative
 \cite{benderorszag,logan}.
 This approximation arose in quantum mechanics where it is still widely
 applied for approximate analytic solutions of the Schr\"{o}dinger equation.
-Writing $\om(t) = \om_0\Omega(t)$
-where $\Omega(t)$ is of unit size, and the asymptotic parameter
-is $\om_0 \gg 1$,    % AB: note how I cut down here
+Writing $\om(t) = \om_0\Omega(t)$,
+where $\Omega(t)$ is of unit size, and the asymptotic parameter is
+$\om_0 \gg 1$,    % AB: note how I cut down here
 % AB: oops not \ll
 % AB: note you don't set gam=0 until later, so I fixed that
 \cref{ode} becomes
@@ -266,9 +269,9 @@ x(t) = \sum_{j=0}^{N} \om_0^{-j} x_j(t)~,
 \ee
 and matching powers of $\om_0$ in \cref{odewkb} gives the recursion relation
 for the functions $x_j(t)$
-(for simplicity we give only the $\gamma \equiv 0$ case),
+(where for simplicity we give only the $\gamma \equiv 0$ case),
 \begin{equation}\label{wkbrecur}
-  x_0 = \pm i\Omega, \quad x_j = -\frac{1}{2x_0}\left( \dot{x}_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots.
+  x_0 = \pm i\Omega, \qquad x_j = -\frac{1}{2x_0}\left( \dot{x}_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots.
   % *** AB: note I killed N since it is never referred to nor given later.
 \end{equation}
 Although originally an analytic tool,
@@ -280,12 +283,15 @@ series is a sufficiently good approximation.
 WKB forms the basis of the method described in
 \cite{agocs2020efficient,agocs2020dense}, and associated open-source software
 package \texttt{oscode} \cite{agocs2020joss}. This uses the expansion
-\cref{wkbexpansion} up to and including $x_3$ to advance the numerical solution
-for $u(t)$ in a time-stepping context, but has the ability to switch to a 4,5th
-order Runge--Kutta pair if the asymptotic expansion isn't accurate enough. In \cite{arnold2011wkb,korner2022wkb} the ``WKB marching method'' uses the same
+\cref{wkbexpansion} up to and including $x_3$ within a time-step,
+or, if this is not accurate enough, switches to a 4,5th
+order Runge--Kutta pair.
+% AB: note "isn't" is too casual. Also, keeping concise.
+In \cite{arnold2011wkb,korner2022wkb} the related
+``WKB marching method'' uses the same
 expansion truncated after $x_2$ to transform \cref{odewkb} into a smoother
-problem in the highly oscillatory regions, otherwise switching to a 4,5th order
-Runge--Kutta method.
+problem in the highly oscillatory regions,
+otherwise again switching to a 4,5th order Runge--Kutta method.
 %The spectral method is based
 %on $n+1$ Chebyshev nodes, where $n$ is chosen adaptively, resulting in an
 %% CHECK NUMERICALLY!  *** is that still a relevant comment
@@ -295,16 +301,24 @@ Runge--Kutta method.
 %solver and produce a
 %$\bigO(h^6)$ error.
 %
-\texttt{oscode}'s WKB-based method produces an $\bigO(h)$
+In terms of the time-step $h$, neither method is high-order.
+\texttt{oscode}'s has
+% AB: local?
+error $\bigO(h)$, although
+its prefactor can be small when $\om_0$ is large.
 error when $h \ll 1$, although in regions of high-frequency oscillations, $h$
-tends to be very large in comparison to the solution's timescale. The
-WKB-marching method's oscillatory solver improves on this and has $\bigO(h^2)$ local error,
-resulting in better performance at lower tolerances.
-A consequence of these two methods having low $h$-order and fixed asymptotic
-order is that they are forced to take very small stepsizes at low tolerances,
+tends to be very large in comparison to the solution's timescale.
+The
+WKB-marching method's oscillatory solver improves on this and has $\bigO(h^2)$ local error, resulting in better performance at lower tolerances.
+Yet, as a consequence,
+%of these two methods having low $h$-order and fixed asymptotic
+%order is
+a small requested tolerance in either method forces $h<1/\om_0$.
 %which in turn causes them to switch over to their respective Runge--Kutta solvers 
-even if the solution is oscillatory. They are therefore only efficient if no more than about 6 digits of accuracy
-are required, and can suffer at low-to-intermediate frequencies where more asymptotic terms would be required. Our method, on the other hand, is both spectrally accurate and 
+%even if the solution is oscillatory.
+They are therefore only efficient if no more than about 6 digits of accuracy
+are required, and can suffer at low-to-intermediate frequencies where more asymptotic terms would be required.
+The present method, on the other hand, is both spectrally accurate and 
 adaptive in the number of terms in its asymptotic expansion.
 
 %The local error of our proposed
@@ -318,32 +332,28 @@ adaptive in the number of terms in its asymptotic expansion.
 %\AB{Valiant, but I think too much detail here. Just say we are spectral. Move detail to discussion}
 
 % QLM
-Instead of finding an approximation via a regular perturbative expansion, the
-``quasilinearisation method''
+%Instead of finding an approximation via a regular perturbative expansion, the
+The ``quasilinearisation method''
 % note M stands for method, so approach was bit confusing
-(QLM) \cite{bellman1970} approximates the solution
-of \cref{riccwkb} with a series of iterates $x_i(t)$ by converting it to a
+(QLM) \cite{bellman1970} instead approximates the solution
+of \cref{riccwkb} with a series of iterates $x_i(t)$ by converting it to the
 differential equation recurrence
-% AB: note word order
-% *** your labeling was wrong: (8) was just the x_0 which isn't an ODE
-% Thus I combined as you did for WKB.
 \be
 x_0 = \pm i\om,
-\quad
+\qquad
 x_j' - x_{j-1}^2 + 2x_j x_{j-1} + \om^2 = 0, \quad \text{for } j = 1, 2, \ldots
-% *** ditto N as above
 \label{qlmode}
 \ee
-and either solving them analytically, \eg in \cite{mandelzweig2004,krivec2006}
-or numerically \cite{krivec2008,krivec2014}. The semi-analytic approach
+and either solving them symbolically \cite{mandelzweig2004,krivec2006}
+or numerically \cite{krivec2008,krivec2014}. The symbolic approach
 requires increasing amounts of algebra as the iteration number grows and can
 become cumbersome. Integrating each ODE in \cref{qlmode} numerically does not prove to be a better strategy since each such ODE is itself oscillatory.
-% AB clarified
 
 % Bremer
 % Accuracy?
 % arbitrarily high order
-Recently Bremer \cite{bremer2018} following \cite{heitman2015,bremer2016} has proposed an efficient
+Recently Bremer \cite{bremer2018}, following \cite{heitman2015,bremer2016},
+has proposed an efficient
 method for solving \cref{ode}, in the special case $\g = 0$, in the high frequency regime. 
 %\AB{Is this distinct from the WKB methods just described?
 %  Ie, don't they also run in $\bigO(1)$ time?

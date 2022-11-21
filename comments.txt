@@ -26,15 +26,11 @@ It takes a lot of editing to make a good Abs!
 
 Last sentence of Abs excellent. 2nd-to-last, try to cut down.
 
-
-
 cascade name: not bad - feels like shoehorning to make a word,
 ie no letter combos in it remind me
 of ode, riccati, iteration, defect correction, phase func, adaptive...
 How about RPFDC or ARPFDC
 or RFPI
-
-
 
 INTRO
 
@@ -59,4 +55,20 @@ or "Assuming ...  one then matches..."
 
 
 
+---------- ongoing comments 11/21/22
 
+
+
+
+
+
+
+====== TO DO
+
+* explain diff btw us and Bremer:
+Bremer converts globally to phase func, then solves adaptively on panels over global region, vs we discretize adaptively on panels before converting to phase func.  We patch together solutions at panel level.
+Thus no windowing needed.
+
+* Future work:
+ - analyse discretized iteration (matvec plus pointwise square).
+  (no reason why high-order derivs on p=16 cheby grid should remain accurate)
