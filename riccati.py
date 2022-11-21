@@ -1,58 +1,8 @@
 import numpy as np
 import math
 import scipy.linalg
-# import scipy.special 
 
-class counter:
-    """
-    Wraps a function to keep track of how many times it's been called.
-    """
-
-    def __init__(self, f):
-        self.f = f
-        self.count = 0
-
-    def __call__(self, *args, **kwargs):
-        self.count += 1
-        return self.f(*args, **kwargs)
-
-class Stats:
-    """
-    Class to keep track of various statistics over the course of the solution. 
-    """
-    
-    def __init__(self):
-        self.n_chebnodes = 0
-        self.n_chebstep = 0
-        self.n_chebits = 0
-        self.n_LS2x2 = 0
-        self.n_LS = 0
-        self.n_riccstep = 0
-        self.n_sub = 0
-        self.n_LU = 0
-
-    def increase(self, chebnodes = 0, chebstep = 0, chebits = 0, LS2x2 = 0, LS = 0, riccstep = 0, sub = 0, LU = 0):
-        self.n_chebnodes += chebnodes
-        self.n_chebstep += chebstep
-        self.n_chebits += chebits
-        self.n_LS2x2 += LS2x2
-        self.n_LS += LS
-        self.n_riccstep += riccstep
-        self.n_LU += LU
-        self.n_sub += sub
-
-    def output(self, steptypes):
-        statdict = {"cheb steps": (self.n_chebstep, sum(np.array(steptypes) == 0) - 1), 
-                    "cheb iterations": self.n_chebits, 
-                    "ricc steps": (self.n_riccstep, sum(np.array(steptypes) == 1)), 
-                    "linear solves": self.n_LS, 
-                    "linear solves 2x2": self.n_LS2x2, 
-                    "cheb nodes": self.n_chebnodes,
-                    "LU decomp": self.n_LU, 
-                    "substitution": self.n_sub}
-        return statdict
-
-def cheb(n, stats):
+def cheb(n):
     """
     Returns the (n+1)*(n+1) differentiation matrix D and (n+1) Chebyshev nodes
     x for the standard 1D interval [-1, 1]. The matrix multiplies a vector of
@@ -79,10 +29,9 @@ def cheb(n, stats):
         dX = X - X.T
         D = np.outer(c, 1/c) / (dX + np.identity(n+1))
         D = D - np.diag(D.sum(axis=1))
-    stats.increase(chebnodes = 1)
     return D, x
 
-def interp(s, t, stats):
+def interp(s, t):
     """
     Creates interpolation matrix from an array of source nodes s to target nodes t.
     Taken from https://github.com/ahbarnett/BIE3D/blob/master/utils/interpmat_1d.m
@@ -95,25 +44,23 @@ def interp(s, t, stats):
         V[:, j] = V[:, j-1]*s
         R[:, j] = R[:, j-1]*t
     L = np.linalg.solve(V.T, R.T).T
-    stats.increase(LS = 1)
     return L
 
-def choose_nonosc_stepsize(w, g, x0, h, p = 16):
+def choose_nonosc_stepsize(info, x0, h, epsh = 0.2):
     """
     Chooses the stepsize for spectral Chebyshev steps, based on the variation
     of 1/w, the approximate timescale over which the solution changes. If over
     the suggested interval h 1/w changes by 20% or more, the interval is
     halved, otherwise it's accepted.
     """
-    #print('choosing nonosc stepsize')
-    xscaled = x0 + h/2 + h/2*xp
-    ws = w(xscaled)
-    if max(ws) > 1.2/h:
-        return choose_nonosc_stepsize(w, g, x0, h/2)
+    xscaled = x0 + h/2 + h/2*info.xp
+    ws = info.w(xscaled)
+    if max(ws) > (1 + epsh)/h:
+        return choose_nonosc_stepsize(info, x0, h/2, epsh = epsh)
     else:
         return h
 
-def choose_osc_stepsize(w, g, x0, h, epsh = 1e-12, p = 32):
+def choose_osc_stepsize(info, x0, h, epsh = 1e-12):
     """
     Chooses the stepsize h over which the functions w(x), g(x) can be
     represented sufficiently accurately. p/2 nodes are randomly chosen over the
@@ -124,46 +71,169 @@ def choose_osc_stepsize(w, g, x0, h, epsh = 1e-12, p = 32):
     exceeds epsh, h is halved.
     TODO: Actually add g, so far only have w
     """
-    #print('choosing osc stepsize')
-    global wn, gn, xp
-    t = x0 + h/2 + h/2*xpinterp
-    s = x0 + h/2 + h/2*xp
+    w, g, L = info.w, info.g, info.L
+    t = x0 + h/2 + h/2*info.xpinterp
+    s = x0 + h/2 + h/2*info.xp
+    if info.p == info.n:
+        info.wn = w(s)
+        info.gn = g(s)
+        ws = info.wn
+        gs = info.gn
+    else:
+        info.wn = w(x0 + h/2 + h/2*info.xn)
+        info.gn = g(x0 + h/2 + h/2*info.xn)
+        ws = w(s)
+        gs = g(s)
     wana = w(t)
-    wn = w(s)
-    west = L.dot(wn)
+    west = L.dot(ws)
     gana = g(t)
-    gn = g(s)
-    gest = L.dot(gn)
+    gest = L.dot(gs)
     maxwerr = max(np.abs((west - wana)/wana))
     maxgerr = max(np.abs((gest - gana)/gana))
     maxerr = max(maxwerr, maxgerr)
     if maxerr > epsh:
-        return choose_osc_stepsize(w, g, x0, min(0.7*h, 0.9*h*(epsh/maxerr)**(1/(p-1))), epsh = epsh, p = p)
+        return choose_osc_stepsize(info, x0, min(0.7*h, 0.9*h*(epsh/maxerr)**(1/(info.p-1))), epsh = epsh)
     else:
         return h
     #TODO: what if h is too small to begin with?
 
-def osc_step(w, g, x0, h, y0, dy0, stats, epsres = 1e-12, n = 32, plotting=False, k=0):
+
+def osc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 1e-12):
+    """
+    Allows continuous evolution between x0 and x1. Starting from x0 and y =
+    [y0, yd0] takes a Riccati step of size h or until x1 is reached. 
+    Will need to call choose_osc_stepsize() before the first call to this to
+    set info.wn, info.gn correctly, or set them by hand.
+    """
+    # Make sure info's attributes are up-to-date:
+    # success = 0
+    # info.x = x0
+    # info.y = y0
+    # Check if we're stepping out of range
+    sign = np.sign(h)
+    if sign*(x0 + h) > sign*x1:
+        # Step would be out of bounds, need to rescale and re-eval wn, gn
+        h = x1 - x0
+        xscaled = h/2*info.xn + x0 + h/2
+        info.wn = info.w(xscaled)
+        info.gn = info.g(xscaled)
+    info.h = h
+    # Call oscillatory step
+    y10, y11, maxerr, s, phase = osc_step(info, x0, h, y0[0], y0[1], epsres = epsres)
+    if s != 1:
+        # Unsuccessful step
+        success = 0
+    else:
+        # Successful step
+        success = 1
+        info.y = np.array([y10, y11])
+        info.x += h
+        # Determine new stepsize
+        wnext = info.wn[0]
+        gnext = info.gn[0]
+        dwnext = 2/h*info.Dn.dot(info.wn)[0]
+        dgnext = 2/h*info.Dn.dot(info.gn)[0]
+        hosc_ini = min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
+        info.h = choose_osc_stepsize(info, info.x, hosc_ini, epsh = epsh)  
+    return success
+
+def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
+    """
+    Allows continuous evolution between x0 and x1. Starting from x0 and y =
+    [y0, yd0] takes a Chebyshev step of size h or until x1 is reached. 
+    Will need to call choose_nonosc_stepsize() before the first call to this to
+    set info.wn, info.gn correctly, or set them by hand.
+    """
+
+    # Make sure info's attributes are up-to-date:
+    # success = 0
+    # info.x = x0
+    # info.y = y0
+    # Check if we're stepping out of range
+    sign = np.sign(h)
+    if sign*(x0 + h) > sign*x1:
+        # Step would be out of bounds, need to rescale and re-eval wn, gn
+        h = x1 - x0
+        xscaled = h/2*info.xn + x0 + h/2
+    info.h = h
+    # Call nonoscillatory step
+    y10, y11, maxerr, s, res = nonosc_step(info, x0, h, y0[0], y0[1], epsres = epsres)
+    if s != 1:
+        # Unsuccessful step
+        success = 0
+    else:
+        # Successful step
+        success = 1
+        info.y = np.array([y10, y11])
+        info.x += h
+        # Determine new stepsize
+        wnext = info.w(info.x)
+        hosc_ini = min(1e8, np.abs(1/wnext))
+        info.h = choose_nonosc_stepsize(info, info.x, hosc_ini, epsh = epsh)  
+    return success
+
+
+def single_osc_step(info, x0, h, y0, dy0, epsres = 1e-12):
+    """
+    Standalone single Riccati step.
+    Advances the solution from x0 to x0+h, starting from the initial conditions
+    y(x0) = y0, y'(x0) = dy0. It uses the Barnett series of order o (up to and
+    including the (o)th correction), and the underlying functions w, g are
+    represented on an (n+1)-node Chebyshev grid.
+    """
+    success = 1
+    xscaled = h/2*info.xn + x0 + h/2
+    ws = info.w(xscaled)
+    gs = info.g(xscaled)
+    Dn = info.Dn
+    y = 1j*ws
+    delta = lambda r, y: -r/(2*(y + gs))
+    R = lambda d: 2/h*Dn.dot(d) + d**2
+    Ry = 1j*2*(1/h*Dn.dot(ws) + gs*ws)
+    maxerr = max(np.abs(Ry))
+    prev_err = np.inf
+    o = 0 # Keep track of number of terms
+    while maxerr > epsres:
+        o += 1
+        deltay = delta(Ry, y)
+        y = y + deltay
+        Ry = R(deltay)       
+        maxerr = max(np.abs(Ry))
+        if maxerr >= prev_err:
+            success = 0
+            break
+        prev_err = maxerr
+    if success == 1:
+        pass
+    du1 = y
+    du2 = np.conj(du1)
+    # LU
+    u1 = h/2*scipy.linalg.lu_solve((info.DnLU, info.Dnpiv), du1, check_finite = False)
+    u1 -= u1[-1]
+    u2 = np.conj(u1)
+    f1 = np.exp(u1)
+    f2 = np.conj(f1)
+    ap = (dy0 - y0*du2[-1])/(du1[-1] - du2[-1])   
+    am = (dy0 - y0*du1[-1])/(du2[-1] - du1[-1])
+    y1 = ap*f1 + am*f2
+    dy1 = ap*du1*f1 + am*du2*f2
+    phase = np.imag(u1[0])
+    return y1[0], dy1[0], maxerr, success, phase
+
+
+def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     """
     Advances the solution from x0 to x0+h, starting from the initial conditions
     y(x0) = y0, y'(x0) = dy0. It uses the Barnett series of order o (up to and
     including the (o)th correction), and the underlying functions w, g are
-    represented on an n-node Chebyshev grid.
-
+    represented on an (n+1)-node Chebyshev grid.
+    ! Relies on info.wn and info.gn being populated with w(x0, ..., x0+h), etc.
     """
-    #print('osc step called')
-    global xn, wn, gn, Dn, DnLU, Dnpiv
     success = 1
-    try:
-        xscaled = h/2*xn + x0 + h/2
-        ws = wn
-        gs = gn
-    except NameError:
-        Dn, xn = cheb(n, stats)
-        DnLU, Dnpiv = scipy.linalg.lu_factor(Dn, check_finite = False)
-        xscaled = h/2*xn + x0 + h/2
-        ws = w(xscaled)
-        gs = g(xscaled)
+    xscaled = h/2*info.xn + x0 + h/2
+    ws = info.wn
+    gs = info.gn
+    Dn = info.Dn
     y = 1j*ws
     delta = lambda r, y: -r/(2*(y + gs))
     R = lambda d: 2/h*Dn.dot(d) + d**2
@@ -178,7 +248,6 @@ def osc_step(w, g, x0, h, y0, dy0, stats, epsres = 1e-12, n = 32, plotting=False
             y = y + deltay
             Ry = R(deltay)       
             maxerr = max(np.abs(Ry))
-            #print(o, maxerr)
             if maxerr >= prev_err:
                 success = 0
                 break
@@ -192,31 +261,22 @@ def osc_step(w, g, x0, h, y0, dy0, stats, epsres = 1e-12, n = 32, plotting=False
             y = y + deltay
             Ry = R(deltay)       
             maxerr = max(np.abs(Ry))
-    #print("y: ", y)
     du1 = y
     du2 = np.conj(du1)
     # LU
-    u1 = h/2*scipy.linalg.lu_solve((DnLU, Dnpiv), du1, check_finite = False)
-    #print("h: ", h)
-    #print("DnLU: ", DnLU)
-    #print("Dnpiv: ", Dnpiv)
-    #print("u: ", u1)
+    u1 = h/2*scipy.linalg.lu_solve((info.DnLU, info.Dnpiv), du1, check_finite = False)
     u1 -= u1[-1]
     u2 = np.conj(u1)
     f1 = np.exp(u1)
     f2 = np.conj(f1)
-#    C = np.array([[1, 1], [du1[-1], du2[-1]]])
-#    ap, am = np.linalg.solve(C, np.array([y0, dy0]))
     ap = (dy0 - y0*du2[-1])/(du1[-1] - du2[-1])   
     am = (dy0 - y0*du1[-1])/(du2[-1] - du1[-1])
-    #print("f: ", f1, "a, b: ", ap, am)
     y1 = ap*f1 + am*f2
     dy1 = ap*du1*f1 + am*du2*f2
     phase = np.imag(u1[0])
-    stats.increase(sub = 1, riccstep = 1)
     if plotting:
         xplot = np.linspace(x0, x0+h, 500)
-        L = interp(xscaled, xplot, stats)
+        L = interp(xscaled, xplot)
         u1plot = L.dot(u1)
         f1plot = np.exp(u1plot)
         f2plot = np.conj(f1plot)
@@ -225,7 +285,7 @@ def osc_step(w, g, x0, h, y0, dy0, stats, epsres = 1e-12, n = 32, plotting=False
     else:
         return y1[0], dy1[0], maxerr, success, phase
 
-def nonosc_step(w, g, x0, h, y0, dy0, stats, epsres = 1e-12, nmax = 64, nini = 16):
+def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
 
     """
     Advances the solution from x0 to x0+h, starting from the initial conditions
@@ -236,38 +296,36 @@ def nonosc_step(w, g, x0, h, y0, dy0, stats, epsres = 1e-12, nmax = 64, nini = 1
     success = 1 #TODO: this doesn't do anything in Cheb, can always add more nodes
     res = 0 #TODO: does nothing
     maxerr = 10*epsres
-    N = nini
-    Nmax = nmax
-    yprev, dyprev, xprev = spectral_cheb(w, g, x0, h, y0, dy0, 0, stats)
+    N = info.nini
+    Nmax = info.nmax
+    yprev, dyprev, xprev = spectral_cheb(info, x0, h, y0, dy0, 0)
     while maxerr > epsres:
         N *= 2
         if N > Nmax:
             success = 0
             return 0, 0, maxerr, success, res
-        y, dy, x = spectral_cheb(w, g, x0, h, y0, dy0, int(np.log2(N/nini)), stats) 
+        y, dy, x = spectral_cheb(info, x0, h, y0, dy0, int(np.log2(N/info.nini))) 
         maxerr = np.abs((yprev[0] - y[0]))
         if np.isnan(maxerr):
             maxerr = np.inf
         yprev = y
         dyprev = dy
         xprev = x
-    stats.increase(chebstep = 1)
     return y[0], dy[0], maxerr, success, res
 
-def spectral_cheb(w, g, x0, h, y0, dy0, niter, stats):
+def spectral_cheb(info, x0, h, y0, dy0, niter):
     """
     Utility function to apply a spectral method based on n Chebyshev nodes from
     x = x0 to x = x0+h, starting from the initial conditions y(x0) = y0, y'(x0)
     = dy0.
     """
-    #print('spectral cheb iteration')
-    D, x = Ds[niter], nodes[niter]
+    D, x = info.Ds[niter], info.nodes[niter]
     xscaled = h/2*x + x0 + h/2
-    ws = w(xscaled)
-    gs = g(xscaled)
+    ws = info.w(xscaled)
+    gs = info.g(xscaled)
     w2 = ws**2
     D2 = 4/h**2*D.dot(D) + 4/h*np.diag(gs).dot(D) + np.diag(w2)
-    n = round(ns[niter])
+    n = round(info.ns[niter])
     ic = np.zeros(n+1, dtype=complex)
     ic[-1] = 1 # Because nodes are ordered backwards, [1, -1]
     D2ic = np.zeros((n+3, n+1), dtype=complex)
@@ -279,11 +337,81 @@ def spectral_cheb(w, g, x0, h, y0, dy0, niter, stats):
     rhs[-1] = y0
     y1, res, rank, sing = np.linalg.lstsq(D2ic, rhs) # NumPy solve only works for square matrices
     dy1 = 2/h*D.dot(y1)
-    stats.increase(LS = 1)
     return y1, dy1, xscaled
 
 
-def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], n = 16, p = 16, hard_stop = False):
+class Solverinfo:
+    """
+    Class to store differentiation matrices, Chebyshev nodes, etc.
+    """
+
+    def __init__(self, w, g, h, nini, nmax, n, p):
+        self.y = np.zeros(2, dtype = complex)
+        self.w = w
+        self.g = g
+        self.h = h
+        self.nini = nini
+        self.nmax = nmax
+        self.n = n
+        self.p = p
+        self.wn, self.gn = np.zeros(n + 1), np.zeros(n + 1)
+        Dlength = int(np.log2(self.nmax/self.nini)) + 1
+        self.Ds, self.nodes = [], []
+        lognini = np.log2(self.nini)
+        self.ns = np.logspace(lognini, lognini + Dlength - 1, num = Dlength, base = 2.0)#, dtype=int)
+        for i in range(Dlength):
+            D, x = cheb(self.nini*2**i)
+            self.Ds.append(D)
+            self.nodes.append(x)
+        if self.n in self.ns:
+            i = np.where(self.ns == self.n)[0][0]
+            self.Dn, self.xn = self.Ds[i], self.nodes[i]
+        else:
+            self.Dn, self.xn = cheb(self.n)
+        if self.p in self.ns:
+            i = np.where(self.ns == self.p)[0][0]
+            self.xp = self.nodes[i]
+        else:
+            self.xp = cheb(self.p)[1]
+        self.xpinterp = np.cos(np.linspace(np.pi/(2*self.p), np.pi*(1 - 1/(2*self.p)), self.p))
+        self.L = interp(self.xp, self.xpinterp)
+        self.DnLU, self.Dnpiv = scipy.linalg.lu_factor(self.Dn, check_finite = False)
+
+
+def setup(w, g, h0 = 1, nini = 16, nmax = 64, n = 16, p = 16):
+    """
+    Sets up the solver by generating differentiation matrices based on an
+    increasing number of Chebyshev gridpoints: nini+1, 2*nini+1, ...,
+    2*nmax+1).  Needs to be called before the first time the solver is ran or
+    if nini or nmax are changed. 
+
+    Parameters:
+    -----------
+    w: callable(t)
+        Freqyency fynction in y'' + 2g(t)y' + w^2(t)y = 0.
+    g: callable(t)
+        Damping fynction in y'' + 2g(t)y' + w^2(t)y = 0.
+    h0: float
+        Initial stepsize.
+    nini: int
+        Lowest (number of nodes - 1) to start the Chebyshev spectral steps with.
+    nmax: int
+        Maximum (number of nodes - 1) for the spectral Chebyshev steps to
+        try before decreasing the stepsize and reattempting the step with (nini + 1) nodes.
+    n: int
+        (Fixed) number of Chebyshev nodes to use for interpolation,
+        integration, and differentiation in Riccati steps.
+    p: int
+        (Fixed) number of Chebyshev nodes to use for interpolation when
+        determining the stepsize for Riccati steps.
+
+    Returns:
+    --------
+    """
+    info = Solverinfo(w, g, h0, nini, nmax, n, p)
+    return info
+
+def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_stop = False, t_eval = []):
     """
     Solves y'' + 2gy' + w^2y = 0 on the interval (xi, xf), starting from the
     initial conditions y(xi) = yi, y'(xi) = dyi. Keeps the residual of the ODE
@@ -294,49 +422,14 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], n = 16, 
 
     Returns:
     """
-    # Parameters
-    nini = 16 # n to start from in Cheby steps
-    nmax = 64 # maximum n in Cheby steps
-    n = n # How many points we use during Cheby interp in Riccati steps, 16 for Airy, 32 for burst
-    p = p # How many points we use to choose h
+    w = info.w
+    g = info.g
+    Dn = info.Dn
+    xn = info.xn
+    n = info.n
+    p = info.p
     hi = 0.1 # Initial stepsize for calculating derivatives
     
-    # Keep track of run statistics
-    stats = Stats()
-
-    # Store D matrices for Cheby steps
-    global Dn, xn, Ds, nodes, ns, xp, xpinterp, L, wn, gn
-    # LU decomp of Dn
-    global DnLU, Dnpiv
-    wn, gn = np.zeros(n + 1), np.zeros(n + 1)
-    Dlength = int(np.log2(nmax/nini)) + 1
-    Ds, nodes = [], []
-    lognini = np.log2(nini)
-    ns = np.logspace(lognini, lognini + Dlength - 1, num = Dlength, base = 2.0)#, dtype=int)
-    for i in range(Dlength):
-        D, x = cheb(nini*2**i, stats)
-        Ds.append(D)
-        nodes.append(x)
-        stats.increase(chebnodes = 1)
-    if n in ns:
-        i = np.where(ns == n)[0][0]
-        Dn, xn = Ds[i], nodes[i]
-    else:
-        Dn, xn = cheb(n, stats)
-    if p in ns:
-        i = np.where(ns == p)[0][0]
-        xp = nodes[i]
-    else:
-        xp = cheb(p, stats)[1]
-    xpinterp = np.cos(np.linspace(np.pi/(2*p), np.pi*(1 - 1/(2*p)), p))
-    L = interp(xp, xpinterp, stats)
-    DnLU, Dnpiv = scipy.linalg.lu_factor(Dn, check_finite = False)
-    #print("Dn shape: ", Dn.shape)
-    #print("DnLU: ", DnLU)
-    #print("Dnpiv: ", Dnpiv)
-    stats.increase(LU = 1)
-
-
     # TODO: backwards integration
     xs = [xi]
     ys = [yi]
@@ -348,7 +441,6 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], n = 16, 
     dy = dyi
     yprev = y
     dyprev = dy
-#    print('initial w, g call')
     wis = w(xi + hi/2 + hi/2*xn)
     gis = g(xi + hi/2 + hi/2*xn)
     wi = wis[-1]
@@ -358,14 +450,12 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], n = 16, 
     # Choose initial stepsize
     hslo_ini = min(1e8, np.abs(1/wi))
     hosc_ini = min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
-    hslo = choose_nonosc_stepsize(w, g, xi, hslo_ini)
-    hosc = choose_osc_stepsize(w, g, xi, hosc_ini, epsh = epsh, p = p)  
+    hslo = choose_nonosc_stepsize(info, xi, hslo_ini)
+    hosc = choose_osc_stepsize(info, xi, hosc_ini, epsh = epsh)  
     xcurrent = xi
     wnext = wi
     dwnext = dwi
     while abs(xcurrent - xf) > 1e-8 and xcurrent < xf:
-        #print("x: ", xcurrent, ", hosc: ", hosc, ", hslo: ", hslo)
-        #print("u: ", y)
         # Check how oscillatory the solution is
         #ty = np.abs(1/wnext)
         #tw = np.abs(wnext/dwnext)
@@ -374,24 +464,22 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], n = 16, 
         if hosc > hslo*5 and hosc*wnext/(2*np.pi) > 1:
             if hard_stop:
                 if xcurrent + hosc > xf:
-                    #print("Ricc step will step outside int range", xcurrent, xcurrent + hosc)
                     hosc = xf - xcurrent
                     xscaled = xcurrent + hosc/2 + hosc/2*xp 
                     wn = w(xscaled)
                     gn = g(xscaled) 
                 if xcurrent + hslo > xf:
-                    #print("Cheb step will step outside int range", xcurrent, xcurrent + hslo)
                     hslo = xf - xcurrent
             # Solution is oscillatory
             # Attempt osc step of size hosc
-            y, dy, res, success, phase = osc_step(w, g, xcurrent, hosc, yprev, dyprev, stats, epsres = eps, n = n)
+            y, dy, res, success, phase = osc_step(info, xcurrent, hosc, yprev, dyprev, epsres = eps)
             if success == 1:
                 pass
             steptype = 1
         while success == 0:
             # Solution is not oscillatory, or previous step failed
             # Attempt Cheby step of size hslo
-            y, dy, err, success, res = nonosc_step(w, g, xcurrent, hslo, yprev, dyprev, stats, epsres = eps, nini = nini, nmax = nmax)
+            y, dy, err, success, res = nonosc_step(info, xcurrent, hslo, yprev, dyprev, epsres = eps)
             phase = 0
             steptype = 0
             # If step still unsuccessful, halve stepsize
@@ -414,12 +502,11 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], n = 16, 
         successes.append(success) # TODO: now always true
         # Advance independent variable and compute next stepsizes
         if steptype == 1:
-            wnext = wn[0]
-            gnext = gn[0]
-            dwnext = 2/h*Dn.dot(wn)[0]
-            dgnext = 2/h*Dn.dot(gn)[0]
+            wnext = info.wn[0]
+            gnext = info.gn[0]
+            dwnext = 2/h*Dn.dot(info.wn)[0]
+            dgnext = 2/h*Dn.dot(info.gn)[0]
         else:
-#            print("calling w, g because steptype != 1")
             wnext = w(xcurrent + h)
             gnext = g(xcurrent + h)
             dwnext = 2/h*Dn.dot(w(xcurrent + h/2 + h/2*xn))[0]
@@ -428,17 +515,9 @@ def solve(w, g, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], n = 16, 
         if xcurrent < xf:
             hslo_ini = min(1e8, np.abs(1/wnext))
             hosc_ini = min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
-            hosc = choose_osc_stepsize(w, g, xcurrent, hosc_ini, epsh = epsh, p = p)  
-            hslo = choose_nonosc_stepsize(w, g, xcurrent, hslo_ini)
+            hosc = choose_osc_stepsize(info, xcurrent, hosc_ini, epsh = epsh)  
+            hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
             dyprev = dy
-    statdict = stats.output(steptypes)
-    return xs, ys, dys, successes, phases, steptypes, statdict
-
-
-
-
-
-
-
+    return xs, ys, dys, successes, phases, steptypes
 
