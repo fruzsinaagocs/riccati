@@ -55,10 +55,30 @@ or "Assuming ...  one then matches..."
 
 
 
----------- ongoing comments 11/21/22
+---------- ongoing Alex comments 11/21/22
 
+* Abs claims n is adapted in the Cheby scheme, but it's not, right? Just h?
+Please check.
 
+* apostrophes are too casual ( "method's" etc)
 
+* I am not using the sec 6 list of changes - suggest cut so the
+paper looks as it should.
+
+* oscode & related: local vs global h-order (and power of om_0 ?)
+needed clarified
+
+* QLM is Newton iter not series, clarified.
+
+* note don't mix \dot{x} and x'
+
+* suggest Bremer's method is not called "the phase function method".
+
+* Check prefactor of al''/al in {kummer} .. 1/2 ?
+
+* Is our method an "expansion", an "iteration", a "series", a "defect correction" ? It is best to stick to one. I think "iteration" is clearest. Hence edits.
+
+* Structure of paper para: note I highlighted *rigorous* analysis.
 
 
 

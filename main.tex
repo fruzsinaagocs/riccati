@@ -21,7 +21,7 @@
 \usepackage{tikz}
 \usepackage[most]{tcolorbox}
 \usetikzlibrary{positioning}
-
+\usepackage{comment}                % to comment out big blocks
 
 
 % SI unit definitions
@@ -126,7 +126,8 @@ For analytic coefficients we prove that each iteration, up to a certain
 maximum, reduces the residual by a factor of order of the local frequency. 
 %
 When the solution changes slowly, the algorithm automatically switches to a
-spectral method based on an adaptively varied number of Chebyshev nodes.
+conventional spectral collocation method on Chebyshev grids.
+%method based on an adaptively varied number of Chebyshev nodes.
 %
 In numerical experiments we find that our proposal outperforms other state-of-the-art
 oscillatory solvers, most significantly at low-to-intermediate
@@ -167,9 +168,9 @@ Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this cl
 Hamiltonian dynamics \cite{Pritula2018,fiore2022}, particle accelerators and plasma physics
 \cite{courant1958,davidson2001,hazeltine2003,lewis1968}, electric circuits
 \cite{likharev2022}, satellite systems \cite{saxena2020}, acoustics and gravity waves \cite{filippi1998,einaudi1970}, and quantum mechanics \cite{griffiths2018,adhikari1988,arnold2011wkb,cea1982}.
-In many of these fields our proposed method could supply a simple and efficient
+In many of these fields our proposed method could supply a robust and efficient
 numerical replacement for
-uncontrolled approximate asymptotic methods.
+uncontrolled asymptotic approximations.
 %which at high order can become cumbersome to apply.
 %  https://www.math.leidenuniv.nl/~vivi/stud_sem2011/BosleyKevorkian92.pdf  latex fail -> coupled oscillators
 
@@ -271,15 +272,13 @@ and matching powers of $\om_0$ in \cref{odewkb} gives the recursion relation
 for the functions $x_j(t)$
 (where for simplicity we give only the $\gamma \equiv 0$ case),
 \begin{equation}\label{wkbrecur}
-  x_0 = \pm i\Omega, \qquad x_j = -\frac{1}{2x_0}\left( \dot{x}_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots.
-  % *** AB: note I killed N since it is never referred to nor given later.
+  x_0 = \pm i\Omega, \qquad x_j = -\frac{1}{2x_0}\left( x'_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots.
 \end{equation}
 Although originally an analytic tool,
 WKB has recently been exploited in numerical solvers.
 These algorithms achieve
 $\bigO(1)$ (i.e., $\om_0$-independent) runtime in regions where the asymptotic
 series is a sufficiently good approximation.
-% note the pivot, since it's a surprise   -> AB, yes, nice.
 WKB forms the basis of the method described in
 \cite{agocs2020efficient,agocs2020dense}, and associated open-source software
 package \texttt{oscode} \cite{agocs2020joss}. This uses the expansion
@@ -301,19 +300,19 @@ otherwise again switching to a 4,5th order Runge--Kutta method.
 %solver and produce a
 %$\bigO(h^6)$ error.
 %
-In terms of the time-step $h$, neither method is high-order.
-\texttt{oscode}'s has
-% AB: local?
-error $\bigO(h)$, although
-its prefactor can be small when $\om_0$ is large.
-error when $h \ll 1$, although in regions of high-frequency oscillations, $h$
-tends to be very large in comparison to the solution's timescale.
+In terms of the time-step $h$, neither method is formally high-order.
+\texttt{oscode} has
+% AB: *** local? need to clarify local vs global in this para.
+local error $\bigO(h)$, although
+its prefactor is small when $\om_0$ is large.
+%error when $h \ll 1$, although in regions of high-frequency oscillations, $h$
+%tends to be very large in comparison to the solution's timescale.
 The
 WKB-marching method's oscillatory solver improves on this and has $\bigO(h^2)$ local error, resulting in better performance at lower tolerances.
-Yet, as a consequence,
-%of these two methods having low $h$-order and fixed asymptotic
-%order is
-a small requested tolerance in either method forces $h<1/\om_0$.
+% AB *** I feel a clearer way to say would be error is O(h^2 / om^3) or something... for each solver.
+Yet, as a consequence of low $h$ order and fixed asymptotic order,
+a small requested tolerance in either method forces
+$h \lesssim 1/\om_0$, removing the efficiency advantage over conventional timesteppers.
 %which in turn causes them to switch over to their respective Runge--Kutta solvers 
 %even if the solution is oscillatory.
 They are therefore only efficient if no more than about 6 digits of accuracy
@@ -335,18 +334,20 @@ adaptive in the number of terms in its asymptotic expansion.
 %Instead of finding an approximation via a regular perturbative expansion, the
 The ``quasilinearisation method''
 % note M stands for method, so approach was bit confusing
-(QLM) \cite{bellman1970} instead approximates the solution
-of \cref{riccwkb} with a series of iterates $x_i(t)$ by converting it to the
-differential equation recurrence
+(QLM) \cite{bellman1970} instead successively approximates
+a solution of the Riccati equation \cref{riccwkb}
+by a functional Newton iteration.
+The resulting differential equation recurrence (here stated for $\gamma\equiv 0$),
 \be
 x_0 = \pm i\om,
 \qquad
 x_j' - x_{j-1}^2 + 2x_j x_{j-1} + \om^2 = 0, \quad \text{for } j = 1, 2, \ldots
 \label{qlmode}
 \ee
-and either solving them symbolically \cite{mandelzweig2004,krivec2006}
-or numerically \cite{krivec2008,krivec2014}. The symbolic approach
-requires increasing amounts of algebra as the iteration number grows and can
+turns out to be equivalent to $2^j$ terms of WKB.
+This recurrence is either solved symbolically \cite{mandelzweig2004,krivec2006}
+or numerically \cite{krivec2008,krivec2014}. The former
+requires increasing amounts of algebra with iteration number, so can
 become cumbersome. Integrating each ODE in \cref{qlmode} numerically does not prove to be a better strategy since each such ODE is itself oscillatory.
 
 % Bremer
@@ -354,113 +355,143 @@ become cumbersome. Integrating each ODE in \cref{qlmode} numerically does not pr
 % arbitrarily high order
 Recently Bremer \cite{bremer2018}, following \cite{heitman2015,bremer2016},
 has proposed an efficient
-method for solving \cref{ode}, in the special case $\g = 0$, in the high frequency regime. 
+method for solving \cref{ode}, in the special case $\g = 0$,
+over a domain in which the solutions is highly oscillatory.
 %\AB{Is this distinct from the WKB methods just described?
 %  Ie, don't they also run in $\bigO(1)$ time?
 %  In which case I suggest we state that above, and not make it a new property here.
 %  To me the Bremer innovation is high-order approximation of phase func
 %  on intervals,
 %  plus convergence, plus code.}
-The method aims to find a nonoscillatory phase function $\alpha(t)$, defined
-via Kummer's equation,
+The method aims to find a global nonoscillatory phase function $\alpha(t)$
+satisfying Kummer's equation,
 \be
 \frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
 \om(t)^2 = 0,
 \label{kummer}
 \ee
-a nonlinear and generally oscillatory ODE, and will therefore be
-referred to as the phase function method hereafter.
-%\AB{I think you should move eq {kummer} here otherwise reader doesn't know what it is}.
-The nonoscillatory phase function $\alpha$ can be used to compute an approximation
-of the solution of \cref{riccwkb} accurate to within
-$\bigO((\mu\om_0)^{-1}\exp(-\mu\om_0))$ as $\om_0 \to \infty$, where $\mu$ is a constant that depends on $\Omega(t)$ but not $\om_0$.
-The proposed algorithm itself generates $\tilde{\alpha}$, an approximation
-of $\alpha$, such that the logarithm form of Kummer's
-equation is satisfied to within $\bigO(-\tfrac{1}{2}\mu\om_0)$. These
-generated phase functions are nonoscillatory in the sense that they can be
-accurately represented using a series expansion (\eg via Chebyshev polynomials)
-with $\bigO(1)$ terms, independently of $\om_0$.
-The basis of the method are the results of \cite{heitman2015,bremer2016}
-that prove the existence of such nonoscillatory phase functions if $\Omega(t)$ is
-nonoscillatory, in the sense that the Fourier transform of $\log \Omega$ is smooth
+a nonlinear and generally oscillatory ODE.
+%and will therefore be referred to as the phase function method hereafter.
+% AB: our method is also a PF meth, so let's not do that ^.
+%
+From an antiderivative $a(t)$ of $\alpha(t)$ one reconstructs solutions
+via $u(t) = \sin(a(t) + c)/\sqrt{\alpha(t)}$.
+% AB: note the reader benefits from seeing how it relates to u
+%
+%The nonoscillatory phase function $\alpha$ can be used to compute an approximation
+%of the solution of \cref{riccwkb} accurate to within
+%$\bigO((\mu\om_0)^{-1}\exp(-\mu\om_0))$ as $\om_0 \to \infty$, where $\mu$ is a constant that depends on $\Omega(t)$ but not $\om_0$.
+% AB ***: I found that confusing - I thought Bremer did not use Riccati form?
+% I decided to cut error detail
+%
+%The proposed algorithm itself generates $\tilde{\alpha}$, an approximation
+%of $\alpha$, such that the so-called logarithm form of Kummer's
+%equation is satisfied to within $\bigO(-\tfrac{1}{2}\mu\om_0)$.
+% AB: *** somethign wrong there _^  what do you mean?  Also too much detail,
+% so I cut.
+The generated phase functions are nonoscillatory in the sense that they can be
+accurately approximated on intervals of fixed size
+using polynomials of degree independent of $\om_0$.
+%(\eg via Chebyshev polynomials)
+%with $\bigO(1)$ terms,
+The results of \cite{heitman2015,bremer2016}
+prove the existence of such nonoscillatory phase functions when
+$\Omega(t)$ is
+nonoscillatory in the sense that the Fourier transform of $\log \Omega$ is smooth
 and rapidly decaying.
 Finding initial conditions on the phase function leading to
 a nonoscillatory solution is, however, challenging.
-The authors of \cite{bremer2018} proposed a ``windowing'' method to numerically find such a global phase function
-on an interval:
-the idea is to first transform the interval $t \in [a,b]$ to $[0, 1]$, then use a $C^\infty$ partition of unity near $t=1$ to smoothly ``blend'' $\Omega$ to
-a constant function, integrate backwards from the constant region
-down to $t = 0$, and finally integrating $t \in [0,1]$ forward using the original $\Omega$.
-This exploits the facts that a nonoscillatory phase function for
-the constant case $\Omega(t) = 1$ is simple to write down; and
-that the smooth window allows
-the nonlinear Kummer oscillator to make a smooth 
-%(in physics terminology ``adiabatic'') 
+Bremer proposed a ``windowing'' method to numerically find such a global phase function on the interval $(t_0,t_1)$,
+% AB: note let's use the same interval name as before, less confusing.
+% AB: note the transformation is a distraction
+first using a $C^\infty$ partition of unity near $t_1$ to smoothly ``blend'' $\Omega$ to
+a constant function, integrating backwards from this constant region
+down to $t = t_0$, and finally integrating $t \in (t_0,t_1)$ forward using the original $\Omega$.
+This exploits two facts: a nonoscillatory phase function for
+the constant case $\Omega(t) = 1$ is simple to write down, and
+a smooth window allows the nonlinear Kummer oscillator to make a smooth 
+%(in physics terminology
+(``adiabatic'')
 transition which excites only an exponentially small oscillation amplitude.
-\AB{something about windowing involves parameter choices.
-  Nevertheless Bremer's is the most efficient
-  and accurate prior method known to the authors.}
-\Fruzsi{Need clarification about this comment.}
+The parameters of this partition of unity require problem-dependent
+adjustment.
+Nevertheless Bremer's is the most efficient
+and accurate prior method known to the authors.
+%\Fruzsi{Need clarification about this comment.} *** what do you want to say?
 
-Here we present an approach using an asymptotic expansion for a nonoscillatory Riccati phase function,
-meaning simply that the
-phase function is the logarithmic derivative $x(t) = (\log u(t))'$ from \cref{riccwkb}.
+Here we present an approach using an asymptotic expansion for a nonoscillatory Riccati phase function as in \cref{riccwkb}.
+%meaning simply that the
+%phase function is the logarithmic derivative $x(t) = (\log u(t))'$ obeying
+% AB: I cut since it's confusing, there is no om_0 scaling in our formulae.
 %
-The series representing the phase function is constructed via a defect
-correction scheme, see \cite{bohmer1984} and references therein. It is,
-however, asymptotic not convergent, thus only a limited number of iterates may
-be used before it becomes unstable, which we address numerically.  
+The asymptotic series for the phase function is constructed
+via a defect
+correction scheme \cite{bohmer1984},
+where each iteration involves simply taking a derivative
+(performed numerically on a spectral grid), rather than solving
+an ODE as in QLM.
+We adaptively terminate this (non-convergent) iteration before it becomes unstable.
 %
 Our algorithm is capable of handling a non-zero damping term $\g \neq 0$,
-allowing for the direct solution of a wider range of second order, linear ODEs
-than the WKB-marching and the phase function method. 
+allowing for the direct solution of a wider range of second order linear ODEs
+than the WKB-marching or the Kummer phase function method.
 %
-The expansion we use does not introduce oscillatory contributions,
+Our iteration does not introduce oscillatory contributions,
 hence finds a nonoscillatory approximate phase function without
-reference to initial conditions, in contrast to the phase function method. 
+reference to initial conditions, in contrast to the
+Kummer phase function method. 
 %
 Another crucial difference from the latter is that $x(t)$ is solved for
-locally on an interval with an adaptively-chosen length, rather than globally.
-Solutions to \cref{ode,ic0,ic1} are then constructed by time-stepping over the
-integration range and matching Cauchy boundary data over adjacent intervals.
+locally on one interval with an adaptively-chosen length, rather than globally.
+Solutions to \eqref{ode}--\eqref{ic1} are then constructed by time-stepping over the
+integration range, repeatedly matching Cauchy data at interval endpoints.
 %
-Our expansion is simpler than the traditional WKB expansion in that the
-associated recursion relation $x_i(x_{i-1}, x_{i-2}, \ldots, x_0)$ only
-involves the previous term $x_{i-1}$ as opposed to all past terms in
-\cref{wkbrecur}. 
+Our iteration only involves one previous term (it is a 2-term recurrence),
+which is simpler than the traditional WKB expansion
+\cref{wkbrecur} which requires all past terms.
 %
-The simplicity of the recursion relation makes it
-computationally simpler for the method to be adaptive in the number of terms 
-used in the asymptotic expansion.
+%The simplicity of the recursion relation makes it
+%computationally simpler for the method to be adaptive in the number of terms 
+%used in the asymptotic expansion.
+% AB: not so convincing
 %
-The expansion presented here has similar accuracy, and
-exhibits geometric convergence for the first few iterations, which we show
-formally in \cref{errorana}. The iterations are computed using high-order
-numerical differentiation, rather than algebraically as the WKB expansion is
-usually applied.
+%The expansion presented here has similar accuracy, and
+%exhibits geometric convergence for the first few iterations, which we show
+%formally in \cref{errorana}. The iterations are computed using high-order
+%numerical differentiation, rather than algebraically as the WKB expansion is
+%usually applied.
+% AB I don't think needed here.
+
 %
 The phase function method, as with WKB or QLM methods,
 is naturally only applicable in the high frequency regime.
 Thus, in the present work, we borrow ideas from \cite{agocs2020efficient} to
-create a fully adaptive algorithm to switch
-solution methods between oscillatory and non-oscillatory intervals,
-and to choose lengths of these intervals to achieve a user-requested
+create a fully adaptive algorithm that can switch 
+between oscillatory and non-oscillatory methods,
+and choose the time-step $h$ to achieve a user-requested
 tolerance efficiently.
-This is achieved by switching between the Riccati asymptotic expansion and a conventional
-spectral method on the fly as the solver
-steps through the full user-requested interval $[t_0, t_1]$.
-
-%
+Here, our nonoscillatory method is a standard spectral collocation scheme
+\cite{tref}.  % AB added this out of respect
+%This is achieved by switching between the Riccati asymptotic expansion and a conventional
+%spectral method on the fly as the solver
+%steps through the full user-requested interval $[t_0, t_1]$.
+% AB: felt repetitive.
 
 %Structure
 This paper is structured as follows. \cref{methods} describes the various
 numerical methods used in the proposed algorithm including the asymptotic
-expansion for regions of oscillations, the spectral method based on Chebyshev
+expansion for oscillatory domains, the spectral method based on Chebyshev
 nodes, adaptive control of stepsize, and switching between the two alternative
-sub-methods. \cref{errorana} discusses the error properties of the method based
-on the asymptotic expansion of the Riccati equation and its consequences for
-implementation. We show results from numerical experiments in
-\cref{numresults}, which involves a comparison of the contemporary ODE solver
+schemes.
+% AB; sub-methods feels more clumsy
+\cref{errorana} presents rigorous analysis of the error of
+% AB : 
+the asymptotic expansion of the Riccati equation,
+including a proof that the error is $\bigO(e^{-c\om_0})$ given sufficient terms.
+%and its consequences for implementation.
+We show results from numerical experiments in
+\cref{numresults}, which involves a comparison of the contemporary ODE solvers
+% AB: plural, right?
 mentioned above. \cref{conclusions} concludes this paper with a summary and
 suggestions for future work.
 
@@ -1850,8 +1881,8 @@ given accuracy. This application will be explored in a future paper.
 % PDEs???
 
 \section*{Acknowledgments}
-We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
-and Manas Rachh.
+We have benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
+Manas Rachh, and Leslie Greengard.
 The Flatiron Institute is a division of the Simons Foundation.
 
 % Some things left to do:  (are this FA or AB ones? Are some obsolete?) These are for FA! Some may be obsolete.
@@ -1889,7 +1920,7 @@ The Flatiron Institute is a division of the Simons Foundation.
 % More references needed
 % - just in intro
 
-% BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+\begin{comment}
 \Fruzsi{
 \section{List of changes}
 
@@ -1934,6 +1965,9 @@ The Flatiron Institute is a division of the Simons Foundation.
 \end{itemize}
 
 }
+\end{comment}
+
+% BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 \bibliographystyle{abbrv}
 \bibliography{refs}
 \end{document}
