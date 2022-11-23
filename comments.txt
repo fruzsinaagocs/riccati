@@ -26,15 +26,11 @@ It takes a lot of editing to make a good Abs!
 
 Last sentence of Abs excellent. 2nd-to-last, try to cut down.
 
-
-
 cascade name: not bad - feels like shoehorning to make a word,
 ie no letter combos in it remind me
 of ode, riccati, iteration, defect correction, phase func, adaptive...
 How about RPFDC or ARPFDC
 or RFPI
-
-
 
 INTRO
 
@@ -59,4 +55,82 @@ or "Assuming ...  one then matches..."
 
 
 
+---------- ongoing Alex comments / changes rationale  11/21/22
 
+* Abs claims n is adapted in the Cheby scheme, but it's not, right? Just h?
+Please check.
+
+* apostrophes are too casual ( "method's" etc)
+
+* I am not using the sec 6 list of changes - suggest cut so the
+paper looks as it should.
+
+* oscode & related: local vs global h-order (and power of om_0 ?)
+needed clarified
+
+* QLM is Newton iter not series, clarified.
+
+* note don't mix \dot{x} and x'
+
+* suggest Bremer's method is not called "the phase function method".
+
+* I corrected prefactor of al''/al in {kummer} to 1/2.
+
+* Check "smoothness" of Fourier xform of log Omega.
+
+* Is our method an "expansion", an "iteration", a "series", a "defect correction" ? It is best to stick to one. I think "iteration" and "defect correction" are clearest.  Hence edits.
+
+* the "structure of this paper" para: note I highlighted *rigorous* analysis.
+
+* Prop 1: why is non-vanishing of x needed given that x+gamma in denominator?
+After prop 1: you needed to update the statement about LB on x_j to be about
+x_j+gamma.
+
+* D mat, and spectral meth in general, needed a ref; I gave Tref. old book.
+
+* major notation clash between t_i for time-step intervals vs t_j Cheby nodes.
+I changed nodes to tau_j, and killed your "set" notation t_n, which also
+clashed.
+
+* first eqn in the matching section was wrong - need t as upper limit.
+
+* Demo section:
+The ICs cannot be relevant since the iter doesn't control them, right?
+Not sure why ICs are given.
+
+* burst eqn you state as m^2-1 upstairs but then state om_max = sqrt(m^2+1) ...
+which is it? (inconsistent)
+
+* burst demo: your choice of test interval [0,2] is very wide, with omega dropping by factor 5 over the interval, and having a nearby singularity at +-i.
+Yet it still works. But we have to comment about this.
+
+* plots/residual-k-corr.pdf would better label j for iteration not k,
+to match paper. We used k as the stopping iter, mostly.
+* also for this plot, the y axis is mislabeled. [t_j,t_j+1] is not the
+interval used for testing in the text.
+
+* push the boundaries of understanding the k=5 kink in the demo - is it
+do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
+
+* consider using block 2x2 notation for {discreteodeic} to save vertical space
+
+* fixed om to om^2 in diag term in {discreteode}
+
+
+
+
+
+
+
+
+====== GENERAL TO DOS
+
+* explain diff btw us and Bremer:
+Bremer converts globally to phase func, then solves adaptively on panels over global region, vs we discretize adaptively on panels before converting to phase func.  We patch together solutions at panel level.
+Thus no windowing needed.
+
+* Future work:
+ - analyse discretized iteration (matvec plus pointwise square).
+  (no reason why high-order derivs on p=16 cheby grid should remain accurate!)
+
+* update struct of paper after later edits

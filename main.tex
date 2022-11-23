@@ -21,7 +21,7 @@
 \usepackage{tikz}
 \usepackage[most]{tcolorbox}
 \usetikzlibrary{positioning}
-
+\usepackage{comment}                % to comment out big blocks
 
 
 % SI unit definitions
@@ -118,20 +118,23 @@ We introduce an efficient numerical method for second order linear ODEs whose
 solution may vary between highly oscillatory and slowly changing over the solution interval.
 %
 In oscillatory regions the solution is generated via a nonoscillatory phase
-function that obeys the nonlinear Riccati equation. We introduce a
+function that obeys the nonlinear Riccati equation. Here we propose a
 defect-correction iteration that gives an asymptotic series for the phase
-function; this iteration is spectrally approximated on a Chebyshev grid with a small number of nodes. 
+function; this iteration is spectrally approximated on a Chebyshev grid with a small number of nodes.
 %
 For analytic coefficients we prove that each iteration, up to a certain
 maximum, reduces the residual by a factor of order of the local frequency. 
 %
 When the solution changes slowly, the algorithm automatically switches to a
-spectral method based on an adaptively varied number of Chebyshev nodes.
+conventional spectral collocation method on Chebyshev grids.
+%method based on an adaptively varied number of Chebyshev nodes.
 %
-In numerical experiments we find that out method outperforms other state-of-the-art
+In numerical experiments we find that our proposal outperforms other state-of-the-art
 oscillatory solvers, most significantly at low-to-intermediate
-frequencies and at low tolerances, where our method performs up to $10^6$
-times fewer function evaluations.  Even at high frequencies, our method is
+frequencies and at low tolerances, where it may use up to $10^6$
+times fewer function evaluations.  Even in high frequency regimes, our
+implementation is
+% AB: we have to be careful about claims re the method vs the implementation
 on average $10$ times faster than other specialised solvers.
 \end{abstract}
 
@@ -149,25 +152,26 @@ order ODE with
 smooth coefficients.
 This includes simple % you didn't mean "single", right?
 harmonic oscillators with time-dependent coefficients,
-thus is pivotal in many computational physics problems.
+which arise in many computational physics problems.
 % note I cut "simple-looking". not needed
 One application in which an extremely fast numerical solution is needed
 is Bayesian parameter estimation in cosmology.
 Specifically, each spatial Fourier mode of the density pertubations
-obeys an ODE in time of this form,
-with solutions that may change repeatedly between smooth and
+obeys such an ODE in time,
+with solutions that may switch repeatedly between smooth and
 highly oscillatory characters \cite{agocs2020dense}.
 Of order $10^3$ modes are needed, and this must be repeated for
 up to $10^6$ trial parameter choices; thus the ODE solver
 may be called a billion times, and an efficient frequency-independent
 solver is crucial.
-Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this class of ODE also appears in
+Besides inflationary cosmology \cite{Hergt2022,martin2003,winitzki2005}, this class of ODE appears in
 Hamiltonian dynamics \cite{Pritula2018,fiore2022}, particle accelerators and plasma physics
 \cite{courant1958,davidson2001,hazeltine2003,lewis1968}, electric circuits
 \cite{likharev2022}, satellite systems \cite{saxena2020}, acoustics and gravity waves \cite{filippi1998,einaudi1970}, and quantum mechanics \cite{griffiths2018,adhikari1988,arnold2011wkb,cea1982}.
-In many of these fields our proposed method could supply a simple and efficient
+In many of these fields our proposed method could supply a robust and efficient
 numerical replacement for
-asymptotic analytic methods which at high order can become cumbersome to apply.
+uncontrolled asymptotic approximations.
+%which at high order can become cumbersome to apply.
 %  https://www.math.leidenuniv.nl/~vivi/stud_sem2011/BosleyKevorkian92.pdf  latex fail -> coupled oscillators
 
 % Define the problem completely before you start getting into details about complex omega:
@@ -237,14 +241,16 @@ when the solution has both highly oscillatory and smooth regimes.
 % WKB
 The most common asymptotic expansion
 is the Wentzel--Kramers--Brillouin (WKB), a
-perturbation method applied to linear differential equations that contain some
-small parameter $\varepsilon$ in the highest derivative
+perturbation method applied to linear differential equations that contain a
+small parameter
+%$\varepsilon$  <- this is never used later so no symbol is needed
+in the highest derivative
 \cite{benderorszag,logan}.
 This approximation arose in quantum mechanics where it is still widely
 applied for approximate analytic solutions of the Schr\"{o}dinger equation.
-Writing $\om(t) = \om_0\Omega(t)$
-where $\Omega(t)$ is of unit size, and the asymptotic parameter
-is $\om_0 \gg 1$,    % AB: note how I cut down here
+Writing $\om(t) = \om_0\Omega(t)$,
+where $\Omega(t)$ is of unit size, and the asymptotic parameter is
+$\om_0 \gg 1$,    % AB: note how I cut down here
 % AB: oops not \ll
 % AB: note you don't set gam=0 until later, so I fixed that
 \cref{ode} becomes
@@ -266,26 +272,27 @@ x(t) = \sum_{j=0}^{N} \om_0^{-j} x_j(t)~,
 \ee
 and matching powers of $\om_0$ in \cref{odewkb} gives the recursion relation
 for the functions $x_j(t)$
-(for simplicity we give only the $\gamma \equiv 0$ case),
+(where for simplicity we give only the $\gamma \equiv 0$ case),
 \begin{equation}\label{wkbrecur}
-  x_0 = \pm i\Omega, \quad x_j = -\frac{1}{2x_0}\left( \dot{x}_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots.
-  % *** AB: note I killed N since it is never referred to nor given later.
+  x_0 = \pm i\Omega, \qquad x_j = -\frac{1}{2x_0}\left( x'_{j-1} + \sum_{k = 1}^{j-1}x_k x_{j-k} \right), \quad \text{for } j = 1, 2, \ldots.
 \end{equation}
 Although originally an analytic tool,
 WKB has recently been exploited in numerical solvers.
 These algorithms achieve
 $\bigO(1)$ (i.e., $\om_0$-independent) runtime in regions where the asymptotic
 series is a sufficiently good approximation.
-% note the pivot, since it's a surprise   -> AB, yes, nice.
 WKB forms the basis of the method described in
 \cite{agocs2020efficient,agocs2020dense}, and associated open-source software
 package \texttt{oscode} \cite{agocs2020joss}. This uses the expansion
-\cref{wkbexpansion} up to and including $x_3$ to advance the numerical solution
-for $u(t)$ in a time-stepping context, but has the ability to switch to a 4,5th
-order Runge--Kutta pair if the asymptotic expansion isn't accurate enough. In \cite{arnold2011wkb,korner2022wkb} the ``WKB marching method'' uses the same
+\cref{wkbexpansion} up to and including $x_3$ within a time-step,
+or, if this is not accurate enough, switches to a 4,5th
+order Runge--Kutta pair.
+% AB: note "isn't" is too casual. Also, keeping concise.
+In \cite{arnold2011wkb,korner2022wkb} the related
+``WKB marching method'' uses the same
 expansion truncated after $x_2$ to transform \cref{odewkb} into a smoother
-problem in the highly oscillatory regions, otherwise switching to a 4,5th order
-Runge--Kutta method.
+problem in the highly oscillatory regions,
+otherwise again switching to a 4,5th order Runge--Kutta method.
 %The spectral method is based
 %on $n+1$ Chebyshev nodes, where $n$ is chosen adaptively, resulting in an
 %% CHECK NUMERICALLY!  *** is that still a relevant comment
@@ -295,16 +302,24 @@ Runge--Kutta method.
 %solver and produce a
 %$\bigO(h^6)$ error.
 %
-\texttt{oscode}'s WKB-based method produces an $\bigO(h)$
-error when $h \ll 1$, although in regions of high-frequency oscillations, $h$
-tends to be very large in comparison to the solution's timescale. The
-WKB-marching method's oscillatory solver improves on this and has $\bigO(h^2)$ local error,
-resulting in better performance at lower tolerances.
-A consequence of these two methods having low $h$-order and fixed asymptotic
-order is that they are forced to take very small stepsizes at low tolerances,
+In terms of the time-step $h$, neither method is formally high-order.
+\texttt{oscode} has
+% AB: *** local? need to clarify local vs global in this para.
+local error $\bigO(h)$, although
+its prefactor is small when $\om_0$ is large.
+%error when $h \ll 1$, although in regions of high-frequency oscillations, $h$
+%tends to be very large in comparison to the solution's timescale.
+The
+WKB-marching method's oscillatory solver improves on this and has $\bigO(h^2)$ local error, resulting in better performance at lower tolerances.
+% AB *** I feel a clearer way to say would be error is O(h^2 / om^3) or something... for each solver.
+Yet, as a consequence of low $h$ order and fixed asymptotic order,
+a small requested tolerance in either method forces
+$h \lesssim 1/\om_0$, removing the efficiency advantage over conventional timesteppers.
 %which in turn causes them to switch over to their respective Runge--Kutta solvers 
-even if the solution is oscillatory. They are therefore only efficient if no more than about 6 digits of accuracy
-are required, and can suffer at low-to-intermediate frequencies where more asymptotic terms would be required. Our method, on the other hand, is both spectrally accurate and 
+%even if the solution is oscillatory.
+They are therefore only efficient if no more than about 6 digits of accuracy
+are required, and can suffer at low-to-intermediate frequencies where more asymptotic terms would be required.
+The present method, on the other hand, is both spectrally accurate and 
 adaptive in the number of terms in its asymptotic expansion.
 
 %The local error of our proposed
@@ -318,139 +333,170 @@ adaptive in the number of terms in its asymptotic expansion.
 %\AB{Valiant, but I think too much detail here. Just say we are spectral. Move detail to discussion}
 
 % QLM
-Instead of finding an approximation via a regular perturbative expansion, the
-``quasilinearisation method''
+%Instead of finding an approximation via a regular perturbative expansion, the
+The ``quasilinearisation method''
 % note M stands for method, so approach was bit confusing
-(QLM) \cite{bellman1970} approximates the solution
-of \cref{riccwkb} with a series of iterates $x_i(t)$ by converting it to a
-differential equation recurrence
-% AB: note word order
-% *** your labeling was wrong: (8) was just the x_0 which isn't an ODE
-% Thus I combined as you did for WKB.
+(QLM) \cite{bellman1970} instead successively approximates
+a solution of the Riccati equation \cref{riccwkb}
+by a functional Newton iteration.
+The resulting differential equation recurrence (here stated for $\gamma\equiv 0$),
 \be
 x_0 = \pm i\om,
-\quad
+\qquad
 x_j' - x_{j-1}^2 + 2x_j x_{j-1} + \om^2 = 0, \quad \text{for } j = 1, 2, \ldots
-% *** ditto N as above
 \label{qlmode}
 \ee
-and either solving them analytically, \eg in \cite{mandelzweig2004,krivec2006}
-or numerically \cite{krivec2008,krivec2014}. The semi-analytic approach
-requires increasing amounts of algebra as the iteration number grows and can
+turns out to be equivalent to $2^j$ terms of WKB.
+This recurrence is either solved symbolically \cite{mandelzweig2004,krivec2006}
+or numerically \cite{krivec2008,krivec2014}. The former
+requires increasing amounts of algebra with iteration number, so can
 become cumbersome. Integrating each ODE in \cref{qlmode} numerically does not prove to be a better strategy since each such ODE is itself oscillatory.
-% AB clarified
 
 % Bremer
 % Accuracy?
 % arbitrarily high order
-Recently Bremer \cite{bremer2018} following \cite{heitman2015,bremer2016} has proposed an efficient
-method for solving \cref{ode}, in the special case $\g = 0$, in the high frequency regime. 
+Recently Bremer \cite{bremer2018}, following \cite{heitman2015,bremer2016},
+has proposed an efficient
+method for solving \cref{ode}, in the special case $\g = 0$,
+over a domain in which the solutions is highly oscillatory.
 %\AB{Is this distinct from the WKB methods just described?
 %  Ie, don't they also run in $\bigO(1)$ time?
 %  In which case I suggest we state that above, and not make it a new property here.
 %  To me the Bremer innovation is high-order approximation of phase func
 %  on intervals,
 %  plus convergence, plus code.}
-The method aims to find a nonoscillatory phase function $\alpha(t)$, defined
-via Kummer's equation,
+The method aims to find a global nonoscillatory phase function $\alpha(t)$
+satisfying Kummer's equation,
 \be
-\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
+\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{2\alpha} - \alpha^2 +
 \om(t)^2 = 0,
 \label{kummer}
 \ee
-a nonlinear and generally oscillatory ODE, and will therefore be
-referred to as the phase function method hereafter.
-%\AB{I think you should move eq {kummer} here otherwise reader doesn't know what it is}.
-The nonoscillatory phase function $\alpha$ can be used to compute an approximation
-of the solution of \cref{riccwkb} accurate to within
-$\bigO((\mu\om_0)^{-1}\exp(-\mu\om_0))$ as $\om_0 \to \infty$, where $\mu$ is a constant that depends on $\Omega(t)$ but not $\om_0$.
-The proposed algorithm itself generates $\tilde{\alpha}$, an approximation
-of $\alpha$, such that the logarithm form of Kummer's
-equation is satisfied to within $\bigO(-\tfrac{1}{2}\mu\om_0)$. These
-generated phase functions are nonoscillatory in the sense that they can be
-accurately represented using a series expansion (\eg via Chebyshev polynomials)
-with $\bigO(1)$ terms, independently of $\om_0$.
-The basis of the method are the results of \cite{heitman2015,bremer2016}
-that prove the existence of such nonoscillatory phase functions if $\Omega(t)$ is
-nonoscillatory, in the sense that the Fourier transform of $\log \Omega$ is smooth
+a nonlinear and generally oscillatory ODE.
+%and will therefore be referred to as the phase function method hereafter.
+% AB: our method is also a PF meth, so let's not do that ^.
+%
+One then reconstructs solutions
+via $u(t) = \sin(\int \alpha(t) dt + c)/\sqrt{\alpha(t)}$.
+% AB: note the reader benefits from seeing how it relates to u
+%
+%The nonoscillatory phase function $\alpha$ can be used to compute an approximation
+%of the solution of \cref{riccwkb} accurate to within
+%$\bigO((\mu\om_0)^{-1}\exp(-\mu\om_0))$ as $\om_0 \to \infty$, where $\mu$ is a constant that depends on $\Omega(t)$ but not $\om_0$.
+% AB ***: I found that confusing - I thought Bremer did not use Riccati form?
+% I decided to cut error detail
+%
+%The proposed algorithm itself generates $\tilde{\alpha}$, an approximation
+%of $\alpha$, such that the so-called logarithm form of Kummer's
+%equation is satisfied to within $\bigO(-\tfrac{1}{2}\mu\om_0)$.
+% AB: *** somethign wrong there _^  what do you mean?  Also too much detail,
+% so I cut.
+The generated phase functions are nonoscillatory in the sense that they can be
+accurately approximated on intervals of fixed size
+using polynomials of degree independent of $\om_0$.
+%(\eg via Chebyshev polynomials)
+%with $\bigO(1)$ terms,
+The results of \cite{heitman2015,bremer2016}
+prove the existence of such nonoscillatory phase functions when
+$\Omega(t)$ is
+nonoscillatory in the sense that the Fourier transform of $\log \Omega$ is smooth
+% *** AB check do you really mean smooth? since it has to be smooth in Fourier
+% due to compactness of interval. Please check.
 and rapidly decaying.
 Finding initial conditions on the phase function leading to
 a nonoscillatory solution is, however, challenging.
-The authors of \cite{bremer2018} proposed a ``windowing'' method to numerically find such a global phase function
-on an interval:
-the idea is to first transform the interval $t \in [a,b]$ to $[0, 1]$, then use a $C^\infty$ partition of unity near $t=1$ to smoothly ``blend'' $\Omega$ to
-a constant function, integrate backwards from the constant region
-down to $t = 0$, and finally integrating $t \in [0,1]$ forward using the original $\Omega$.
-This exploits the facts that a nonoscillatory phase function for
-the constant case $\Omega(t) = 1$ is simple to write down; and
-that the smooth window allows
-the nonlinear Kummer oscillator to make a smooth 
-%(in physics terminology ``adiabatic'') 
+Bremer proposed a ``windowing'' method to numerically find such a global phase function on the interval $(t_0,t_1)$,
+% AB: note let's use the same interval name as before, less confusing.
+% AB: note the transformation is a distraction
+first using a $C^\infty$ partition of unity near $t_1$ to smoothly ``blend'' $\Omega$ to
+a constant function, integrating backwards from this constant region
+down to $t = t_0$, and finally integrating $t \in (t_0,t_1)$ forward using the original $\Omega$.
+This exploits two facts: a nonoscillatory phase function for
+the constant case $\Omega(t) = 1$ is simple to write down, and
+a smooth window allows the nonlinear Kummer oscillator to make a smooth 
+%(in physics terminology
+(``adiabatic'')
 transition which excites only an exponentially small oscillation amplitude.
-\AB{something about windowing involves parameter choices.
-  Nevertheless Bremer's is the most efficient
-  and accurate prior method known to the authors.}
-\Fruzsi{Need clarification about this comment.}
+The parameters of this partition of unity require problem-dependent
+adjustment.
+Nevertheless Bremer's is the most efficient
+and accurate prior method known to the authors.
+%\Fruzsi{Need clarification about this comment.} *** what do you want to say?
 
-Here we present an approach using an asymptotic expansion for a nonoscillatory Riccati phase function,
-meaning simply that the
-phase function is the logarithmic derivative $x(t) = (\log u(t))'$ from \cref{riccwkb}.
+% US
+Here we present an approach using an asymptotic expansion for a nonoscillatory Riccati phase function as in \cref{riccwkb}.
+%meaning simply that the
+%phase function is the logarithmic derivative $x(t) = (\log u(t))'$ obeying
+% AB: I cut since it's confusing, there is no om_0 scaling in our formulae.
 %
-The series representing the phase function is constructed via a defect
-correction scheme, see \cite{bohmer1984} and references therein. It is,
-however, asymptotic not convergent, thus only a limited number of iterates may
-be used before it becomes unstable, which we address numerically.  
+The asymptotic series for the phase function is constructed
+via a defect
+correction scheme \cite{bohmer1984},
+where each iteration involves simply taking a derivative
+(performed numerically on a spectral grid), rather than solving
+an ODE as in QLM.
+We adaptively terminate this (non-convergent) iteration before it becomes unstable.
 %
 Our algorithm is capable of handling a non-zero damping term $\g \neq 0$,
-allowing for the direct solution of a wider range of second order, linear ODEs
-than the WKB-marching and the phase function method. 
+allowing for the direct solution of a wider range of second order linear ODEs
+than the WKB-marching or the Kummer phase function method.
 %
-The expansion we use does not introduce oscillatory contributions,
+Our iteration does not introduce oscillatory contributions,
 hence finds a nonoscillatory approximate phase function without
-reference to initial conditions, in contrast to the phase function method. 
+reference to initial conditions, in contrast to the
+Kummer phase function method. 
 %
 Another crucial difference from the latter is that $x(t)$ is solved for
-locally on an interval with an adaptively-chosen length, rather than globally.
-Solutions to \cref{ode,ic0,ic1} are then constructed by time-stepping over the
-integration range and matching Cauchy boundary data over adjacent intervals.
+locally on one interval with an adaptively-chosen length, rather than globally.
+Solutions to \eqref{ode}--\eqref{ic1} are then constructed by time-stepping over the
+integration range, repeatedly matching Cauchy data at interval endpoints.
 %
-Our expansion is simpler than the traditional WKB expansion in that the
-associated recursion relation $x_i(x_{i-1}, x_{i-2}, \ldots, x_0)$ only
-involves the previous term $x_{i-1}$ as opposed to all past terms in
-\cref{wkbrecur}. 
+Our iteration only involves one previous term (it is a 2-term recurrence),
+which is simpler than the traditional WKB expansion
+\cref{wkbrecur} which requires all past terms.
 %
-The simplicity of the recursion relation makes it
-computationally simpler for the method to be adaptive in the number of terms 
-used in the asymptotic expansion.
+%The simplicity of the recursion relation makes it
+%computationally simpler for the method to be adaptive in the number of terms 
+%used in the asymptotic expansion.
+% AB: not so convincing
 %
-The expansion presented here has similar accuracy, and
-exhibits geometric convergence for the first few iterations, which we show
-formally in \cref{errorana}. The iterations are computed using high-order
-numerical differentiation, rather than algebraically as the WKB expansion is
-usually applied.
+%The expansion presented here has similar accuracy, and
+%exhibits geometric convergence for the first few iterations, which we show
+%formally in \cref{errorana}. The iterations are computed using high-order
+%numerical differentiation, rather than algebraically as the WKB expansion is
+%usually applied.
+% AB I don't think needed here.
+
 %
 The phase function method, as with WKB or QLM methods,
 is naturally only applicable in the high frequency regime.
 Thus, in the present work, we borrow ideas from \cite{agocs2020efficient} to
-create a fully adaptive algorithm to switch
-solution methods between oscillatory and non-oscillatory intervals,
-and to choose lengths of these intervals to achieve a user-requested
+create a fully adaptive algorithm that can switch 
+between oscillatory and non-oscillatory methods,
+and choose the time-step $h$ to achieve a user-requested
 tolerance efficiently.
-This is achieved by switching between the Riccati asymptotic expansion and a conventional
-spectral method on the fly as the solver
-steps through the full user-requested interval $[t_0, t_1]$.
-
-%
+Here, our nonoscillatory method is a standard spectral collocation scheme
+\cite{tref}.  % AB added this out of respect
+%This is achieved by switching between the Riccati asymptotic expansion and a conventional
+%spectral method on the fly as the solver
+%steps through the full user-requested interval $[t_0, t_1]$.
+% AB: felt repetitive.
 
 %Structure
 This paper is structured as follows. \cref{methods} describes the various
 numerical methods used in the proposed algorithm including the asymptotic
-expansion for regions of oscillations, the spectral method based on Chebyshev
+expansion for oscillatory domains, the spectral method based on Chebyshev
 nodes, adaptive control of stepsize, and switching between the two alternative
-sub-methods. \cref{errorana} discusses the error properties of the method based
-on the asymptotic expansion of the Riccati equation and its consequences for
-implementation. We show results from numerical experiments in
-\cref{numresults}, which involves a comparison of the contemporary ODE solver
+schemes.
+% AB; sub-methods feels more clumsy
+\cref{errorana} presents rigorous analysis of the error of
+% AB : 
+the asymptotic expansion of the Riccati equation,
+including a proof that the error is $\bigO(e^{-c\om_0})$ given sufficient terms.
+%and its consequences for implementation.
+We show results from numerical experiments in
+\cref{numresults}, which involves a comparison of the contemporary ODE solvers
+% AB: plural, right?
 mentioned above. \cref{conclusions} concludes this paper with a summary and
 suggestions for future work.
 
@@ -460,27 +506,32 @@ suggestions for future work.
 %we will show that close to machine accuracy is easily reached in
 %intervals that contain many oscillations.
 
+
+
 \section{Methods \label{methods}}
 
-\subsection{Riccati phase function solution on a
-  single interval \label{phasefun}}
+\subsection{Defect correction of the Riccati phase function}
+  \label{phasefun}
 
-%\AB{The following will be cut down quite a bit by moving ricc, kummer,
-%  eqns etc to intro as discussed there, and referring back. No eqn need appear
-%twice, and repetition is generally avoided}
-
-We will use prime to denote differentiation with respect to time $t$.
-We consider an interval $t\in[a,b]$ lying in $[0,1]$.  
+%We will use prime to denote differentiation with respect to time $t$.
+% AB; that's clear by now
+%We consider an interval $t\in[a,b]$ lying in $[0,1]$.
+% AB: why needed? [a,b] comes only later and it can be anything, right?
+%
+In this section we explain how to solve for
+a nonoscillatory Riccati phase function on a sufficiently small interval,
+which will correspond to a single time-step of the overall ODE solver.
 Writing $u = e^z$ where $z'(t) = x(t)$ is the phase function,
-then any nonvanishing $u(t)$ satisfies \cref{ode} if and only if
+any nonvanishing $u(t)$ satisfies \cref{ode} if and only if
 its complex phase function $x(t)$ satisfies the nonlinear Riccati equation
 \be
 x' + x^2 + 2\g(t)x + \om(t)^2 = 0.
 \label{ricc}
 \ee
-%For the sake of simplicity, let us set $\g(t) = 0$ for the time being.
-Almost all solutions to \cref{ricc} are oscillatory,
-as the presence of $\om(t)$ would suggest.
+(For convenience we now work without rescaling by $\om_0$ as in the
+Introduction.)
+A generic solution to \cref{ricc} is oscillatory
+on the local timescale $1/\om(t)$.
 This is illustrated by the case of constant $\om(t) = \om_0$
 and $\g(t)\equiv 0$,
 which has only the family of analytic solutions
@@ -489,262 +540,366 @@ where $\re \alpha$ is interpreted as a phase shift and $\im \alpha$
 controls the amplitude. Their oscillation frequency is $2\om_0$.
 %\AB{note the $\om_0$ then reinforces using this instead of $\lambda$
 %  in the intro for Bremer.}
-However, the limit $\im \alpha \to \pm \infty$ produces
-the only two nonoscillatory solutions $x(t) = \pm i\om_0$.
-The picture is similar
-for general analytic functions $\om(t)$:
-it has recently been proved that there exist nonoscillatory phase functions
-(in a precise sense for $\om\gg 1$ involving exponential decay of the Fourier
-transform) in that case \cite{heitman2015,bremer2016}.
-In fact this result was proven
-for the related real-valued Kummer's equation \cref{kummer},
-%\AB{now we move Kummer back to intro and refer to that}
-%\be
-%\frac{3 \alpha'^2}{4\alpha^2} - \frac{\alpha''}{\alpha} - \alpha^2 +
-%\om(t)^2 = 0,
-%\label{kummer}
-%\ee
-corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
-but the existence of a nonoscillatory Kummer's solution implies the same for
-a Riccati solution.
-The latter is easy to show, since if $\alpha(t)$ satisfies \cref{kummer},
+However, taking the limit $\im \alpha \to \pm \infty$ produces
+the only two nonoscillatory (constant) solutions $x(t) = \pm i\om_0$.
+For general analytic frequency functions $\om(t)$ there
+also exist nonoscillatory solutions.
+These take the approximate form
+$x_{\pm}(t) \approx \pm i\om(t)$, leading to a conjugate pair of basis
+counter-rotating functions $u_{\pm}(t) := e^{\int x_\pm(t) \d t}$.
+The rigorous existence of nonoscillatory solutions
+(in the sense of decay of their Fourier transforms asymptotically
+for $\om\gg 1$)
+follows from the corresponding result
+for the Kummer's equation \cref{kummer} proven in
+\cite{heitman2015,bremer2016}.
+% AB this repeated stuff from the Intro - try to avoid repetition.
+The argument that existence of a real-valued Kummer phase function implies
+existence of a Riccati phase function goes as follows:%
+\footnote{We thank Jim Bremer for explaining this argument to us.}
+%corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
+if $\alpha(t)$ satisfies \cref{kummer},
 then defining $\beta = -\alpha'/2\alpha$ allows \cref{kummer}
 to be written
 $\beta' - \alpha^2 + \beta^2 + \om(t)^2 = 0$, and these last two equations
 are the real and imaginary parts of \cref{ricc}
-for $x = i\alpha + \beta$.
-\footnote{We thank Jim Bremer for explaining this argument.}
+with $x = i\alpha + \beta$.
 
-We now present a new numerical method to find nonoscillatory
-solutions to the nonlinear Riccati equation \cref{ricc}.
-%(in its most general form, \ie without imposing $\g(t) = 0$).
-When $\om\gg 1, \g$, there are two nonoscillatory solutions
-which take the approximate form
-$x_{\pm}(t) \approx \pm i\om(t)$, leading to a conjugate pair of basis
-counter-rotating functions $u_{\pm}(t) := e^{\int x_\pm(t) \d t}$.
-Given any trial solution $x$ to \cref{ricc}, its \textit{residual
-  function} is defined as the left-hand side of \cref{ricc}, namely
+% AB *** what did this mean?: When $\om\gg 1, \g$,
+% AB: the approx forms fit better above; are a distraction to the proposal here
+Given any trial solution $x$ to \cref{ricc}, we define its {\em residual}
+as the left-hand side of \cref{ricc}, namely
 \be
 \label{R}
 R[x](t) := x' + x^2 + 2\g(t)x + \om(t)^2.
 \ee
-Our proposal takes the following \textit{functional iteration}
+We propose the following iteration
 to generate a sequence of functions $x_0, x_1, \dots, x_k$
-on $t\in(a,b)$,
-using the above positive (say) approximation as a starting point:
+on a given interval,
+using the above positive (say) approximate form as a starting point:
 \begin{align}
-x_0(t) &= +i\om(t)
+x_0(t) &\;=\; +i\om(t),
 \label{init}
 \\
-    x_{j+1}(t) &= x_j(t) - \frac{R[x_j](t)}{2 \left( x_j(t) + \g(t) \right)}, \qquad j=0,1,\dots,k-1.
+    x_{j+1}(t) &\;=\; x_j(t) - \frac{R[x_j](t)}{2 \left( x_j(t) + \g(t) \right)}, \qquad j=0,1,\dots,k-1.
 \label{iter}
 \end{align}
-
-%with the functional $R$ defined as in \cref{R}.
-This may be justified heuristically as an approximate Newton
-iteration to reduce the residual function
-(noting that similar exact Newton iterations have been
-exploited for analysis \cite{heitman2015}).
-Namely, since
+This is an {\em approximate} Newton
+iteration for \eqref{ricc}; note that an exact Newton iteration has
+been used numerically \cite{krivec2008,krivec2014}
+and as an analysis tool \cite{heitman2015}.
+To show this, perturbing $x_j$ by a function $\delta_j$ we get
 \begin{align}
-    R[x_j + \delta] &= x_j' + \delta' + x_j^2 + 2 x_j \delta + \delta^2 
-    + 2\g x_j + 2\g\delta + \om(t)^2 \nonumber \\
-    &= R[x_j] + \delta' + 2x_j\delta + 2\g\delta + \bigO(\delta^2), \nonumber
+    R[x_j + \delta_j] &= x_j' + \delta_j' + x_j^2 + 2 x_j \delta_j + \delta_j^2 
+    + 2\g x_j + 2\g\delta_j + \om(t)^2 \nonumber \\
+    &= R[x_j] + \delta_j' + 2x_j\delta_j + 2\g\delta_j + \bigO(\delta_j^2), \nonumber
 \end{align}
-by linearizing we get that $\delta$ solves the linear 1st-order ODE
-$\delta' + 2x_j(t) \delta + 2\g \delta  = -R[x_j](t)$,
-which has an analytic solution.
-Solving this exact Newton update symbolically is the basis of the quasilinearization method (QLM) \cite{bellman1970}.
-However, this ODE is again generally oscillatory,
-with unknown initial condition needed for a nonoscillatory solution $\delta$.
-Yet if $\delta$ is nonoscillatory the first term $\delta'$ is
+then by linearizing we get that $\delta_j$ solves the linear 1st-order ODE
+$\delta_j' + 2x_j(t) \delta_j + 2\g \delta_j  = -R[x_j](t)$.
+%which has an analytic solution. % AB <- why did you need this phrase.
+%Solving this exact Newton update symbolically is the basis of the quasilinearization method (QLM) \cite{bellman1970}.
+% AB; seems like Bellman too old here; it' the QLM on Schrod ppl we cite.
+However, this ODE is itself generally oscillatory,
+with an unknown initial condition needed to achieve a nonoscillatory
+solution.
+Yet if $\delta_j$ is nonoscillatory, the first term $\delta_j'$ is
 a factor $x_j = \bigO(\om)$ smaller than the second term, thus
 one might hope that by dropping it a useful reduction in residual might
 still result.
 %\footnote{\Fruzsi{[Strictly speaking, we should then be dropping the $\g$ term as well, since it's also an order of magnitude smaller...]}}. 
-This leads to the algebraic formula $2\left(x_j(t) + \g(t)\right) \delta(t) = -R[x_j](t)$
-which is solved pointwise for each $t$, and
-writing $x_{j+1} = x_j + \delta$ gives \cref{iter}.
-This is a type of defect correction scheme \cite{bohmer1984}.
-The result is nonoscillatory by construction, without explicit reference
-to initial conditions.
+This leads to the algebraic formula $2\left(x_j(t) + \g(t)\right) \delta_j(t) = -R[x_j](t)$
+which is solved pointwise for each $t$, then updating via
+$x_{j+1} = x_j + \delta_j$ explains our proposed \cref{iter}.
+%This is a type of defect correction scheme \cite{bohmer1984}.
+% AB: you already said that but with Bellman as the ref!
+If $\om$ is a smooth function, then
+the result is nonoscillatory by construction, without explicit reference
+to an initial condition.
 
-The early iterates of \cref{init,iter} illustrate
-algebraically
-the type of residual reduction that occurs. We take $\g(t) = 0$ below for the
-sake of simplicity, but the results hold for the case of $\g(t) \neq 0$. The first few iterates and residuals are
+The early iterates of \eqref{init}--\eqref{iter} illustrate
+the residual reduction (we give the case $\g(t) \equiv 0$, for
+simplicity, but the results hold for the general case):
 \begin{align}
     x_0 &=  i\om, &&R[x_0] = i\om' = \bigO(\om), \nonumber \\
 x_1 &= i\om - \frac{\om'}{2\om}, 
-    &&R[x_1] = -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2} = \bigO(1), \nonumber \\
+&&R[x_1] = -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2} = \bigO(1),
+\label{x1R1}
+\\
 x_2 &= i\om - \frac{\om'}{2\om} + \delta_1, \mbox{ where }
-    \delta_1 \equiv \frac{\frac{\om''}{2\om} - \frac{3\om'^2}{4\om^2}}{2i\om - \frac{\om'}{\om}}, \quad
+    \delta_1 = \frac{\frac{\om''}{2\om} - \frac{3\om'^2}{4\om^2}}{2i\om - \frac{\om'}{\om}}, \quad
     &&R[x_2] = \delta_1' + \delta_1^2 = \bigO(\om^{-1}). \nonumber
 \end{align}
-To measure the size of term we assume that $\om'$, $\om''$, \etc, are
-of the same order as $\om$, because $\om(t)$ is smooth,
-and also assume that $\om$ has a lower bound of the same order. If we were to include $\g$, we would assume $\g = \bigO(1) $ in terms of $\om$, and that its derivatives are of the same order as $\g$ itself by the same reasoning as with $\om$. 
-Thus we see that each iteration the residual drops by a factor $\bigO(\om)$.
-However, each iteration also results in terms with
-one higher time-derivative of $\om$ (and $\g$).
-Despite the rapid growth in complexity, one can check that this
-pattern continues
-by defining the $j$th correction function $\delta_j$,
-so that $x_{j+1} = x_j + \delta_j$, then using \cref{R} to write
-\be
+Here our somewhat loose asymptotic notation $\bigO(\om)$, etc,
+has meaning over some interval where $\om$ does not change much,
+i.e., that its upper and lower bounds are of the same order.
+Also, since $\om$ is assumed smooth, then we have that $\om'$, $\om''$, etc, are
+of the same order as $\om$.
+If we were to include $\g$, we would assume $\g = \bigO(1)$
+%in terms of $\om$,
+and that its derivatives are of the same order as $\g$ itself due to smoothness.
+%by the same reasoning as with $\om$. 
+This suggests that each iteration reduces the residual by a factor $\bigO(\om)$
+but brings in one extra derivative of $\om$ (and $\g$).
+To verify this pattern for arbitrary $j$, notice that
+$$
 R[x_{j+1}] = R[x_j] + 2\left(x_j + \g \right)\delta_j  + \delta_j^2 + \delta_j' = \delta_j^2 + \delta_j',
-\label{Rdelta}
-\ee
-where the first two terms cancel by design due to \cref{iter}.
-The resulting evolution of the residual is then
-summarized as follows, which is proved simply by
-substituting $\delta_j \equiv -R[x_j]/2(x_j + \g)$ into \cref{Rdelta} and using
-the quotient rule.
-\begin{pro}\label{PRiter}
-  Let $x_j \in C^2([a,b])$ be a function on an interval $[a,b]\subset \R$
-  % we may as well be pedantic about conditions
-  such that $x_j(t) \neq 0 \; \forall t\in [a,b]$,
-  let $\om\in C^1([a,b])$,
-  $\g\in C^1([a,b])$,
-  and let $x_{j+1}$ be given by the single iteration \cref{iter}.
-  Then their associated residual functions \cref{R} on $[a,b]$
-  are related pointwise by
+%\label{Rdelta}
+$$
+where the first two terms canceled by design, due to \cref{iter}.
+Then substituting $\delta_j := -R[x_j]/2(x_j + \g)$ and using
+the quotient rule proves the following useful update
+for the residual function.
+% AB note I simplified my orig version...
+% AB note: why was non-vanishing of x needed given that x+gamma in denominator?
+\begin{pro}\label{PRiter}  % ppppppppppppppppppppppppppppppppppppppppppppppp
+  Let $x_j$, $\om$ and $\gamma$ be smooth functions on an interval
+  in which $x_j+\gamma$ is nonvanishing.
+  Let $x_{j+1}$ be given by the iteration \cref{iter}.
+  Then the associated residual function \cref{R} obeys the iteration
   \be
   \label{Riter}
     R[x_{j+1}] = \frac{1}{2(x_j + \g)}\left( \frac{(x_j + \g)'}{x_j + \g} R[x_j] - R[x_j]' \right) 
     + \left(\frac{R[x_j]}{2(x_j + \g)}\right)^2. 
   \ee
-\end{pro}
-Thus, with the initialization \cref{init},
-assuming that the lower bound on each $x_j$ is no smaller than $\bigO(\om)$,
-and that the quadratic term in \cref{Riter} is small,
-one might hope that
-the residual shrinks like $R[x_j] = \bigO(\om^{1-j})$ for each $j=0,1,\dots$.
-Unfortunately this will turn out not to be true, due to the increasing
-order of derivatives of $\om(t)$, which will lead to an
-asymptotic (but not convergent) series.
-However, the iteration is numerically useful since when the right conditions
-are met the residual convergences geometrically for the first few iterations with a
-rate that gets better with larger $\om$. We show this formally in \cref{TR}.
+\end{pro}                  % pppppppppppppppppppppppppppppppppppppppppppppp
+Thus, if one can show that $|x_j+\gamma|$ is uniformly bounded from
+below by a $\bigO(\om)$ constant,
+%on some solution interval,
+and that the final quadratic term in \eqref{Riter} is small,
+then one might hope that the
+residual is an asymptotic series
+shrinking like $R[x_j] = \bigO(\om^{1-j})$ for $j=0,1,\dots$.
+However, it will turn out that this series, and the iteration \cref{iter} for $x_j$, are not convergent:
+for a typical fixed functions $\om(t)$ and $\g(t)$,
+the increasing order of derivatives eventually lead to divergence.
+However, the iteration
+is useful numerically since, when $\om$ varies only a small amount
+over an interval,
+the residual decays geometrically for the first few iterations with a rate that gets better with larger $\om$.
+We will make this rigorous for the case of analytic $\om$ and $\g$
+in \cref{TR}.
+%the above geometric decay in $R[x_j]$ for $0\le j<k$, where $k$ will depend on the size of $\om$.
 
-%\AB{there is currently a problem of ordering in that Fig 1 can't be understood until the Cheby discr method is explained. (Or is Fig 1 not done via Cheby - surely must be). In which case Cheby must come before the demo. I made a crude attempt at this.}
-The numerical evaluation of the asymptotic solution $x(t)$, and the solution of
-the original ODE $u(t)$ requires repeated differentiation (as part of each
-correction term) and quadrature (since $u(t) = \exp \int^t x(\sigma)
-\mathrm{d}\sigma$). 
-Since our solver is a stepper, we are not attempting to find a global solution
-$u(t)$ for the entire integration range, and only need to compute the
-asymptotic solution over a timestep, $t \in [t_i, t_i+h]$ at a time. At each 
-timestep, we choose to perform differentiation and quadrature by discretizing
-time on a Chebyshev grid of $n + 1$ nodes.  
-Over the standard interval $t \in [-1, 1]$, the $n+1$ Chebyshev nodes are given by 
-\be\label{chebnodes}
-\tilde{t}_n := \{\tilde{t}_j\}, \quad \tilde{t}_j = \cos\left( j\pi/n\right), \quad j = 0, 1, \ldots, n,
-\ee
-where the parameter $n$ can be set by the user with a default value of $n = 16$, and is fixed throughout integration. 
-One may then define an $(n+1) \times (n+1)$ differentiation matrix $\tilde{D}_n$ which, given a vector of function
-values $\tilde{v}_n$ defined on the Chebyshev nodes $\tilde{t}_j$, returns $\tilde{w}_n$, the function's
-derivative evaluated at the nodes,
-\be\label{diffmat}
-\tilde{w}_n = \tilde{D}_n\tilde{v}_n, \quad \tilde{f}_n := f(\tilde{t}_n),
-\ee
-The timestep $t \in [t_i, t_i+h]$ can always be scaled up or down to the standard interval via
+\subsection{Discretization of Riccati defect correction}
+%and initial condition matching}
+\label{s:discr}
+
+We now turn to the numerical discretization of
+the iteration \eqref{init}--\eqref{iter} on an interval
+$[t_i,t_i+h]$ corresponding to the $i$th time-step of the solver.
+For now, assume that $h$ is sufficiently small that the functions
+$\om$, $\g$, $x_j$, $R_j$, and their first few derivatives are accurately
+represented by function values on a single $(n+1)$-node Chebyshev grid.
+We will explain our choice of $h$ in Section~\ref{s:hosc}.
+The remaining tasks are numerical differentiation of the function
+$x_j$ needed to evaluate $R_j$ as in \eqref{R}, and
+numerical quadrature (since $u(t) = \exp \int^t x(\sigma) \mathrm{d}\sigma$).
+
+Recall that on the standard interval $[-1, 1]$ the $n+1$ Chebyshev nodes are
+$\tilde\tau_j = \cos\left( j\pi/n\right)$, $j = 0, 1, \dots, n$.
+% AB *** ummm, notation clashes here: \tilde{t}_n = just the last cheby node.
+% I think you are using subscripts in a physics way where the *name* of the
+% subscript changes the meaning of the overall symbol... this is not used in
+% math (much).
+% But I don't see a need for this vector of nodes as an object.
+% Also t_i is already the breakpoints above.
+% Also I saved the labeled eqns for the rescaled ones, which saves space.
+In our experiments we fixed $n=16$, which we found gave a good compromise
+between very high order and speed of numerical linear algebra.
+The standard $(n+1) \times (n+1)$ differentiation matrix $\tilde{D}_n$
+is filled according to \cite[Ch.~6]{tref}.
+Rescaling to the time-step inverval $[t_i, t_i+h]$
+gives nodes
+% AB if you're going to use i for interval, j for iterate, can't then also
+% use j for the node index within interval!
 \be\label{scaledt}
-t_n := \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
+\tau_l = t_i + \frac{h}{2}[1+\cos (l\pi/n)], \quad l = 0, 1, \ldots, n,
 \ee
-Under the scaling, the differentiation matrix transforms as
-\begin{align}
-    w_n &= D_nv_n, \quad f_n := f(t_n) \label{scaledDdef}\\
-    D_n &= \frac{2}{h}\tilde{D}_n. \label{scaledD}
-\end{align}
-We then use $D_n$ to compute antiderivatives (\eg $v_n$ given $w_n$), by
-solving the
-%matrix equation  AB: "matrix eqn" implies the unknonw is a matrix :)
-linear system \cref{scaledDdef}. 
+and the rescaled matrix $D_n = (2/h) \tilde D_n$.
+Then given a vector $\mbf{x}\in\C^{n+1}$ with components
+$x_l := \{x(\tau_l)\}$ being node values of a smooth function $x$,
+then $D_n\mbf{x}$ is a vector of approximate derivatives at these nodes.
+% AB: this section was missing the actual formula applied, this stuff:
+We then fill the vectors of values $\om_l=\om(\tau_j)$
+and $\g_l=\gamma(\tau_j)$.
+The discretization of the iteration \eqref{init}--\eqref{iter}
+gives the sequence $\mbf{x}^{(0)}, \mbf{x}^{(1)},\dots,\mbf{x}^{(k)}$ whose
+components $l=0,\dots, n$ obey
+$$
+x^{(0)}_l = i\om_l,
+\quad
+x^{(j+1)}_l = x^{(j)}_l - \frac{R^{(j)}_l}{2(x^{(j)}_l + \g_l)},
+\quad \mbox{where}\;
+R^{(j)}_l = \sum_{m=0}^n (D_n)_{lm}x^{(j)}_m  + [x^{(j)}_l]^2 + 2\g_lx^{(j)}_l + \om_l^2
+.
+$$
+% AB: note how I needed to introduce new notation to explain the actual formula
+We postpone choice of the stopping point $k$ to Sec.~\ref{s:steptype}.
+% AB *** please point to where this is discussed.
 
-%In \cref{phasefun}
-%\AB{better to refer forward to a Remark since Sec 2.1 is long. But maybe the comment doesn't add anything here - it's too in the weeds. Save the entire comparison of residuals until our method is described.}
-%we show that this is equivalent to
-%starting from the zeroth order solution $x_0 = \pm i\om$ and generating
-%successive iterates $x_i(t) := x_{i-1}(t) + \delta(t)$ by setting the residual they leave on the
-%right-hand-side when substituted into \cref{riccwkb} to zero, to first order in
-%$\delta$. 
+Finally, we must discretize the antiderivative operation giving
+$z(t)$ on the interval such that $z' = x$, to then recover a solution $u = e^z$.
+Given the final vector $\mbf{x}=\mbf{x}_k$, this is done by solving
+the linear system
+\be
+D_n \mbf{z} = \mbf{x},
+\label{antider}
+\ee
+which has nullity 1 (the constant vector is in the nullspace),
+and then by subtracting a constant so that the first entry $z_0=0$,
+corresponding to $z(t_i)=0$ at the start of the timestep.
+% AB - note details needed I added here
+
+In practice, to avoid an $\bigO(n^3)$ cost per timestep,
+the SVD of $\tilde D_n = U \Sigma V^T$ is computed once and for all.
+At each timestep \eqref{antider} is then solved
+by multiplication of $\mbf{x}$
+by the pseudoinverse $(\tilde D_n)^+ = V \Sigma^+ U^T$
+in $\bigO(n^2)$ cost, followed by a rescaling by $h/2$.
+% AB *** please check the SVD aspect since I made it up based on what is sensible. I don't seem to have your code.
+
+% AB *** discuss the two lin indep solns here? Otherwise how can matching
+% of IC in demo be understood? Ah, I see matching is not needed there.
 
 
+\subsection{Numerical demonstration of Riccati defect correction}
+\label{s:demo}
 
-\subsection{Numerical demonstration of Riccati defect correction iteration}
-%\AB{swtiching from presenting the method to testing it makes a needed subsec break here}
-
-Here we demonstrate the temporary convergence of the residual by example: in the left panel of \cref{convergence-plot}, we apply
-the iteration from \cref{init,iter} to the equation 
+At this point it is useful to illustrate the residual reduction
+with an example.
+In the left panel of \cref{convergence-plot}, we apply
+% AB note we didn't apply the continuous version, rather the discr one
+the above numerically-discretized iteration to the ``burst'' equation
+% *** cite it
 \begin{equation}\label{bursteq}
-    u'' + \frac{m^2 - 1}{(1+t^2)^2}u = 0,  
+  u'' + \om^2(t) u = 0, \qquad \mbox{ where } \om(t):=\frac{\sqrt{m^2 - 1}}{1+t^2},
+  % AB: note it's easier fo the reader to see explicitly the form of om
 \end{equation}
-over the timestep $t \in [0, 2]$ starting with initial conditions $u(0) = 1/m$ and
-$u'(0) = i$. For a given $m$, we show the maximum residual over the length of
-the step, $\max_{t \in [t_j, t_{j+1}]}R[x_k]$, as a function
-of the iteration number $k$. We vary $m$ and observe that the maximum residual
-indeed drops geometrically for the first few iterations, $R[x_k] \propto
-\om_{\text{max}}^{-k}$, where $\om_{\text{max}} = \sqrt{1 + m^2}$ is the
-maximum value of $\om$ over the timestep. At small $\om_{\text{max}}$, the
-geometric progression stops and the series starts diverging after $5$
-iterations and only about $4$ digits of accuracy can be achieved, clearly
-showing the asymptotic nature of the expansion. At large $\om$, however, the
-convergence is exteremely rapid and machine precision is reached within about
-$5$ iterations. In \cref{pracres} we show that even though the number of iterations
-required to reach minimal residual grows with $\om$ as $\bigO(\om)$, in
-practice a larger $\om$ required \emph{fewer} iterations to reach a given
-accuracy threshold $\varepsilon$, approximately $k_{\varepsilon} \approx
-\bigO(1/\log\om)$.  
+over a timestep interval $t \in [0, 2]$ covered by the $n=16$ Chebyshev grid.
+This interval is chosen longer that would occur in practice in order
+to illustrate different behaviors.
+% AB: I am totally guessing here... could you explain why it is so long?
+% Would [0,0.5] be that different?
+%
+% AB: You wrote:
+% starting with initial conditions $u(0) = 1/m$ and $u'(0) = i$.
+% *** AB confused since the iter does not reference nor control the ICs!
+% Thus cut.
+For various fixed choices of $m$, which controls
+the maximum frequency according to $\om_{\text{max}} = \sqrt{m^2-1}$,
+% *** please check the formula for max was wrong, not sure why inconsistent with above?
+we plot the maximum magnitude residual vector $\max_{0\le l \le n} |R_l^{(k)}|$
+at the nodes, as a function of iteration number $k$.
+% *** prefer j
+%
+% AB: You wrote:
+%maximum residual over the length of
+%the step, $\max_{t \in [t_j, t_{j+1}]}R[x_k]$,
+% AB *** but we don't; we plot the max value at a node, right? (unless you
+% interpolate off the nodes... would need to state and explain that then).
+We observe that the residual
+indeed drops geometrically for the first few iterations,
+with a rate well described by $\om_{\text{max}}^{-k}$.
+However, for small $\om_{\text{max}}=10$, the iteration
+then starts diverging after about $5$
+iterations, thus only about $4$ digits of accuracy could be achieved
+by optimal stopping.
+This shows the asymptotic nature of the series generated by the iteration.
+At very large $\om_{\text{max}} = 10^4$, however, the
+convergence is extremely rapid, with machine precision reached at $k=5$.
+% AB: new thought...
+Interestingly, at moderately large $\om_{\text{max}}=10^3$ the initial decay is
+still very useful, but the rate decreases after $k=5$; we
+suspect this ``kink'' is due to growth in the
+approximation of the high-order derivatives of $\om(t)$, which has nearby
+poles at $t=\pm i$.
+% *** AB this suggests rerunning for an ODE that doesn't have such nearby
+% singularities in om. Or smaller interval. Or larger n. But you need
+% to push the boundaries of exploration here.
+\begin{rmk}
+In \cref{pracres} we will show that even though the number of iterations $k$
+required to reach minimal residual grows as $\bigO(\om)$, in
+practice a larger $\om$ requires \emph{fewer} iterations to reach a fixed
+accuracy threshold $\varepsilon$.
+Indeed, solving $\varepsilon\approx \om^{-k}$ gives a heuristic
+$k\approx \log(1/\varepsilon)/\log \om$.
+\end{rmk}
+% AB notice how I was explict about the eps-dependence, very easy to be.
 
-\begin{figure*}[tb]
+
+\begin{figure*}[tb]  % ffffffffffffffffffffffffffffffffffffffffffffffffffff
     \flushleft
     \subfloat{\includegraphics{plots/residual-k-corr.pdf}}
     %\label{residual-reduction}
     \subfloat{\includegraphics{plots/convergence.pdf}}
-    \caption{\label{convergence-plot} Error analysis and convergence of our
-    method. The left panel shows the maximum residual of the Riccati equation
-    over a single step of the numerical method as a function of the number of
-    terms added to the asymptotic expansion, which is used to propagate the
-    numerical solution in the highly oscillatory regions of the ODE. The
-    differently coloured curves correspond to different peak frequencies over
-    the same time interval. A geometric reduction in the residual for the first
-    few iterations, forecast qualitatively in \cref{phasefun} and shown formally in
-    \cref{TR}, is observed. Following this geometric reduction the
-    asymptotic nature of the approximation is manifest as an increase in the
-    residual, especially visible at low $\omega_{\text{max}}$. The right panel
-    is a convergence plot showing the achieved relative error against the
-    relative tolerance set to the solver. The coloured curves correspond to
-    different upper ends of the integration region. These should be compared to
-    the grey dashed line showing an achieved error matching the tolerance.
-    In regions where the condition number $\kappa$ of the problem may limit the achievable
-    accuracy (see \cref{conditionnodef}), we plot the maximum achievable
-    accuracy as a coloured dashed line to compare the achieved error with. }
+    \caption{\label{convergence-plot}
+      Demonstrations of Riccati residual defect correction (left plot), and error performance of the overall solver (right plot).
+      In detail, the left plot shows the maximum magnitude of the residual
+      of the Riccati ODE \eqref{R} over the
+      $n=16$ Chebyshev grid, as a function of iteration count,
+      for the example in Section~\ref{s:demo}.
+      For small $\om_{\text{max}}$ an initial geometric decay eventually becomes
+      unstable growth for large $k$. The dotted lines show $\om_{\text{max}}^{-k}$.
+      %
+      The right plot shows *** TO FINISH VERY CONCISELY WITH POINTERS TO
+      MAIN TEXT.
+ %     
+   %   Demonstration of residual reduction
+ %     Error analysis and convergence of our
+ %   method. The left panel shows the maximum residual of the Riccati equation
+ %   over a single step of the numerical method as a function of the number of
+ %   terms added to the asymptotic expansion, which is used to propagate the
+ %   numerical solution in the highly oscillatory regions of the ODE. The
+ %   differently coloured curves correspond to different peak frequencies over
+ %   the same time interval. A geometric reduction in the residual for the first
+ %   few iterations, forecast qualitatively in \cref{phasefun} and shown formally in
+ %   \cref{TR}, is observed. Following this geometric reduction the
+ %   asymptotic nature of the approximation is manifest as an increase in the
+ %   residual, especially visible at low $\omega_{\text{max}}$. The right panel
+ %   is a convergence plot showing the achieved relative error against the
+ %   relative tolerance set to the solver. The coloured curves correspond to
+ %   different upper ends of the integration region. These should be compared to
+ %   the grey dashed line showing an achieved error matching the tolerance.
+ %   In regions where the condition number $\kappa$ of the problem may limit the achievable
+ %   accuracy (see \cref{conditionnodef}), we plot the maximum achievable
+      %   accuracy as a coloured dashed line to compare the achieved error with.
+      }
    % Need to say what ODEs were used to create these  
-\end{figure*}
+\end{figure*}    % ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 
 
-\subsection{Matching Riccati intervals}
+\subsection{Matching Riccati timestep intervals}
 %\AB{short but probblay seperate subsec like this, since confusing before
 %  the demo of Fig.1}
 
-We ensure continuity of the solution and its derivative across timestep
-boundaries by treating $u(t_i)$ and $u'(t_i)$ as initial conditions in the step
-from $t_i$ to  $t_i+h$. Noting that the asymptotic iteration \cref{iter} can be
-initialised with $x_0(t) = +i\om(t)$ as is done in \cref{init}, or with $x_0(t)
-= -i\om(t)$, the resulting asymptotic solutions, $x_{\pm}(t)$, approximate the
-nonlinear Riccati equation, but the associated 
+So far we have explained how to numerically solve for 
+one approximate nonoscillatory Riccati phase function over one timestep
+$[t_i,t_i+h]$,
+in the sense of having uniformly small residual on its spectral grid.
+% AB note narrative guide.
+However, this cannot match general initial conditions
+$u(t_i)$ and $u'(t_i)$, as needed for a 2nd-order ODE timestepper.
+Yet, the asymptotic iteration \cref{iter} can be
+initialised with $x_0(t) = +i\om(t)$ (as done in \cref{init}), or with $x_0(t)
+= -i\om(t)$. The two resulting Riccati solutions, $x_{\pm}(t)$,
+give two linearly independent approximate solutions of the desired ODE
+\cref{ode}, namely
 \be
-u_{\pm} = e^{\int_{t_i}^{t_i+h}x_{\pm}(\sigma)\mathrm{d}\sigma}
+u_{\pm}(t) = e^{\int_{t_i}^t x_{\pm}(\sigma)\d\sigma}~.
+\label{upm}
+% *** AB fixed typo here
 \ee
-are two, linearly independent approximate solutions of the linear ODE \cref{ode}.
-They may therefore be linearly combined to match any set of initial conditions,
+Since $\om$ and $\gamma$ are real, they are complex conjugates.
+% AB *** please check this!
+%
+They may be linearly combined to match any set of complex-valued
+initial conditions,
 \begin{align}
     u(t) &= A_{+}u_{+}(t) + A_{-}u_{-}(t), \qquad t \in [t_i, t_i + h],\\
     u'(t) &= A_{+}u'_{+}(t) + A_{-}u'_{-}(t), \qquad t \in [t_i, t_i + h],
 \end{align}
-with 
+with coefficients $A_\pm$ satisfying the $2\times 2$ linear system
 \be
 \begin{bmatrix}
     1 & 1 \\
@@ -758,49 +913,58 @@ with
 \begin{bmatrix}
     u(t_i) \\
     u'(t_i)
-\end{bmatrix}, 
+\end{bmatrix}.
 \ee
-where we used that $u_{\pm}(t_i) = 1$ and $u'_{\pm}(t_i) = x_{\pm}(t_i)$ by construction.
-
-
-% +/- solutions complex conjugates
+Here we used that $u_{\pm}(t_i) = 1$ and $u'_{\pm}(t_i) = x_{\pm}(t_i)$ by construction of \eqref{upm}.
 
 
 
 
 \subsection{Direct spectral solution on nonoscillatory intervals \label{chebysteps}}
 
-In case the solution is nonoscillatory or the asymptotic expansion fails to
-converge before the residual reaches a user-specified tolerance $\varepsilon$, we
-employ a spectral method based on Chebyshev nodes instead. The motivation
-behind this choice is that by adjusting the number of nodes, an arbitrarily
-high order can be achieved. Although spectral methods are usually used for
-solving boundary value problems whereby the nodes are laid out over the entire
-integration range, there is no reason one could not apply them over one timestep at a
-time in a time-stepper setting. Since the present algorithm was constructed to
-switch between two methods -- one based on the asymptotic expansion of the
-Riccati equation and a spectral method -- on the fly and the points of
-switching are not predetermined, we opt to break the integration range up into
-smaller timesteps, applying the spectral method over a single timestep at a
-time.
-
-Using the differentiation matrix from \cref{scaledD}, \cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
+If the solution is nonoscillatory, or the asymptotic expansion fails to
+converge before the residual reaches a user-specified tolerance $\varepsilon$, we switch to a standard spectral collocation method on a Chebyshev grid.
+This achieves an arbitrarily high order timestep in a simple manner.
+(We note that in other applications a \emph{global} spectral grid is
+advantageous \cite{tref}; here, since adaptive switching and efficiency are
+needed,
+integration is best performed over many timestep intervals with a fixed high
+order grid on each.)
+%The motivation
+%behind this choice is that by adjusting the number of nodes, an arbitrarily
+%high order can be achieved.
+%Although spectral methods are usually used for
+%solving boundary value problems whereby the nodes are laid out over the entire
+%integration range, there is no reason one could not apply them over one timeste%p at a
+%time in a time-stepper setting. Since the present algorithm was constructed to
+%switch between two methods -- one based on the asymptotic expansion of the
+%Riccati equation and a spectral method -- on the fly and the points of
+%switching are not predetermined, we opt to break the integration range up into
+%smaller timesteps, applying the spectral method over a single timestep at a
+%time.
+% AB: although I liked some of this story, it was a bit long-winded.
+% And piecewise spectral is a standard idea, not a new one.
+%
+Using the
+Chebyshev nodes $\{\tau_l\}_{l=0}^n$ and differentiation matrix $D_n$
+from the previous subsection,
+\cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ by
+the linear system
 \begin{align}\label{discreteode}
-    F_n u_n = \left(D_n^2 + 2\text{diag}(\g_n)D_n + \text{diag}(\om_n) \right)u_n = 0, 
+  F_n \mbf{u} := \left(D_n^2 + 2\text{diag}(\{\g_l\})D_n + \text{diag}(\{\om_l^2\}) \right)\mbf{u} = \mbf{0},
+ % note vector 0. note fixed typo om -> om^2
 \end{align}
-where the subscript $n$ denotes a vector of function values at the $n+1$ (scaled) Chebyshev nodes $t_n$.
-%\be\label{scaledt}
-%t_n = \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
-%\ee
-A spectral method based on Chebyshev nodes finds $u_n$ by solving the system of
-equations defined by \cref{discreteode}, subject to auxiliary conditions that
-ensure the uniqueness of the solution. In our case these conditions encode
-continuity across the lower timestep-boundary, \ie are the initial conditions
+% AB: again, u_n notation ambgious since it means u at the last node l=n.
+where $\mbf{u}:=\{u(\tau_l)\}_{l=0}^n$ is the node value vector, and
+diag indicates the diagonal matrix constructed from a vector.
+One must also enforce initial conditions via
 \be\label{discreteic}
-(u_n)_n = u(t_i), \quad \left(D_nu_n\right)_0 = u'(t_i),
+u_0
+% AB *** why was (u_n)_n here? did you mean (u_n)_0 in your notation?
+= u(t_i), \qquad \left(D_n\mbf{u}\right)_0 = u'(t_i).
 \ee
-where a lower index outside brackets denotes a given vector element.
-The initial conditions may be encoded as two rows appended to $F_n$,
+%where a lower index outside brackets denotes a given vector element. <- AB good but I already did this in sec 2.2 now.
+Stacking these conditions as rows gives the overdetermined $(n+3) \times (n+1)$ linear system
 \be\label{discreteodeic}
 \renewcommand*{\arraystretch}{1.25}
 \begin{bmatrix}
@@ -809,8 +973,10 @@ The initial conditions may be encoded as two rows appended to $F_n$,
     (F_n)_{n0} & \ldots & (F_n)_{nn} \\
     (D_n)_{00} & \ldots & (D_n)_{0n} \\
     1 & \ldots & 0
+    % AB: note last row is ambiguous. A 2x2 block notation may be easier and
+    % shorter
 \end{bmatrix}
-u_n =  
+\mbf{u} =  
 \begin{bmatrix}
 0 \\
 \vdots \\
@@ -819,22 +985,37 @@ u'(t_i) \\
 u(t_i)
 \end{bmatrix},
 \ee
-where lower indices outside a bracket specify a given matrix element.
-After solving the $(n+3) \times (n+1)$ system in \cref{discreteodeic}, the value of the solution
-$u(t)$ at the end of the interval can be read off as the last element of the
-solution vector $u_n$, and its derivative as the last element of $D_nu_n$.
+which is solved in the least-squares sense via QR with $\bigO(n^3)$ cost.
+% AB *** please check - we need to say how.
+$u(t)$ at interval endpoint can be read off as the last element of the
+solution vector $\mbf{u}$, and its derivative as the last element of
+$D_n\mbf{u}$.
 These then serve as the initial conditions for the subsequent time-step.
-Note that the system has now become rectangular but also overdetermined. The
-matrix on the right-hand-side of \cref{discreteodeic} may be replaced with a
-square one by removing the last two rows and incorporating the initial
-conditions directly, \eg the last row can be removed by solving only for
-$(u_n)_1, \ldots, (u_n)_n$ and setting $(u_n)_0 = u(t_i)$.
+(Note that square systems may also be created by removing rows \cite{tref},
+but that we did not find that this made a significant speed difference
+in practice.)
+% *** AB is that true? in the narrative you have to state what we did,
+% not leave it ambiguous what we did.
+%Note that the system has now become rectangular but also overdetermined. The
+%matrix on the right-hand-side of \cref{discreteodeic} may be replaced with a
+%square one by removing the last two rows and incorporating the initial
+%conditions directly, \eg the last row can be removed by solving only for
+%$(u_n)_1, \ldots, (u_n)_n$ and setting $(u_n)_0 = u(t_i)$.
 
-The error on steps taken with the spectral method above is estimated by
-doubling $n$, attempting the step with the same stepsize
-$h$ again, and comparing results. If the error falls below the user-specified
-threshold $\varepsilon$, the spectral method is considered to have converged and the
-step is accepted. If the error does not reach $\varepsilon$ by $n=n_{\text{max}}$, $h$
+We estimate the error induced over this timestep $[t_i,t_i+h]$
+by comparing to the solution at the interval endpoint using a doubled value
+of $n$.
+If the
+absolute
+% *** AB? relative or abs?
+error falls below the user-specified
+threshold $\varepsilon$, the step is accepted.
+% *** AB which value is used, the original n or the doubled n one?
+If the error does not reach $\varepsilon$ by $n=n_{\text{max}}$, $h$
+% *** AB I don't understand this: all you have run is n and 2n, so how
+% do we get to nmax.? You do not describe an iteration here.
+% Since 64^3 is big, I suggest you stick to 16 and 32, then half h if
+%
 is halved and the iteration in $n$ begins again starting with
 $n=n_{\text{min}}$. The parameters $n_{\text{min, max}}$ can be chosen by the
 user, but their default values are set to $n_{\text{min}} = 16$,
@@ -842,82 +1023,124 @@ $n_{\text{max}} = 64$. Computation time spent in failed steps is lost, making
 it imperative that the initial stepsize estimate $h$ is chosen carefully. We
 describe the procedure for choosing $h$ for both spectral and asymptotic steps
 in detail in the next section.
+% AB good narrative end!
 
-% Error analysis? Just briefly about order of error...
-% Argue why Chebyshev nodes are a good choice here, citing Tref
+*** TO TRY FIX n=16,32,64 to n=16,32 only - or describe how decision
+to go to 64 is done.
 
 
+
+
+% AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 \subsection{Adaptive selection of interval size and type}
+\label{s:adap}
+
+In this section we explain the adaptive stepsize and method-switching
+algorithm. The left side of Figure~\ref{balls-flowchart} shows
+a summary flowchart.
 
 \subsubsection{Initial stepsize estimates}
+\label{s:hosc}
 
-At each timestep $t_i$, a decision needs to be made about whether to attempt a
-step using the spectral method or the asymptotic exansion. The two types of
-steps could be attempted simultaneously and the decision could be made based on
-their estimated error (as done in \cite{agocs2020efficient}), but in order to minimise
-computation time, we estimate whether the asymptotic expansion would
-converge quickly enough first. Inspecting the first few iterates of the asymptotic
-method from \cref{init,iter}, and noting that the convergence rate is
-determined by the size of the correction term added in each iteration, a rough
-upper bound on the first correction term is $\om'/\om$, giving the
-approximate timescale 
+At each timestep start $t_i$, a decision needs to be made about whether to
+use the high-frequency Riccati solver or the plain spectral method.
+Both types of steps could be attempted
+% simultaneously <- AB they are not simultaneous unless you're doing some
+% weird parallel proc model. Trying to get you to be as precise as possible :)
+% The reader will thank us.
+and the decision based upon the their estimated error (as done in \cite{agocs2020efficient}).
+Instead, we find it more efficient to use local properties of $\om$ at $t_i$
+to get initial stepsize estimates.
+Recalling \eqref{x1R1}, the first correction term is $\om'/\om$, giving the
+approximate timescale
 \be\label{hoscini}
 h_{\text{osc}} = \frac{\om(t_i)}{\om'(t_i)}.
 \ee
-\cref{TR} to follow justifies this initial stepsize-estimate by showing that
+\cref{TR} will also support this by showing that
 the ratio of bounds on $\om'$ and $\om$ appears in the rate of
-convergence of successive Riccati residuals. 
+convergence of successive Riccati residuals.
+
+% AB note how I'm trying to remove repetition, speculation,
+% and keep it to the point.
 
 A similar estimate for the spectral method should depend on two things: how
-oscillatory the solution is, and what timescales the terms in \cref{ode} change
-on, \ie their smoothness. If the solution is highly oscillatory, we wish to
-avoid taking a step with a Chebyshev spectral method. A measure of the rate of
+oscillatory the solution is, and on what timescales the coefficients in \cref{ode} change, \ie, their smoothness. Using the former as our criterion,
+a measure of the rate of
 oscillations is simply the frequency, giving the timescale
 \be\label{hsloini}
 h_{\text{slo}} = \frac{1}{\om(t_i)}.
 \ee
 
-These initial stepsize estimates are too crude to attempt a step with in
-practice, since over $h_{\text{osc}}$ or  $h_{\text{slo}}$, $\om$, $\om'$, and $\g$ may change significantly. 
+These initial stepsize estimates are too crude to use directly, since
+$\om$, $\om'$, or $\g$ may change significantly over such an interval.
 Nonetheless they provide a useful starting point for the algorithm that computes
 finer estimates.
+% AB *** why doesn't eps enter into either of these h estimates?
+
 
 \subsubsection{Refining the stepsize estimates}
 
-The local error of of the asymptotic solution described in \cref{phasefun} is not
-inherently dependent on the stepsize $h$ in the same way a \eg Runge--Kutta
-method's is. The convergence rate of the residual of asymptotic steps depends
-on the bounds on $\om$, $\om'$, and $\g$ over the course of the step as we show
-in \cref{TR}, which indirectly introduces stepsize-dependence, as does the fact
-that the derivatives and integral appearing in the step are computed
-numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). Ultimately, it is how well $\om$ and $\g$ can be represented by $(n+1)$th
-degree Chebyshev polynomials that determines the error in asymptotic steps, which
-we therefore test directly to gain a more accurate estimate for the stepsize
-starting from $h_{\text{osc}}$ as an initial estimate. Given $\om$ and $\g$ evaluated on $t_n$, 
-which we denote $\om_n$ and $\g_n$, respectively, we define an error
+%The local error of of the asymptotic solution described in \cref{phasefun} is not
+%inherently dependent on the stepsize $h$ in the same way a \eg Runge--Kutta
+%method's is.
+% AB *** note RK would also have prefactors infront of O(h^4) that depend on
+% the coeffs, their derivs, etc. So it is no different. Also try reading your
+% sentence :)
+%
+%The convergence rate of the residual of asymptotic steps depends
+%on the bounds on $\om$, $\om'$, and $\g$ over the course of the step as we show
+%in \cref{TR}, which indirectly introduces stepsize-dependence, as does the fact
+%that the derivatives and integral appearing in the step are computed
+%numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). Ultimately,
+% AB I found the above rambling. The below is a more direct statement:
+
+The discretization in \cref{s:discr} is certainly no more accurate than
+the error in which the coefficient functions $\om$ and $\g$ are represented
+on the Chebyshev grid.
+%degree Chebyshev polynomials that determines the error in asymptotic steps, which
+Therefore we estimate their Chebyshev interpolation error as follows.
+Let $\mbf{f}\in\R^{n+1}$ indicate the vector of nodes values
+$\{f(\tau_l)\}$ for a function $f$ which will be either $\om$ or $\g$.
+Let $f^\star(t)$ be the Lagrange polynomial interpolant through the
+nodes $\{\tau_l\}_{l=0}^n$.
+Let $\tau^\star_l := t_i + h(l+1/2)/(n+1)$, $l=0,\dots,n$ be an equispaced set of
+test points in the interval.
+% AB *** note I fixed your formula, but you have to check it
+Then define the error estimate
 \be
-    \Delta_n[f] := \max_{j = 0, 1, \ldots, n} \left| \frac{f(t^{\star}_j) -
-    f^{\star}(t^{\star}_j)}{f(t^{\star}_j)} \right|,
+    \Delta_n[f] := \max_{l = 0, 1, \ldots, n} \biggl| \frac{f(\tau^{\star}_l) -
+    f^{\star}(\tau^{\star}_l)}{f(\tau^{\star}_l)} \biggr|,
 \ee
-where $f$ is $\om$ or $\g$, 
+where $f$ is $\om$ or $\g$.
+In fact $\{f^{\star}(t^{\star}_l)\} = L_n \mbf{f}$ for some interpolation matrix
+$L_n$ that is independent of the interval choice, so in practice
+$L_n$ is computed only once, for instance by inverting Vandermonde systems
+or using standard barycentric formulae \cite{tref}.
+% AB *** either we explain this and cite Helsing appendix and my prior work,
+%  or we just say its done by barycentric formulae and cite Berrut-Tref.
+%  You decide.
+
+%\be
+%t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n,
+% AB *** I don't understand this since they fall outside interval, plus why \pi is here??
+%\ee
+%and the $f^{\star}(t^{\star}_j)$ are interpolated using the $f(t_n)$ values,
+%\be
+%f^{\star}(t^{\star}_n) = L_n f(t_n).
+%\ee
+%The interpolation matrix $L_n$ is computed using a Vandermonde matrix \cite{atap}. The entries of $L_n$ are invariant under the simultaneous rescaling of
+%$t_n$ and $t^{\star}_n$ to lie within the standard interval $[-1, 1]$,
+%therefore $L_n$ need only to be computed once.
+Letting $\Delta$ denote the larger of $\Delta_n[\om]$ and $\Delta_n[\g]$, we accept or update the stepsize as follows,
 \be
-t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n,
-\ee
-and the $f^{\star}(t^{\star}_j)$ are interpolated using the $f(t_n)$ values,
-\be
-f^{\star}(t^{\star}_n) = L_n f(t_n).
-\ee
-The interpolation matrix $L_n$ is computed using a Vandermonde matrix \cite{atap}. The entries of $L_n$ are invariant under the simultaneous rescaling of
-$t_n$ and $t^{\star}_n$ to lie within the standard interval $[-1, 1]$,
-therefore $L_n$ need only to be computed once.
-Given $\Delta_n[\om]$ and $\Delta_n[\g]$, we accept or update the stepsize as follows,
-\begin{align}
-    \Delta :=& \max \left(\Delta_n[\om], \; \Delta_n[\g]\right), \\
-    h :=& \begin{cases}
+  %    \Delta :=& \max \left(\Delta_n[\om], \; \Delta_n[\g]\right), \\
+  % AB: not sure that deserves a separate formula, esp since want look simpler
+    h \leftarrow \begin{cases}
         h &\text{if } \Delta \leq \varepsilon_h, \\
         \min \left( 0.7h,\; 0.9 h \left( \frac{\varepsilon_h}{\Delta} \right)^{\frac{1}{n+1}} \right) &\text{otherwise}.
     \end{cases}
-\end{align}
+    \ee
+    % AB got here
 In the above, the $1/(n+1)$ in the exponent is justified by noting that the
 error in $n+1$-point Chebyshev interpolation is proportional to $h^(n+2)$, therefore if
 $\Delta$ exceeds $\varepsilon_h$, using an exponent slightly larger than $1/(n+2)$ takes
@@ -938,9 +1161,12 @@ h_{\text{slo}}$, we refine the stepsize proposal according to
         h &\text{otherwise},
     \end{cases}
 \end{align}
-with $\sigma = 0.8$, chosen experimentally, and $n$ being a hyperparameter with a default value of $n = 16$.
+with $\sigma = 0.8$, chosen experimentally, and $n$ being a
+%hyperparameter  <- AB only stats has hyperparams :)
+parameter with a default value of $n = 16$.
 
-\subsubsection{Choosing the steptype}
+\subsubsection{Choosing the step type}
+\label{s:steptype}
 
 With a refined $h_{\text{osc}}$ and $h_{\text{slo}}$ in hand, we can make an informed decision about which type of step to take.
 \begin{pro}\label{steptypechoose}
@@ -978,6 +1204,8 @@ together is shown in the left panel of \cref{balls-flowchart}.
 % EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 \section{Error analysis for the Riccati iteration\label{errorana}}
 
+The goal of this section is rigorous analysis of the residual
+reduction of the defect correction of Section~\ref{phasefun}.
 From now on we abbreviate the residual function by $R_j = R_j(t) := R[x_j](t)$.
 \cref{PRiter} described the evolution of $R_j$
 under the proposed iteration, which is local in $t$.
@@ -1839,10 +2067,18 @@ the number of quadrature points required to compute the numerical integral to a
 given accuracy. This application will be explored in a future paper.
 % PDEs???
 
+*** TO INSERT: analysis question is to prove the discretized
+defect correction matches the continuous, ie, bound discretization error.
+And study the discrete iteration.
+
+
 \section*{Acknowledgments}
-We benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
-and Manas Rachh.
+We have benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
+Manas Rachh, and Leslie Greengard.
 The Flatiron Institute is a division of the Simons Foundation.
+
+
+%%%%%% suggest move this to comments.txt:
 
 % Some things left to do:  (are this FA or AB ones? Are some obsolete?) These are for FA! Some may be obsolete.
 % AB comments with "-"
@@ -1879,7 +2115,8 @@ The Flatiron Institute is a division of the Simons Foundation.
 % More references needed
 % - just in intro
 
-% BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+\begin{comment}    % we don't want to see this int he paper...
 \Fruzsi{
 \section{List of changes}
 
@@ -1924,6 +2161,9 @@ The Flatiron Institute is a division of the Simons Foundation.
 \end{itemize}
 
 }
+\end{comment}
+
+% BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 \bibliographystyle{abbrv}
 \bibliography{refs}
 \end{document}
