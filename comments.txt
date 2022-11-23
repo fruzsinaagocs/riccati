@@ -116,8 +116,10 @@ do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
 
 * fixed om to om^2 in diag term in {discreteode}
 
+* figure 2 balls: could you move the rho label to look like the radius -
+currently it's confusing since the label on the Im axis should be -rho.
 
-
+* fig 2 flowchart: t_i is used in text, so change t_j to t_i to match.
 
 
 
