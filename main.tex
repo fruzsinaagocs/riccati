@@ -920,38 +920,49 @@ Here we used that $u_{\pm}(t_i) = 1$ and $u'_{\pm}(t_i) = x_{\pm}(t_i)$ by const
 
 \subsection{Direct spectral solution on nonoscillatory intervals \label{chebysteps}}
 
-In case the solution is nonoscillatory or the asymptotic expansion fails to
-converge before the residual reaches a user-specified tolerance $\varepsilon$, we
-employ a spectral method based on Chebyshev nodes instead. The motivation
-behind this choice is that by adjusting the number of nodes, an arbitrarily
-high order can be achieved. Although spectral methods are usually used for
-solving boundary value problems whereby the nodes are laid out over the entire
-integration range, there is no reason one could not apply them over one timestep at a
-time in a time-stepper setting. Since the present algorithm was constructed to
-switch between two methods -- one based on the asymptotic expansion of the
-Riccati equation and a spectral method -- on the fly and the points of
-switching are not predetermined, we opt to break the integration range up into
-smaller timesteps, applying the spectral method over a single timestep at a
-time.
-
-Using the differentiation matrix from the previous subsection,
-\cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
+If the solution is nonoscillatory, or the asymptotic expansion fails to
+converge before the residual reaches a user-specified tolerance $\varepsilon$, we switch to a standard spectral collocation method on a Chebyshev grid.
+This achieves an arbitrarily high order timestep in a simple manner.
+(We note that in other applications a \emph{global} spectral grid is
+advantageous \cite{tref}; here, since adaptive switching and efficiency are
+needed,
+integration is best performed over many timestep intervals with a fixed high
+order grid on each.)
+%The motivation
+%behind this choice is that by adjusting the number of nodes, an arbitrarily
+%high order can be achieved.
+%Although spectral methods are usually used for
+%solving boundary value problems whereby the nodes are laid out over the entire
+%integration range, there is no reason one could not apply them over one timeste%p at a
+%time in a time-stepper setting. Since the present algorithm was constructed to
+%switch between two methods -- one based on the asymptotic expansion of the
+%Riccati equation and a spectral method -- on the fly and the points of
+%switching are not predetermined, we opt to break the integration range up into
+%smaller timesteps, applying the spectral method over a single timestep at a
+%time.
+% AB: although I liked some of this story, it was a bit long-winded.
+% And piecewise spectral is a standard idea, not a new one.
+%
+Using the
+Chebyshev nodes $\{\tau_l\}_{l=0}^n$ and differentiation matrix $D_n$
+from the previous subsection,
+\cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ by
+the linear system
 \begin{align}\label{discreteode}
-    F_n u_n = \left(D_n^2 + 2\text{diag}(\g_n)D_n + \text{diag}(\om_n) \right)u_n = 0, 
+  F_n \mbf{u} := \left(D_n^2 + 2\text{diag}(\{\g_l\})D_n + \text{diag}(\{\om_l\}) \right)\mbf{u} = \mbf{0},
+ % note vector 0
 \end{align}
-where the subscript $n$ denotes a vector of function values at the $n+1$ (scaled) Chebyshev nodes $t_n$.
-%\be\label{scaledt}
-%t_n = \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
-%\ee
-A spectral method based on Chebyshev nodes finds $u_n$ by solving the system of
-equations defined by \cref{discreteode}, subject to auxiliary conditions that
-ensure the uniqueness of the solution. In our case these conditions encode
-continuity across the lower timestep-boundary, \ie are the initial conditions
+% AB: again, u_n notation ambgious since it means u at the last node l=n.
+where $\mbf{u}:=\{u(\tau_l)\}_{l=0}^n$ is the node value vector, and
+diag indicates the diagonal matrix constructed from a vector.
+One must also enforce initial conditions via
 \be\label{discreteic}
-(u_n)_n = u(t_i), \quad \left(D_nu_n\right)_0 = u'(t_i),
+u_0
+% AB *** why was (u_n)_n here? did you mean (u_n)_0 in your notation?
+= u(t_i), \qquad \left(D_n\mbf{u}\right)_0 = u'(t_i).
 \ee
-where a lower index outside brackets denotes a given vector element.
-The initial conditions may be encoded as two rows appended to $F_n$,
+%where a lower index outside brackets denotes a given vector element. <- AB good but I already did this in sec 2.2 now.
+Stacking these conditions as rows gives the overdetermined $(n+3) \times (n+1)$ linear system
 \be\label{discreteodeic}
 \renewcommand*{\arraystretch}{1.25}
 \begin{bmatrix}
@@ -960,8 +971,10 @@ The initial conditions may be encoded as two rows appended to $F_n$,
     (F_n)_{n0} & \ldots & (F_n)_{nn} \\
     (D_n)_{00} & \ldots & (D_n)_{0n} \\
     1 & \ldots & 0
+    % AB: note last row is ambiguous. A 2x2 block notation may be easier and
+    % shorter
 \end{bmatrix}
-u_n =  
+\mbf{u} =  
 \begin{bmatrix}
 0 \\
 \vdots \\
@@ -970,22 +983,37 @@ u'(t_i) \\
 u(t_i)
 \end{bmatrix},
 \ee
-where lower indices outside a bracket specify a given matrix element.
-After solving the $(n+3) \times (n+1)$ system in \cref{discreteodeic}, the value of the solution
-$u(t)$ at the end of the interval can be read off as the last element of the
-solution vector $u_n$, and its derivative as the last element of $D_nu_n$.
+which is solved in the least-squares sense via QR with $\bigO(n^3)$ cost.
+% AB *** please check - we need to say how.
+$u(t)$ at interval endpoint can be read off as the last element of the
+solution vector $\mbf{u}$, and its derivative as the last element of
+$D_n\mbf{u}$.
 These then serve as the initial conditions for the subsequent time-step.
-Note that the system has now become rectangular but also overdetermined. The
-matrix on the right-hand-side of \cref{discreteodeic} may be replaced with a
-square one by removing the last two rows and incorporating the initial
-conditions directly, \eg the last row can be removed by solving only for
-$(u_n)_1, \ldots, (u_n)_n$ and setting $(u_n)_0 = u(t_i)$.
+(Note that square systems may also be created by removing rows \cite{tref},
+but that we did not find that this made a significant speed difference
+in practice.)
+% *** AB is that true? in the narrative you have to state what we did,
+% not leave it ambiguous what we did.
+%Note that the system has now become rectangular but also overdetermined. The
+%matrix on the right-hand-side of \cref{discreteodeic} may be replaced with a
+%square one by removing the last two rows and incorporating the initial
+%conditions directly, \eg the last row can be removed by solving only for
+%$(u_n)_1, \ldots, (u_n)_n$ and setting $(u_n)_0 = u(t_i)$.
 
-The error on steps taken with the spectral method above is estimated by
-doubling $n$, attempting the step with the same stepsize
-$h$ again, and comparing results. If the error falls below the user-specified
-threshold $\varepsilon$, the spectral method is considered to have converged and the
-step is accepted. If the error does not reach $\varepsilon$ by $n=n_{\text{max}}$, $h$
+We estimate the error induced over this timestep $[t_i,t_i+h]$
+by comparing to the solution at the interval endpoint using a doubled value
+of $n$.
+If the
+absolute
+% *** AB? relative or abs?
+error falls below the user-specified
+threshold $\varepsilon$, the step is accepted.
+% *** AB which value is used, the original n or the doubled n one?
+If the error does not reach $\varepsilon$ by $n=n_{\text{max}}$, $h$
+% *** AB I don't understand this: all you have run is n and 2n, so how
+% do we get to nmax.? You do not describe an iteration here.
+% Since 64^3 is big, I suggest you stick to 16 and 32, then half h if
+%
 is halved and the iteration in $n$ begins again starting with
 $n=n_{\text{min}}$. The parameters $n_{\text{min, max}}$ can be chosen by the
 user, but their default values are set to $n_{\text{min}} = 16$,
@@ -993,9 +1021,10 @@ $n_{\text{max}} = 64$. Computation time spent in failed steps is lost, making
 it imperative that the initial stepsize estimate $h$ is chosen carefully. We
 describe the procedure for choosing $h$ for both spectral and asymptotic steps
 in detail in the next section.
+% AB good narrative!
 
-% Error analysis? Just briefly about order of error...
-% Argue why Chebyshev nodes are a good choice here, citing Tref
+*** TO TRY FIX n=16,32,64 to n=16,32 only - or describe how decision
+to go to 64 is done.
 
 
 \subsection{Adaptive selection of interval size and type}
