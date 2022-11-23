@@ -112,6 +112,10 @@ interval used for testing in the text.
 * push the boundaries of understanding the k=5 kink in the demo - is it
 do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
 
+* consider using block 2x2 notation for {discreteodeic} to save vertical space
+
+* fixed om to om^2 in diag term in {discreteode}
+
 
 
 

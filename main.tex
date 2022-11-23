@@ -622,7 +622,9 @@ simplicity, but the results hold for the general case):
 \begin{align}
     x_0 &=  i\om, &&R[x_0] = i\om' = \bigO(\om), \nonumber \\
 x_1 &= i\om - \frac{\om'}{2\om}, 
-    &&R[x_1] = -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2} = \bigO(1), \nonumber \\
+&&R[x_1] = -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2} = \bigO(1),
+\label{x1R1}
+\\
 x_2 &= i\om - \frac{\om'}{2\om} + \delta_1, \mbox{ where }
     \delta_1 = \frac{\frac{\om''}{2\om} - \frac{3\om'^2}{4\om^2}}{2i\om - \frac{\om'}{\om}}, \quad
     &&R[x_2] = \delta_1' + \delta_1^2 = \bigO(\om^{-1}). \nonumber
@@ -949,8 +951,8 @@ from the previous subsection,
 \cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ by
 the linear system
 \begin{align}\label{discreteode}
-  F_n \mbf{u} := \left(D_n^2 + 2\text{diag}(\{\g_l\})D_n + \text{diag}(\{\om_l\}) \right)\mbf{u} = \mbf{0},
- % note vector 0
+  F_n \mbf{u} := \left(D_n^2 + 2\text{diag}(\{\g_l\})D_n + \text{diag}(\{\om_l^2\}) \right)\mbf{u} = \mbf{0},
+ % note vector 0. note fixed typo om -> om^2
 \end{align}
 % AB: again, u_n notation ambgious since it means u at the last node l=n.
 where $\mbf{u}:=\{u(\tau_l)\}_{l=0}^n$ is the node value vector, and
@@ -1021,85 +1023,124 @@ $n_{\text{max}} = 64$. Computation time spent in failed steps is lost, making
 it imperative that the initial stepsize estimate $h$ is chosen carefully. We
 describe the procedure for choosing $h$ for both spectral and asymptotic steps
 in detail in the next section.
-% AB good narrative!
+% AB good narrative end!
 
 *** TO TRY FIX n=16,32,64 to n=16,32 only - or describe how decision
 to go to 64 is done.
 
 
+
+
+% AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 \subsection{Adaptive selection of interval size and type}
 \label{s:adap}
+
+In this section we explain the adaptive stepsize and method-switching
+algorithm. The left side of Figure~\ref{balls-flowchart} shows
+a summary flowchart.
 
 \subsubsection{Initial stepsize estimates}
 \label{s:hosc}
 
-At each timestep $t_i$, a decision needs to be made about whether to attempt a
-step using the spectral method or the asymptotic exansion. The two types of
-steps could be attempted simultaneously and the decision could be made based on
-their estimated error (as done in \cite{agocs2020efficient}), but in order to minimise
-computation time, we estimate whether the asymptotic expansion would
-converge quickly enough first. Inspecting the first few iterates of the asymptotic
-method from \cref{init,iter}, and noting that the convergence rate is
-determined by the size of the correction term added in each iteration, a rough
-upper bound on the first correction term is $\om'/\om$, giving the
-approximate timescale 
+At each timestep start $t_i$, a decision needs to be made about whether to
+use the high-frequency Riccati solver or the plain spectral method.
+Both types of steps could be attempted
+% simultaneously <- AB they are not simultaneous unless you're doing some
+% weird parallel proc model. Trying to get you to be as precise as possible :)
+% The reader will thank us.
+and the decision based upon the their estimated error (as done in \cite{agocs2020efficient}).
+Instead, we find it more efficient to use local properties of $\om$ at $t_i$
+to get initial stepsize estimates.
+Recalling \eqref{x1R1}, the first correction term is $\om'/\om$, giving the
+approximate timescale
 \be\label{hoscini}
 h_{\text{osc}} = \frac{\om(t_i)}{\om'(t_i)}.
 \ee
-\cref{TR} to follow justifies this initial stepsize-estimate by showing that
+\cref{TR} will also support this by showing that
 the ratio of bounds on $\om'$ and $\om$ appears in the rate of
-convergence of successive Riccati residuals. 
+convergence of successive Riccati residuals.
+
+% AB note how I'm trying to remove repetition, speculation,
+% and keep it to the point.
 
 A similar estimate for the spectral method should depend on two things: how
-oscillatory the solution is, and what timescales the terms in \cref{ode} change
-on, \ie their smoothness. If the solution is highly oscillatory, we wish to
-avoid taking a step with a Chebyshev spectral method. A measure of the rate of
+oscillatory the solution is, and on what timescales the coefficients in \cref{ode} change, \ie, their smoothness. Using the former as our criterion,
+a measure of the rate of
 oscillations is simply the frequency, giving the timescale
 \be\label{hsloini}
 h_{\text{slo}} = \frac{1}{\om(t_i)}.
 \ee
 
-These initial stepsize estimates are too crude to attempt a step with in
-practice, since over $h_{\text{osc}}$ or  $h_{\text{slo}}$, $\om$, $\om'$, and $\g$ may change significantly. 
+These initial stepsize estimates are too crude to use directly, since
+$\om$, $\om'$, or $\g$ may change significantly over such an interval.
 Nonetheless they provide a useful starting point for the algorithm that computes
 finer estimates.
+% AB *** why doesn't eps enter into either of these h estimates?
+
 
 \subsubsection{Refining the stepsize estimates}
 
-The local error of of the asymptotic solution described in \cref{phasefun} is not
-inherently dependent on the stepsize $h$ in the same way a \eg Runge--Kutta
-method's is. The convergence rate of the residual of asymptotic steps depends
-on the bounds on $\om$, $\om'$, and $\g$ over the course of the step as we show
-in \cref{TR}, which indirectly introduces stepsize-dependence, as does the fact
-that the derivatives and integral appearing in the step are computed
-numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). Ultimately, it is how well $\om$ and $\g$ can be represented by $(n+1)$th
-degree Chebyshev polynomials that determines the error in asymptotic steps, which
-we therefore test directly to gain a more accurate estimate for the stepsize
-starting from $h_{\text{osc}}$ as an initial estimate. Given $\om$ and $\g$ evaluated on $t_n$, 
-which we denote $\om_n$ and $\g_n$, respectively, we define an error
+%The local error of of the asymptotic solution described in \cref{phasefun} is not
+%inherently dependent on the stepsize $h$ in the same way a \eg Runge--Kutta
+%method's is.
+% AB *** note RK would also have prefactors infront of O(h^4) that depend on
+% the coeffs, their derivs, etc. So it is no different. Also try reading your
+% sentence :)
+%
+%The convergence rate of the residual of asymptotic steps depends
+%on the bounds on $\om$, $\om'$, and $\g$ over the course of the step as we show
+%in \cref{TR}, which indirectly introduces stepsize-dependence, as does the fact
+%that the derivatives and integral appearing in the step are computed
+%numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). Ultimately,
+% AB I found the above rambling. The below is a more direct statement:
+
+The discretization in \cref{s:discr} is certainly no more accurate than
+the error in which the coefficient functions $\om$ and $\g$ are represented
+on the Chebyshev grid.
+%degree Chebyshev polynomials that determines the error in asymptotic steps, which
+Therefore we estimate their Chebyshev interpolation error as follows.
+Let $\mbf{f}\in\R^{n+1}$ indicate the vector of nodes values
+$\{f(\tau_l)\}$ for a function $f$ which will be either $\om$ or $\g$.
+Let $f^\star(t)$ be the Lagrange polynomial interpolant through the
+nodes $\{\tau_l\}_{l=0}^n$.
+Let $\tau^\star_l := t_i + h(l+1/2)/(n+1)$, $l=0,\dots,n$ be an equispaced set of
+test points in the interval.
+% AB *** note I fixed your formula, but you have to check it
+Then define the error estimate
 \be
-    \Delta_n[f] := \max_{j = 0, 1, \ldots, n} \left| \frac{f(t^{\star}_j) -
-    f^{\star}(t^{\star}_j)}{f(t^{\star}_j)} \right|,
+    \Delta_n[f] := \max_{l = 0, 1, \ldots, n} \biggl| \frac{f(\tau^{\star}_l) -
+    f^{\star}(\tau^{\star}_l)}{f(\tau^{\star}_l)} \biggr|,
 \ee
-where $f$ is $\om$ or $\g$, 
+where $f$ is $\om$ or $\g$.
+In fact $\{f^{\star}(t^{\star}_l)\} = L_n \mbf{f}$ for some interpolation matrix
+$L_n$ that is independent of the interval choice, so in practice
+$L_n$ is computed only once, for instance by inverting Vandermonde systems
+or using standard barycentric formulae \cite{tref}.
+% AB *** either we explain this and cite Helsing appendix and my prior work,
+%  or we just say its done by barycentric formulae and cite Berrut-Tref.
+%  You decide.
+
+%\be
+%t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n,
+% AB *** I don't understand this since they fall outside interval, plus why \pi is here??
+%\ee
+%and the $f^{\star}(t^{\star}_j)$ are interpolated using the $f(t_n)$ values,
+%\be
+%f^{\star}(t^{\star}_n) = L_n f(t_n).
+%\ee
+%The interpolation matrix $L_n$ is computed using a Vandermonde matrix \cite{atap}. The entries of $L_n$ are invariant under the simultaneous rescaling of
+%$t_n$ and $t^{\star}_n$ to lie within the standard interval $[-1, 1]$,
+%therefore $L_n$ need only to be computed once.
+Letting $\Delta$ denote the larger of $\Delta_n[\om]$ and $\Delta_n[\g]$, we accept or update the stepsize as follows,
 \be
-t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n,
-\ee
-and the $f^{\star}(t^{\star}_j)$ are interpolated using the $f(t_n)$ values,
-\be
-f^{\star}(t^{\star}_n) = L_n f(t_n).
-\ee
-The interpolation matrix $L_n$ is computed using a Vandermonde matrix \cite{atap}. The entries of $L_n$ are invariant under the simultaneous rescaling of
-$t_n$ and $t^{\star}_n$ to lie within the standard interval $[-1, 1]$,
-therefore $L_n$ need only to be computed once.
-Given $\Delta_n[\om]$ and $\Delta_n[\g]$, we accept or update the stepsize as follows,
-\begin{align}
-    \Delta :=& \max \left(\Delta_n[\om], \; \Delta_n[\g]\right), \\
-    h :=& \begin{cases}
+  %    \Delta :=& \max \left(\Delta_n[\om], \; \Delta_n[\g]\right), \\
+  % AB: not sure that deserves a separate formula, esp since want look simpler
+    h \leftarrow \begin{cases}
         h &\text{if } \Delta \leq \varepsilon_h, \\
         \min \left( 0.7h,\; 0.9 h \left( \frac{\varepsilon_h}{\Delta} \right)^{\frac{1}{n+1}} \right) &\text{otherwise}.
     \end{cases}
-\end{align}
+    \ee
+    % AB got here
 In the above, the $1/(n+1)$ in the exponent is justified by noting that the
 error in $n+1$-point Chebyshev interpolation is proportional to $h^(n+2)$, therefore if
 $\Delta$ exceeds $\varepsilon_h$, using an exponent slightly larger than $1/(n+2)$ takes
@@ -1120,7 +1161,9 @@ h_{\text{slo}}$, we refine the stepsize proposal according to
         h &\text{otherwise},
     \end{cases}
 \end{align}
-with $\sigma = 0.8$, chosen experimentally, and $n$ being a hyperparameter with a default value of $n = 16$.
+with $\sigma = 0.8$, chosen experimentally, and $n$ being a
+%hyperparameter  <- AB only stats has hyperparams :)
+parameter with a default value of $n = 16$.
 
 \subsubsection{Choosing the step type}
 \label{s:steptype}
