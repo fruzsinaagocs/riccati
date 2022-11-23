@@ -241,8 +241,10 @@ when the solution has both highly oscillatory and smooth regimes.
 % WKB
 The most common asymptotic expansion
 is the Wentzel--Kramers--Brillouin (WKB), a
-perturbation method applied to linear differential equations that contain some
-small parameter $\varepsilon$ in the highest derivative
+perturbation method applied to linear differential equations that contain a
+small parameter
+%$\varepsilon$  <- this is never used later so no symbol is needed
+in the highest derivative
 \cite{benderorszag,logan}.
 This approximation arose in quantum mechanics where it is still widely
 applied for approximate analytic solutions of the Schr\"{o}dinger equation.
@@ -676,7 +678,7 @@ We will make this rigorous for the case of analytic $\om$ and $\g$
 in \cref{TR}.
 %the above geometric decay in $R[x_j]$ for $0\le j<k$, where $k$ will depend on the size of $\om$.
 
-\subsection{Numerical Riccati discretization}
+\subsection{Discretization of Riccati defect correction}
 %and initial condition matching}
 
 We now turn to the numerical discretization of
@@ -691,7 +693,7 @@ $x_j$ needed to evaluate $R_j$ as in \eqref{R}, and
 numerical quadrature (since $u(t) = \exp \int^t x(\sigma) \mathrm{d}\sigma$).
 
 Recall that on the standard interval $[-1, 1]$ the $n+1$ Chebyshev nodes are
-$\tilde\tau{t}_j = \cos\left( j\pi/n\right)$, $j = 0, 1, \dots, n$.
+$\tilde\tau_j = \cos\left( j\pi/n\right)$, $j = 0, 1, \dots, n$.
 % AB *** ummm, notation clashes here: \tilde{t}_n = just the last cheby node.
 % I think you are using subscripts in a physics way where the *name* of the
 % subscript changes the meaning of the overall symbol... this is not used in
@@ -723,17 +725,17 @@ components $l=0,\dots, n$ obey
 $$
 x^{(0)}_l = i\om_l,
 \quad
-x^{(j+1)}_l = x^{(j)}_l - \frac{R^{(j)}_l}{2(x^{(j)}_l + \g_l)}
+x^{(j+1)}_l = x^{(j)}_l - \frac{R^{(j)}_l}{2(x^{(j)}_l + \g_l)},
 \quad \mbox{where}\;
 R^{(j)}_l = \sum_{m=0}^n (D_n)_{lm}x^{(j)}_m  + [x^{(j)}_l]^2 + 2\g_lx^{(j)}_l + \om_l^2
+.
 $$
 % AB: note how I needed to introduce new notation to explain the actual formula
-We postpone choice of the stopping point $k$ to Sec.~***.
+We postpone choice of the stopping point $k$ to Sec.~\ref{s:steptype}.
 % AB *** please point to where this is discussed.
 
-
-Finally, we need to discretize the antiderivative operation which gives
-$z(t)$ on the interval such that $z' = x$, to recover $u = e^z$.
+Finally, we must discretize the antiderivative operation giving
+$z(t)$ on the interval such that $z' = x$, to then recover a solution $u = e^z$.
 Given the final vector $\mbf{x}=\mbf{x}_k$, this is done by solving
 the linear system
 \be
@@ -741,68 +743,121 @@ D_n \mbf{z} = \mbf{x},
 \label{antider}
 \ee
 which has nullity 1 (the constant vector is in the nullspace).
-In practice, to avoid the $\bigO(n^3)$ cost,
-the SVD of $\tilde D_n$ is computed once and for all,
-so that a pseudoinverse $(D_n)^+$ may be applied in $\bigO(n^2)$ cost
-to solve \eqref{antider}.
+In practice, to avoid an $\bigO(n^3)$ cost per timestep,
+the SVD of $\tilde D_n = U \Sigma V^T$ is computed once and for all.
+At each timestep \eqref{antider} is then solved
+by multiplication of $\mbf{x}$
+by the pseudoinverse $(\tilde D_n)^+ = V \Sigma^+ U^T$
+in $\bigO(n^2)$ cost, followed by a rescaling by $h/2$.
+% AB *** please check the SVD aspect since I made it up based on what is sensible. I don't seem to have your code.
 
 % AB *** discuss the two lin indep solns here? Otherwise how can matching
-% of IC in demo be understood?
-
-
+% of IC in demo be understood? Ah, I see matching is not needed there.
 
 
 \subsection{Numerical demonstration of Riccati defect correction}
 \label{s:demo}
 
-Here we demonstrate the temporary convergence of the residual by example: in the left panel of \cref{convergence-plot}, we apply
+At this point it is useful to illustrate the residual reduction
+with an example.
+In the left panel of \cref{convergence-plot}, we apply
 % AB note we didn't apply the continuous version, rather the discr one
-the above numerically-discretized iteration to the equation
+the above numerically-discretized iteration to the ``burst'' equation
+% *** cite it
 \begin{equation}\label{bursteq}
-    u'' + \frac{m^2 - 1}{(1+t^2)^2}u = 0,  
+  u'' + \om^2(t) u = 0, \qquad \mbox{ where } \om(t):=\frac{\sqrt{m^2 - 1}}{1+t^2},
+  % AB: note it's easier fo the reader to see explicitly the form of om
 \end{equation}
-over the timestep $t \in [0, 2]$ starting with initial conditions $u(0) = 1/m$ and
-$u'(0) = i$. For a given $m$, we show the maximum residual over the length of
-the step, $\max_{t \in [t_j, t_{j+1}]}R[x_k]$, as a function
-of the iteration number $k$. We vary $m$ and observe that the maximum residual
-indeed drops geometrically for the first few iterations, $R[x_k] \propto
-\om_{\text{max}}^{-k}$, where $\om_{\text{max}} = \sqrt{1 + m^2}$ is the
-maximum value of $\om$ over the timestep. At small $\om_{\text{max}}$, the
-geometric progression stops and the series starts diverging after $5$
-iterations and only about $4$ digits of accuracy can be achieved, clearly
-showing the asymptotic nature of the expansion. At large $\om$, however, the
-convergence is exteremely rapid and machine precision is reached within about
-$5$ iterations. In \cref{pracres} we show that even though the number of iterations
-required to reach minimal residual grows with $\om$ as $\bigO(\om)$, in
-practice a larger $\om$ required \emph{fewer} iterations to reach a given
-accuracy threshold $\varepsilon$, approximately $k_{\varepsilon} \approx
-\bigO(1/\log\om)$.  
+over a timestep interval $t \in [0, 2]$ covered by the $n=16$ Chebyshev grid.
+This interval is chosen longer that would occur in practice in order
+to illustrate different behaviors.
+% AB: I am totally guessing here... could you explain why it is so long?
+% Would [0,0.5] be that different?
+%
+% AB: You wrote:
+% starting with initial conditions $u(0) = 1/m$ and $u'(0) = i$.
+% *** AB confused since the iter does not reference nor control the ICs!
+% Thus cut.
+For various fixed choices of $m$, which controls
+the maximum frequency according to $\om_{\text{max}} = \sqrt{m^2-1}$,
+% *** please check the formula for max was wrong, not sure why inconsistent with above?
+we plot the maximum magnitude residual vector $\max_{0\le l \le n} |R_l^{(k)}|$
+at the nodes, as a function of iteration number $k$.
+% *** prefer j
+%
+% AB: You wrote:
+%maximum residual over the length of
+%the step, $\max_{t \in [t_j, t_{j+1}]}R[x_k]$,
+% AB *** but we don't; we plot the max value at a node, right? (unless you
+% interpolate off the nodes... would need to state and explain that then).
+We observe that the residual
+indeed drops geometrically for the first few iterations,
+with a rate well described by $\om_{\text{max}}^{-k}$.
+However, for small $\om_{\text{max}}=10$, the iteration
+then starts diverging after about $5$
+iterations, thus only about $4$ digits of accuracy could be achieved
+by optimal stopping.
+This shows the asymptotic nature of the series generated by the iteration.
+At very large $\om_{\text{max}} = 10^4$, however, the
+convergence is extremely rapid, with machine precision reached at $k=5$.
+% AB: new thought...
+Interestingly, at moderately large $\om_{\text{max}}=10^3$ the initial decay is
+still very useful, but the rate decreases after $k=5$; we
+suspect this rate change is due to growth in the
+approximation of the high-order derivatives of $\om$, which has nearby
+poles at $t=\pm i$.
+% *** AB this suggests rerunning for an ODE that doesn't have such nearby
+% singularities in om. Or smaller interval.
+\begin{rmk}
+In \cref{pracres} we will show that even though the number of iterations $k$
+required to reach minimal residual grows as $\bigO(\om)$, in
+practice a larger $\om$ requires \emph{fewer} iterations to reach a fixed
+accuracy threshold $\varepsilon$.
+Indeed, solving $\varepsilon\approx \om^{-k}$ gives a heuristic
+$k\approx \log(1/\varepsilon)/\log \om$.
+\end{rmk}
+% AB notice how I was explict about the eps-dependence, very easy to be.
 
-\begin{figure*}[tb]
+
+\begin{figure*}[tb]  % ffffffffffffffffffffffffffffffffffffffffffffffffffff
     \flushleft
     \subfloat{\includegraphics{plots/residual-k-corr.pdf}}
     %\label{residual-reduction}
     \subfloat{\includegraphics{plots/convergence.pdf}}
-    \caption{\label{convergence-plot} Error analysis and convergence of our
-    method. The left panel shows the maximum residual of the Riccati equation
-    over a single step of the numerical method as a function of the number of
-    terms added to the asymptotic expansion, which is used to propagate the
-    numerical solution in the highly oscillatory regions of the ODE. The
-    differently coloured curves correspond to different peak frequencies over
-    the same time interval. A geometric reduction in the residual for the first
-    few iterations, forecast qualitatively in \cref{phasefun} and shown formally in
-    \cref{TR}, is observed. Following this geometric reduction the
-    asymptotic nature of the approximation is manifest as an increase in the
-    residual, especially visible at low $\omega_{\text{max}}$. The right panel
-    is a convergence plot showing the achieved relative error against the
-    relative tolerance set to the solver. The coloured curves correspond to
-    different upper ends of the integration region. These should be compared to
-    the grey dashed line showing an achieved error matching the tolerance.
-    In regions where the condition number $\kappa$ of the problem may limit the achievable
-    accuracy (see \cref{conditionnodef}), we plot the maximum achievable
-    accuracy as a coloured dashed line to compare the achieved error with. }
+    \caption{\label{convergence-plot}
+      Demonstrations of Riccati residual defect correction (left plot), and error performance of the overall solver (right plot).
+      In detail, the left plot shows the maximum magnitude of the residual
+      of the Riccati ODE \eqref{R} over the
+      $n=16$ Chebyshev grid, as a function of iteration count,
+      for the example in Section~\ref{s:demo}.
+      For small $\om_{\text{max}}$ an initial geometric decay eventually becomes
+      unstable growth for large $k$. The dotted lines show $\om_{\text{max}}^{-k}$.
+      %
+      The right plot shows *** TO FINISH VERY CONCISELY WITH POINTERS TO
+      MAIN TEXT.
+ %     
+   %   Demonstration of residual reduction
+ %     Error analysis and convergence of our
+ %   method. The left panel shows the maximum residual of the Riccati equation
+ %   over a single step of the numerical method as a function of the number of
+ %   terms added to the asymptotic expansion, which is used to propagate the
+ %   numerical solution in the highly oscillatory regions of the ODE. The
+ %   differently coloured curves correspond to different peak frequencies over
+ %   the same time interval. A geometric reduction in the residual for the first
+ %   few iterations, forecast qualitatively in \cref{phasefun} and shown formally in
+ %   \cref{TR}, is observed. Following this geometric reduction the
+ %   asymptotic nature of the approximation is manifest as an increase in the
+ %   residual, especially visible at low $\omega_{\text{max}}$. The right panel
+ %   is a convergence plot showing the achieved relative error against the
+ %   relative tolerance set to the solver. The coloured curves correspond to
+ %   different upper ends of the integration region. These should be compared to
+ %   the grey dashed line showing an achieved error matching the tolerance.
+ %   In regions where the condition number $\kappa$ of the problem may limit the achievable
+ %   accuracy (see \cref{conditionnodef}), we plot the maximum achievable
+      %   accuracy as a coloured dashed line to compare the achieved error with.
+      }
    % Need to say what ODEs were used to create these  
-\end{figure*}
+\end{figure*}    % ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 
 
@@ -1024,7 +1079,8 @@ h_{\text{slo}}$, we refine the stepsize proposal according to
 \end{align}
 with $\sigma = 0.8$, chosen experimentally, and $n$ being a hyperparameter with a default value of $n = 16$.
 
-\subsubsection{Choosing the steptype}
+\subsubsection{Choosing the step type}
+\label{s:steptype}
 
 With a refined $h_{\text{osc}}$ and $h_{\text{slo}}$ in hand, we can make an informed decision about which type of step to take.
 \begin{pro}\label{steptypechoose}
@@ -1062,6 +1118,8 @@ together is shown in the left panel of \cref{balls-flowchart}.
 % EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 \section{Error analysis for the Riccati iteration\label{errorana}}
 
+The goal of this section is rigorous analysis of the residual
+reduction of the defect correction of Section~\ref{phasefun}.
 From now on we abbreviate the residual function by $R_j = R_j(t) := R[x_j](t)$.
 \cref{PRiter} described the evolution of $R_j$
 under the proposed iteration, which is local in $t$.
@@ -1923,10 +1981,18 @@ the number of quadrature points required to compute the numerical integral to a
 given accuracy. This application will be explored in a future paper.
 % PDEs???
 
+*** TO INSERT: analysis question is to prove the discretized
+defect correction matches the continuous, ie, bound discretization error.
+And study the discrete iteration.
+
+
 \section*{Acknowledgments}
 We have benefitted greatly from discussions with Jim Bremer, Charlie Epstein,
 Manas Rachh, and Leslie Greengard.
 The Flatiron Institute is a division of the Simons Foundation.
+
+
+%%%%%% suggest move this to comments.txt:
 
 % Some things left to do:  (are this FA or AB ones? Are some obsolete?) These are for FA! Some may be obsolete.
 % AB comments with "-"
@@ -1963,7 +2029,8 @@ The Flatiron Institute is a division of the Simons Foundation.
 % More references needed
 % - just in intro
 
-\begin{comment}
+
+\begin{comment}    % we don't want to see this int he paper...
 \Fruzsi{
 \section{List of changes}
 

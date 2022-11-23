@@ -74,31 +74,50 @@ needed clarified
 
 * suggest Bremer's method is not called "the phase function method".
 
-* I corrected prefactor of al''/al in {kummer} .. 1/2
+* I corrected prefactor of al''/al in {kummer} to 1/2.
 
 * Check "smoothness" of Fourier xform of log Omega.
 
-* Is our method an "expansion", an "iteration", a "series", a "defect correction" ? It is best to stick to one. I think "iteration" is clearest. Hence edits.
+* Is our method an "expansion", an "iteration", a "series", a "defect correction" ? It is best to stick to one. I think "iteration" and "defect correction" are clearest.  Hence edits.
 
-* Structure of paper para: note I highlighted *rigorous* analysis.
+* the "structure of this paper" para: note I highlighted *rigorous* analysis.
 
 * Prop 1: why is non-vanishing of x needed given that x+gamma in denominator?
 After prop 1: you needed to update the statement about LB on x_j to be about
 x_j+gamma.
 
-* D mat needed a ref.
+* D mat, and spectral meth in general, needed a ref; I gave Tref. old book.
 
 * major notation clash between t_i for time-step intervals vs t_j Cheby nodes.
-I changed nodes to tau_j
+I changed nodes to tau_j, and killed your "set" notation t_n, which also
+clashed.
 
 * first eqn in the matching section was wrong - need t as upper limit.
 
+* Demo section:
+The ICs cannot be relevant since the iter doesn't control them, right?
+Not sure why ICs are given.
+
+* burst eqn you state as m^2-1 upstairs but then state om_max = sqrt(m^2+1) ...
+which is it? (inconsistent)
+
+* burst demo: your choice of test interval [0,2] is very wide, with omega dropping by factor 5 over the interval, and having a nearby singularity at +-i.
+Yet it still works. But we have to comment about this.
+
+* plots/residual-k-corr.pdf would better label j for iteration not k,
+to match paper. We used k as the stopping iter, mostly.
+* also for this plot, the y axis is mislabeled. [t_j,t_j+1] is not the
+interval used for testing in the text.
 
 
 
 
 
-====== TO DO
+
+
+
+
+====== GENERAL TO DOS
 
 * explain diff btw us and Bremer:
 Bremer converts globally to phase func, then solves adaptively on panels over global region, vs we discretize adaptively on panels before converting to phase func.  We patch together solutions at panel level.
@@ -106,6 +125,6 @@ Thus no windowing needed.
 
 * Future work:
  - analyse discretized iteration (matvec plus pointwise square).
-  (no reason why high-order derivs on p=16 cheby grid should remain accurate)
+  (no reason why high-order derivs on p=16 cheby grid should remain accurate!)
 
 * update struct of paper after later edits
