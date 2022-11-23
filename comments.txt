@@ -55,7 +55,7 @@ or "Assuming ...  one then matches..."
 
 
 
----------- ongoing Alex comments 11/21/22
+---------- ongoing Alex comments / changes rationale  11/21/22
 
 * Abs claims n is adapted in the Cheby scheme, but it's not, right? Just h?
 Please check.
@@ -82,6 +82,19 @@ needed clarified
 
 * Structure of paper para: note I highlighted *rigorous* analysis.
 
+* Prop 1: why is non-vanishing of x needed given that x+gamma in denominator?
+After prop 1: you needed to update the statement about LB on x_j to be about
+x_j+gamma.
+
+* D mat needed a ref.
+
+* major notation clash between t_i for time-step intervals vs t_j Cheby nodes.
+I changed nodes to tau_j
+
+* first eqn in the matching section was wrong - need t as upper limit.
+
+
+
 
 
 
@@ -94,3 +107,5 @@ Thus no windowing needed.
 * Future work:
  - analyse discretized iteration (matvec plus pointwise square).
   (no reason why high-order derivs on p=16 cheby grid should remain accurate)
+
+* update struct of paper after later edits

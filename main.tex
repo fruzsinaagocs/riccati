@@ -508,16 +508,17 @@ suggestions for future work.
 
 \section{Methods \label{methods}}
 
-\subsection{Riccati phase function solution on a
-  single interval \label{phasefun}}
+\subsection{Defect correction of the Riccati phase function}
+  \label{phasefun}
 
 %We will use prime to denote differentiation with respect to time $t$.
 % AB; that's clear by now
 %We consider an interval $t\in[a,b]$ lying in $[0,1]$.
 % AB: why needed? [a,b] comes only later and it can be anything, right?
 %
-We now present a new numerical method to find nonoscillatory
-solutions to the nonlinear Riccati equation \cref{ricc}.
+In this section we explain how to solve for
+a nonoscillatory Riccati phase function on a sufficiently small interval,
+which will correspond to a single time-step of the overall ODE solver.
 Writing $u = e^z$ where $z'(t) = x(t)$ is the phase function,
 any nonvanishing $u(t)$ satisfies \cref{ode} if and only if
 its complex phase function $x(t)$ satisfies the nonlinear Riccati equation
@@ -552,10 +553,10 @@ for the Kummer's equation \cref{kummer} proven in
 \cite{heitman2015,bremer2016}.
 % AB this repeated stuff from the Intro - try to avoid repetition.
 The argument that existence of a real-valued Kummer phase function implies
-existence of a Riccati phase function goes as follows.%
+existence of a Riccati phase function goes as follows:%
 \footnote{We thank Jim Bremer for explaining this argument to us.}
 %corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
-If $\alpha(t)$ satisfies \cref{kummer},
+if $\alpha(t)$ satisfies \cref{kummer},
 then defining $\beta = -\alpha'/2\alpha$ allows \cref{kummer}
 to be written
 $\beta' - \alpha^2 + \beta^2 + \om(t)^2 = 0$, and these last two equations
@@ -581,147 +582,182 @@ x_0(t) &\;=\; +i\om(t),
     x_{j+1}(t) &\;=\; x_j(t) - \frac{R[x_j](t)}{2 \left( x_j(t) + \g(t) \right)}, \qquad j=0,1,\dots,k-1.
 \label{iter}
 \end{align}
-This is justified heuristically as an {\em approximate} Newton
-iteration for \eqref{ricc} (noting that an exact Newton iteration has
+This is an {\em approximate} Newton
+iteration for \eqref{ricc}; note that an exact Newton iteration has
 been used numerically \cite{krivec2008,krivec2014}
-and as an analysis tool \cite{heitman2015}).
-Namely, perturbing by a function $\delta(t)$ we get
+and as an analysis tool \cite{heitman2015}.
+To show this, perturbing $x_j$ by a function $\delta_j$ we get
 \begin{align}
-    R[x_j + \delta] &= x_j' + \delta' + x_j^2 + 2 x_j \delta + \delta^2 
-    + 2\g x_j + 2\g\delta + \om(t)^2 \nonumber \\
-    &= R[x_j] + \delta' + 2x_j\delta + 2\g\delta + \bigO(\delta^2), \nonumber
+    R[x_j + \delta_j] &= x_j' + \delta_j' + x_j^2 + 2 x_j \delta_j + \delta_j^2 
+    + 2\g x_j + 2\g\delta_j + \om(t)^2 \nonumber \\
+    &= R[x_j] + \delta_j' + 2x_j\delta_j + 2\g\delta_j + \bigO(\delta_j^2), \nonumber
 \end{align}
-then by linearizing we get that $\delta$ solves the linear 1st-order ODE
-$\delta' + 2x_j(t) \delta + 2\g \delta  = -R[x_j](t)$.
+then by linearizing we get that $\delta_j$ solves the linear 1st-order ODE
+$\delta_j' + 2x_j(t) \delta_j + 2\g \delta_j  = -R[x_j](t)$.
 %which has an analytic solution. % AB <- why did you need this phrase.
 %Solving this exact Newton update symbolically is the basis of the quasilinearization method (QLM) \cite{bellman1970}.
 % AB; seems like Bellman too old here; it' the QLM on Schrod ppl we cite.
-However, this ODE is again generally oscillatory,
-with unknown initial condition needed to achieve a nonoscillatory
-solution $\delta(t)$.
-Yet if $\delta$ is nonoscillatory, the first term $\delta'$ is
+However, this ODE is itself generally oscillatory,
+with an unknown initial condition needed to achieve a nonoscillatory
+solution.
+Yet if $\delta_j$ is nonoscillatory, the first term $\delta_j'$ is
 a factor $x_j = \bigO(\om)$ smaller than the second term, thus
 one might hope that by dropping it a useful reduction in residual might
 still result.
 %\footnote{\Fruzsi{[Strictly speaking, we should then be dropping the $\g$ term as well, since it's also an order of magnitude smaller...]}}. 
-This leads to the algebraic formula $2\left(x_j(t) + \g(t)\right) \delta(t) = -R[x_j](t)$
-which is solved pointwise for each $t$, and
-writing $x_{j+1} = x_j + \delta$ gives our proposed \cref{iter}.
+This leads to the algebraic formula $2\left(x_j(t) + \g(t)\right) \delta_j(t) = -R[x_j](t)$
+which is solved pointwise for each $t$, then updating via
+$x_{j+1} = x_j + \delta_j$ explains our proposed \cref{iter}.
 %This is a type of defect correction scheme \cite{bohmer1984}.
 % AB: you already said that but with Bellman as the ref!
 If $\om$ is a smooth function, then
 the result is nonoscillatory by construction, without explicit reference
-to initial conditions.
+to an initial condition.
 
 The early iterates of \eqref{init}--\eqref{iter} illustrate
-the residual reduction. We show the case $\g(t) \equiv 0$, for
-simplicity, but the results hold for the general case.
-The first few iterates and residuals are
+the residual reduction (we give the case $\g(t) \equiv 0$, for
+simplicity, but the results hold for the general case):
 \begin{align}
     x_0 &=  i\om, &&R[x_0] = i\om' = \bigO(\om), \nonumber \\
 x_1 &= i\om - \frac{\om'}{2\om}, 
     &&R[x_1] = -\frac{\om''}{2\om} + \frac{3\om'^2}{4\om^2} = \bigO(1), \nonumber \\
 x_2 &= i\om - \frac{\om'}{2\om} + \delta_1, \mbox{ where }
-    \delta_1 \equiv \frac{\frac{\om''}{2\om} - \frac{3\om'^2}{4\om^2}}{2i\om - \frac{\om'}{\om}}, \quad
+    \delta_1 = \frac{\frac{\om''}{2\om} - \frac{3\om'^2}{4\om^2}}{2i\om - \frac{\om'}{\om}}, \quad
     &&R[x_2] = \delta_1' + \delta_1^2 = \bigO(\om^{-1}). \nonumber
 \end{align}
-To interpret this, we assume that $\om'$, $\om''$, \etc, are
-of the same order as $\om$, because $\om(t)$ is smooth,
-and also assume that $\om$ has a lower bound of the same order. If we were to include $\g$, we would assume $\g = \bigO(1) $ in terms of $\om$, and that its derivatives are of the same order as $\g$ itself by the same reasoning as with $\om$. 
-Thus we see that each iteration the residual drops by a factor $\bigO(\om)$.
-However, each iteration also results in terms with
-one higher derivative of $\om$ (and $\g$).
-%Despite the rapid growth in complexity,
-Algebraically, one can check that this
-pattern continues
-by defining the $j$th correction function $\delta_j$,
-so that $x_{j+1} = x_j + \delta_j$, then using \cref{R} to write
-\be
+Here our somewhat loose asymptotic notation $\bigO(\om)$, etc,
+has meaning over some interval where $\om$ does not change much,
+i.e., that its upper and lower bounds are of the same order.
+Also, since $\om$ is assumed smooth, then we have that $\om'$, $\om''$, etc, are
+of the same order as $\om$.
+If we were to include $\g$, we would assume $\g = \bigO(1)$
+%in terms of $\om$,
+and that its derivatives are of the same order as $\g$ itself due to smoothness.
+%by the same reasoning as with $\om$. 
+This suggests that each iteration reduces the residual by a factor $\bigO(\om)$
+but brings in one extra derivative of $\om$ (and $\g$).
+To verify this pattern for arbitrary $j$, notice that
+$$
 R[x_{j+1}] = R[x_j] + 2\left(x_j + \g \right)\delta_j  + \delta_j^2 + \delta_j' = \delta_j^2 + \delta_j',
-\label{Rdelta}
-\ee
-where the first two terms cancel by design due to \cref{iter}.
-The resulting evolution of the residual is then
-summarized as follows, which is proved simply by
-substituting $\delta_j \equiv -R[x_j]/2(x_j + \g)$ into \cref{Rdelta} and using
-the quotient rule.
-\begin{pro}\label{PRiter}
-  Let $x_j \in C^2([a,b])$ be a function on an interval $[a,b]\subset \R$
-  % we may as well be pedantic about conditions
-  such that $x_j(t) \neq 0 \; \forall t\in [a,b]$,
-  let $\om\in C^1([a,b])$,
-  $\g\in C^1([a,b])$,
-  and let $x_{j+1}$ be given by the single iteration \cref{iter}.
-  Then their associated residual functions \cref{R} on $[a,b]$
-  are related pointwise by
+%\label{Rdelta}
+$$
+where the first two terms canceled by design, due to \cref{iter}.
+Then substituting $\delta_j := -R[x_j]/2(x_j + \g)$ and using
+the quotient rule proves the following useful update
+for the residual function.
+% AB note I simplified my orig version...
+% AB note: why was non-vanishing of x needed given that x+gamma in denominator?
+\begin{pro}\label{PRiter}  % ppppppppppppppppppppppppppppppppppppppppppppppp
+  Let $x_j$, $\om$ and $\gamma$ be smooth functions on an interval
+  in which $x_j+\gamma$ is nonvanishing.
+  Let $x_{j+1}$ be given by the iteration \cref{iter}.
+  Then the associated residual function \cref{R} obeys the iteration
   \be
   \label{Riter}
     R[x_{j+1}] = \frac{1}{2(x_j + \g)}\left( \frac{(x_j + \g)'}{x_j + \g} R[x_j] - R[x_j]' \right) 
     + \left(\frac{R[x_j]}{2(x_j + \g)}\right)^2. 
   \ee
-\end{pro}
-Thus, with the initialization \cref{init},
-assuming that the lower bound on each $x_j$ is no smaller than $\bigO(\om)$,
-and that the quadratic term in \cref{Riter} is small,
-one might hope that
-the residual shrinks like $R[x_j] = \bigO(\om^{1-j})$ for each $j=0,1,\dots$.
-Unfortunately this will turn out not to be true, due to the increasing
-order of derivatives of $\om(t)$, which will lead to an
-asymptotic (but not convergent) series.
-However, the iteration is numerically useful since when the right conditions
-are met the residual convergences geometrically for the first few iterations with a
-rate that gets better with larger $\om$. We show this formally in \cref{TR}.
+\end{pro}                  % pppppppppppppppppppppppppppppppppppppppppppppp
+Thus, if one can show that $|x_j+\gamma|$ is uniformly bounded from
+below by a $\bigO(\om)$ constant,
+%on some solution interval,
+and that the final quadratic term in \eqref{Riter} is small,
+then one might hope that the
+residual is an asymptotic series
+shrinking like $R[x_j] = \bigO(\om^{1-j})$ for $j=0,1,\dots$.
+However, it will turn out that this series, and the iteration \cref{iter} for $x_j$, are not convergent:
+for a typical fixed functions $\om(t)$ and $\g(t)$,
+the increasing order of derivatives eventually lead to divergence.
+However, the iteration
+is useful numerically since, when $\om$ varies only a small amount
+over an interval,
+the residual decays geometrically for the first few iterations with a rate that gets better with larger $\om$.
+We will make this rigorous for the case of analytic $\om$ and $\g$
+in \cref{TR}.
+%the above geometric decay in $R[x_j]$ for $0\le j<k$, where $k$ will depend on the size of $\om$.
 
-%\AB{there is currently a problem of ordering in that Fig 1 can't be understood until the Cheby discr method is explained. (Or is Fig 1 not done via Cheby - surely must be). In which case Cheby must come before the demo. I made a crude attempt at this.}
-The numerical evaluation of the asymptotic solution $x(t)$, and the solution of
-the original ODE $u(t)$ requires repeated differentiation (as part of each
-correction term) and quadrature (since $u(t) = \exp \int^t x(\sigma)
-\mathrm{d}\sigma$). 
-Since our solver is a stepper, we are not attempting to find a global solution
-$u(t)$ for the entire integration range, and only need to compute the
-asymptotic solution over a timestep, $t \in [t_i, t_i+h]$ at a time. At each 
-timestep, we choose to perform differentiation and quadrature by discretizing
-time on a Chebyshev grid of $n + 1$ nodes.  
-Over the standard interval $t \in [-1, 1]$, the $n+1$ Chebyshev nodes are given by 
-\be\label{chebnodes}
-\tilde{t}_n := \{\tilde{t}_j\}, \quad \tilde{t}_j = \cos\left( j\pi/n\right), \quad j = 0, 1, \ldots, n,
-\ee
-where the parameter $n$ can be set by the user with a default value of $n = 16$, and is fixed throughout integration. 
-One may then define an $(n+1) \times (n+1)$ differentiation matrix $\tilde{D}_n$ which, given a vector of function
-values $\tilde{v}_n$ defined on the Chebyshev nodes $\tilde{t}_j$, returns $\tilde{w}_n$, the function's
-derivative evaluated at the nodes,
-\be\label{diffmat}
-\tilde{w}_n = \tilde{D}_n\tilde{v}_n, \quad \tilde{f}_n := f(\tilde{t}_n),
-\ee
-The timestep $t \in [t_i, t_i+h]$ can always be scaled up or down to the standard interval via
+\subsection{Numerical Riccati discretization}
+%and initial condition matching}
+
+We now turn to the numerical discretization of
+the iteration \eqref{init}--\eqref{iter} on an interval
+$[t_i,t_i+h]$ corresponding to the $i$th time-step of the solver.
+For now, assume that $h$ is sufficiently small that the functions
+$\om$, $\g$, $x_j$, $R_j$, and their first few derivatives are accurately
+represented by function values on a single $(n+1)$-node Chebyshev grid.
+We will explain our choice of $h$ in Section~\ref{s:hosc}.
+The remaining tasks are numerical differentiation of the function
+$x_j$ needed to evaluate $R_j$ as in \eqref{R}, and
+numerical quadrature (since $u(t) = \exp \int^t x(\sigma) \mathrm{d}\sigma$).
+
+Recall that on the standard interval $[-1, 1]$ the $n+1$ Chebyshev nodes are
+$\tilde\tau{t}_j = \cos\left( j\pi/n\right)$, $j = 0, 1, \dots, n$.
+% AB *** ummm, notation clashes here: \tilde{t}_n = just the last cheby node.
+% I think you are using subscripts in a physics way where the *name* of the
+% subscript changes the meaning of the overall symbol... this is not used in
+% math (much).
+% But I don't see a need for this vector of nodes as an object.
+% Also t_i is already the breakpoints above.
+% Also I saved the labeled eqns for the rescaled ones, which saves space.
+In our experiments we fixed $n=16$, which we found gave a good compromise
+between very high order and speed of numerical linear algebra.
+The standard $(n+1) \times (n+1)$ differentiation matrix $\tilde{D}_n$
+is filled according to \cite[Ch.~6]{tref}.
+Rescaling to the time-step inverval $[t_i, t_i+h]$
+gives nodes
+% AB if you're going to use i for interval, j for iterate, can't then also
+% use j for the node index within interval!
 \be\label{scaledt}
-t_n := \{ t_j \}, \quad t_j = t_i + \frac{h}{2} + \frac{h}{2}\tilde{t}_j, \quad j = 0, 1, \ldots, n. 
+\tau_l = t_i + \frac{h}{2}[1+\cos (l\pi/n)], \quad l = 0, 1, \ldots, n,
 \ee
-Under the scaling, the differentiation matrix transforms as
-\begin{align}
-    w_n &= D_nv_n, \quad f_n := f(t_n) \label{scaledDdef}\\
-    D_n &= \frac{2}{h}\tilde{D}_n. \label{scaledD}
-\end{align}
-We then use $D_n$ to compute antiderivatives (\eg $v_n$ given $w_n$), by
-solving the
-%matrix equation  AB: "matrix eqn" implies the unknonw is a matrix :)
-linear system \cref{scaledDdef}. 
+and the rescaled matrix $D_n = (2/h) \tilde D_n$.
+Then given a vector $\mbf{x}\in\C^{n+1}$ with components
+$x_l := \{x(\tau_l)\}$ being node values of a smooth function $x$,
+then $D_n\mbf{x}$ is a vector of approximate derivatives at these nodes.
+% AB: this section was missing the actual formula applied, this stuff:
+We then fill the vectors of values $\om_l=\om(\tau_j)$
+and $\g_l=\gamma(\tau_j)$.
+The discretization of the iteration \eqref{init}--\eqref{iter}
+gives the sequence $\mbf{x}^{(0)}, \mbf{x}^{(1)},\dots,\mbf{x}^{(k)}$ whose
+components $l=0,\dots, n$ obey
+$$
+x^{(0)}_l = i\om_l,
+\quad
+x^{(j+1)}_l = x^{(j)}_l - \frac{R^{(j)}_l}{2(x^{(j)}_l + \g_l)}
+\quad \mbox{where}\;
+R^{(j)}_l = \sum_{m=0}^n (D_n)_{lm}x^{(j)}_m  + [x^{(j)}_l]^2 + 2\g_lx^{(j)}_l + \om_l^2
+$$
+% AB: note how I needed to introduce new notation to explain the actual formula
+We postpone choice of the stopping point $k$ to Sec.~***.
+% AB *** please point to where this is discussed.
 
-%In \cref{phasefun}
-%\AB{better to refer forward to a Remark since Sec 2.1 is long. But maybe the comment doesn't add anything here - it's too in the weeds. Save the entire comparison of residuals until our method is described.}
-%we show that this is equivalent to
-%starting from the zeroth order solution $x_0 = \pm i\om$ and generating
-%successive iterates $x_i(t) := x_{i-1}(t) + \delta(t)$ by setting the residual they leave on the
-%right-hand-side when substituted into \cref{riccwkb} to zero, to first order in
-%$\delta$. 
+
+Finally, we need to discretize the antiderivative operation which gives
+$z(t)$ on the interval such that $z' = x$, to recover $u = e^z$.
+Given the final vector $\mbf{x}=\mbf{x}_k$, this is done by solving
+the linear system
+\be
+D_n \mbf{z} = \mbf{x},
+\label{antider}
+\ee
+which has nullity 1 (the constant vector is in the nullspace).
+In practice, to avoid the $\bigO(n^3)$ cost,
+the SVD of $\tilde D_n$ is computed once and for all,
+so that a pseudoinverse $(D_n)^+$ may be applied in $\bigO(n^2)$ cost
+to solve \eqref{antider}.
+
+% AB *** discuss the two lin indep solns here? Otherwise how can matching
+% of IC in demo be understood?
 
 
 
-\subsection{Numerical demonstration of Riccati defect correction iteration}
-%\AB{swtiching from presenting the method to testing it makes a needed subsec break here}
+
+\subsection{Numerical demonstration of Riccati defect correction}
+\label{s:demo}
 
 Here we demonstrate the temporary convergence of the residual by example: in the left panel of \cref{convergence-plot}, we apply
-the iteration from \cref{init,iter} to the equation 
+% AB note we didn't apply the continuous version, rather the discr one
+the above numerically-discretized iteration to the equation
 \begin{equation}\label{bursteq}
     u'' + \frac{m^2 - 1}{(1+t^2)^2}u = 0,  
 \end{equation}
@@ -829,7 +865,8 @@ switching are not predetermined, we opt to break the integration range up into
 smaller timesteps, applying the spectral method over a single timestep at a
 time.
 
-Using the differentiation matrix from \cref{scaledD}, \cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
+Using the differentiation matrix from the previous subsection,
+\cref{ode} may then be discretized over the interval $t \in [t_i, t_i+h]$ as
 \begin{align}\label{discreteode}
     F_n u_n = \left(D_n^2 + 2\text{diag}(\g_n)D_n + \text{diag}(\om_n) \right)u_n = 0, 
 \end{align}
@@ -893,8 +930,10 @@ in detail in the next section.
 
 
 \subsection{Adaptive selection of interval size and type}
+\label{s:adap}
 
 \subsubsection{Initial stepsize estimates}
+\label{s:hosc}
 
 At each timestep $t_i$, a decision needs to be made about whether to attempt a
 step using the spectral method or the asymptotic exansion. The two types of
