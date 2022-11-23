@@ -680,6 +680,7 @@ in \cref{TR}.
 
 \subsection{Discretization of Riccati defect correction}
 %and initial condition matching}
+\label{s:discr}
 
 We now turn to the numerical discretization of
 the iteration \eqref{init}--\eqref{iter} on an interval
@@ -742,7 +743,11 @@ the linear system
 D_n \mbf{z} = \mbf{x},
 \label{antider}
 \ee
-which has nullity 1 (the constant vector is in the nullspace).
+which has nullity 1 (the constant vector is in the nullspace),
+and then by subtracting a constant so that the first entry $z_0=0$,
+corresponding to $z(t_i)=0$ at the start of the timestep.
+% AB - note details needed I added here
+
 In practice, to avoid an $\bigO(n^3)$ cost per timestep,
 the SVD of $\tilde D_n = U \Sigma V^T$ is computed once and for all.
 At each timestep \eqref{antider} is then solved
@@ -803,11 +808,12 @@ convergence is extremely rapid, with machine precision reached at $k=5$.
 % AB: new thought...
 Interestingly, at moderately large $\om_{\text{max}}=10^3$ the initial decay is
 still very useful, but the rate decreases after $k=5$; we
-suspect this rate change is due to growth in the
-approximation of the high-order derivatives of $\om$, which has nearby
+suspect this ``kink'' is due to growth in the
+approximation of the high-order derivatives of $\om(t)$, which has nearby
 poles at $t=\pm i$.
 % *** AB this suggests rerunning for an ODE that doesn't have such nearby
-% singularities in om. Or smaller interval.
+% singularities in om. Or smaller interval. Or larger n. But you need
+% to push the boundaries of exploration here.
 \begin{rmk}
 In \cref{pracres} we will show that even though the number of iterations $k$
 required to reach minimal residual grows as $\bigO(\om)$, in
@@ -861,26 +867,37 @@ $k\approx \log(1/\varepsilon)/\log \om$.
 
 
 
-\subsection{Matching Riccati intervals}
+\subsection{Matching Riccati timestep intervals}
 %\AB{short but probblay seperate subsec like this, since confusing before
 %  the demo of Fig.1}
 
-We ensure continuity of the solution and its derivative across timestep
-boundaries by treating $u(t_i)$ and $u'(t_i)$ as initial conditions in the step
-from $t_i$ to  $t_i+h$. Noting that the asymptotic iteration \cref{iter} can be
-initialised with $x_0(t) = +i\om(t)$ as is done in \cref{init}, or with $x_0(t)
-= -i\om(t)$, the resulting asymptotic solutions, $x_{\pm}(t)$, approximate the
-nonlinear Riccati equation, but the associated 
+So far we have explained how to numerically solve for 
+one approximate nonoscillatory Riccati phase function over one timestep
+$[t_i,t_i+h]$,
+in the sense of having uniformly small residual on its spectral grid.
+% AB note narrative guide.
+However, this cannot match general initial conditions
+$u(t_i)$ and $u'(t_i)$, as needed for a 2nd-order ODE timestepper.
+Yet, the asymptotic iteration \cref{iter} can be
+initialised with $x_0(t) = +i\om(t)$ (as done in \cref{init}), or with $x_0(t)
+= -i\om(t)$. The two resulting Riccati solutions, $x_{\pm}(t)$,
+give two linearly independent approximate solutions of the desired ODE
+\cref{ode}, namely
 \be
-u_{\pm} = e^{\int_{t_i}^{t_i+h}x_{\pm}(\sigma)\mathrm{d}\sigma}
+u_{\pm}(t) = e^{\int_{t_i}^t x_{\pm}(\sigma)\d\sigma}~.
+\label{upm}
+% *** AB fixed typo here
 \ee
-are two, linearly independent approximate solutions of the linear ODE \cref{ode}.
-They may therefore be linearly combined to match any set of initial conditions,
+Since $\om$ and $\gamma$ are real, they are complex conjugates.
+% AB *** please check this!
+%
+They may be linearly combined to match any set of complex-valued
+initial conditions,
 \begin{align}
     u(t) &= A_{+}u_{+}(t) + A_{-}u_{-}(t), \qquad t \in [t_i, t_i + h],\\
     u'(t) &= A_{+}u'_{+}(t) + A_{-}u'_{-}(t), \qquad t \in [t_i, t_i + h],
 \end{align}
-with 
+with coefficients $A_\pm$ satisfying the $2\times 2$ linear system
 \be
 \begin{bmatrix}
     1 & 1 \\
@@ -894,12 +911,9 @@ with
 \begin{bmatrix}
     u(t_i) \\
     u'(t_i)
-\end{bmatrix}, 
+\end{bmatrix}.
 \ee
-where we used that $u_{\pm}(t_i) = 1$ and $u'_{\pm}(t_i) = x_{\pm}(t_i)$ by construction.
-
-
-% +/- solutions complex conjugates
+Here we used that $u_{\pm}(t_i) = 1$ and $u'_{\pm}(t_i) = x_{\pm}(t_i)$ by construction of \eqref{upm}.
 
 
 

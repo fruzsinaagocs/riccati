@@ -109,6 +109,8 @@ to match paper. We used k as the stopping iter, mostly.
 * also for this plot, the y axis is mislabeled. [t_j,t_j+1] is not the
 interval used for testing in the text.
 
+* push the boundaries of understanding the k=5 kink in the demo - is it
+do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
 
 
 
