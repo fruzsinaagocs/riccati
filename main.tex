@@ -286,14 +286,13 @@ otherwise again switching to a 4,5th order Runge--Kutta method.
 %
 In terms of the time-step $h$, neither method is formally high-order.
 \texttt{oscode} has
-% AB: *** local? need to clarify local vs global in this para.
-$\bigO(h^2)$ global error, although
+$\bigO(h)$ global error, although
 its prefactor is small when $\om_0$ is large.
 %error when $h \ll 1$, although in regions of high-frequency oscillations, $h$
 %tends to be very large in comparison to the solution's timescale.
 The
 WKB-marching method's oscillatory solver improves on this and has $\bigO(h^2)$ global error, resulting in better performance at lower tolerances.
-% AB *** I feel a clearer way to say would be error is O(h^2 / om^3) or something... for each solver.
+% AB I feel a clearer way to say would be error is O(h^2 / om^3) or something... for each solver.
 % FA: OK. For WKB marching, they have the global error $\leq C(h^{g}\om + h^2/\om^3)$.
 % The $g$ is the order of a quadrature routine involved, which
 % can be chosen. They say that even though the first term scales badly with
@@ -823,7 +822,7 @@ required to reach minimal residual grows as $\bigO(\om)$, in
 practice a larger $\om$ requires \emph{fewer} iterations to reach a fixed
 accuracy threshold $\varepsilon$.
 Indeed, solving $\varepsilon\approx \om^{-k}$ gives a heuristic
-$k\approx \log(1/\varepsilon)/\log \om$.
+$k_\varepsilon \approx \log(1/\varepsilon)/\log \om$.
 \end{rmk}                    % rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 % AB notice how I was explict about the eps-dependence, very easy to be.
 
@@ -1060,6 +1059,8 @@ h_{\text{osc}} = \frac{\om(t_i)}{\om'(t_i)}.
 \cref{TR} will also support this by showing that
 the ratio of bounds on $\om'$ and $\om$ appears in the rate of
 convergence of successive Riccati residuals.
+In practice to approximate $\om'(t_i)$ use Chebyshev differentiation
+from the grid of the previous timestep.
 
 % AB note how I'm trying to remove repetition, speculation,
 % and keep it to the point.
@@ -1497,9 +1498,7 @@ This shows \textit{nearly} geometric convergence in $k$,
 sufficient to reach machine accuracy efficiently with a few iterations
 when $\om$ is large.
 For large $\rho\om$ one may approximately invert this to predict the iteration number $k$ sufficient for $|R_k| \approx \varepsilon$, to get
-$$
-k_\varepsilon \approx \frac{\log \varepsilon^{-1}}{\log \rho\om}~,
-$$
+$ k_\varepsilon \approx \frac{\log \varepsilon^{-1}}{\log \rho\om}~, $
 a refinement of Remark~\ref{r:fewer}.
 %*** compare to numerics.
 
