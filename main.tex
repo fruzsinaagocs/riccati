@@ -1498,27 +1498,34 @@ This shows \textit{nearly} geometric convergence in $k$,
 sufficient to reach machine accuracy efficiently with a few iterations
 when $\om$ is large.
 For large $\rho\om$ one may approximately invert this to predict the iteration number $k$ sufficient for $|R_k| \approx \varepsilon$, to get
-$ k_\varepsilon \approx \frac{\log \varepsilon^{-1}}{\log \rho\om}~, $
+$ k_\varepsilon \approx \frac{\log \varepsilon^{-1}}{\log \rho\om}$,
 a refinement of Remark~\ref{r:fewer}.
 %*** compare to numerics.
 
 % AB here
-Finally, note that a stopping criterion for $k$ based on the residual $R[x_k]$ of the Riccati equation is viable because the residual is directly related to that of the original ODE.
-\begin{cor}[Relationship of residuals]\label{residualu}
+Finally we show that the stopping criterion for $k$ based on the absolute
+residual $R[x_k]$ of the Riccati equation is relevant because this is equal
+to the \emph{relative residual} of the original ODE.
+% AB this is a Prop since it's a short indep result. A Cor is a downstream result depending on a prior theorem.
+\begin{pro}[Relationship of residuals]\label{residualu}
     Let $R[x_k](t)$ be the residual of the Riccati equation as defined in
-    \cref{R} after $k$ iterations of \cref{init,iter}. Then if
+    \cref{R}.
+    % after $k$ iterations of \cref{init,iter} <- not part of the statement.
+    Then if
     $\tilde{R}[u_k](t)$ is the associated residual of the original ODE
     \cref{ode}, defined as
     \be\label{Rode}
-    \tilde{R}[u_k](t) := u''_k + 2\gamma(t)u'_k + \omega^2(t),
+    \tilde{R}[u_k](t) := u''_k + 2\gamma(t)u'_k + \omega^2(t) u_k,
+    % note correction of last term
     \ee
-    and $u_k = e^{\int^t x_k(\sigma)\mathrm{d}\sigma}$, then
+    for $u_k(t) = e^{\int_0^t x_k(\sigma)\mathrm{d}\sigma}$, then
+    % AB note t needs to be on left if on right
     \be
-    \tilde{R}[u_k] = u_k R[x_k].
+    \frac{\tilde{R}[u_k](t)}{u_k(t)} = R[x_k](t).
     \ee
-\end{cor}
+\end{pro}
 \begin{proof}
-    The proof follows straightforwardly from substitution of $u_k(x_k)$ into \cref{Rode}.
+    This follows straightforwardly from substitution of the above form of $u_k$ into \cref{Rode}.
 \end{proof}
 
 
