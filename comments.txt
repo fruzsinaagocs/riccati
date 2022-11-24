@@ -60,6 +60,10 @@ or "Assuming ...  one then matches..."
 * Abs claims n is adapted in the Cheby scheme, but it's not, right? Just h?
 Please check.
 
+-> n is actually adapted between nmin and nmax, with these being chosen by the
+used but having default values of nmin = 16 and nmax = 64. In each iteration,
+the number of nodes is doubled.
+
 * apostrophes are too casual ( "method's" etc)
 
 * I am not using the sec 6 list of changes - suggest cut so the
@@ -73,6 +77,8 @@ needed clarified
 * note don't mix \dot{x} and x'
 
 * suggest Bremer's method is not called "the phase function method".
+
+-> Just to explain the choice: this is what Bremer's code repo is called (Phase-functions).
 
 * I corrected prefactor of al''/al in {kummer} to 1/2.
 
