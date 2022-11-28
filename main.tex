@@ -286,14 +286,13 @@ otherwise again switching to a 4,5th order Runge--Kutta method.
 %
 In terms of the time-step $h$, neither method is formally high-order.
 \texttt{oscode} has
-% AB: *** local? need to clarify local vs global in this para.
-$\bigO(h^2)$ global error, although
+$\bigO(h)$ global error, although
 its prefactor is small when $\om_0$ is large.
 %error when $h \ll 1$, although in regions of high-frequency oscillations, $h$
 %tends to be very large in comparison to the solution's timescale.
 The
 WKB-marching method's oscillatory solver improves on this and has $\bigO(h^2)$ global error, resulting in better performance at lower tolerances.
-% AB *** I feel a clearer way to say would be error is O(h^2 / om^3) or something... for each solver.
+% AB I feel a clearer way to say would be error is O(h^2 / om^3) or something... for each solver.
 % FA: OK. For WKB marching, they have the global error $\leq C(h^{g}\om + h^2/\om^3)$.
 % The $g$ is the order of a quadrature routine involved, which
 % can be chosen. They say that even though the first term scales badly with
@@ -817,14 +816,14 @@ poles at $t=\pm i$.
 % *** AB this suggests rerunning for an ODE that doesn't have such nearby
 % singularities in om. Or smaller interval. Or larger n. But you need
 % to push the boundaries of exploration here.
-\begin{rmk}
+\begin{rmk}\label{r:fewer}  % rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 In \cref{pracres} we will show that even though the number of iterations $k$
 required to reach minimal residual grows as $\bigO(\om)$, in
 practice a larger $\om$ requires \emph{fewer} iterations to reach a fixed
 accuracy threshold $\varepsilon$.
 Indeed, solving $\varepsilon\approx \om^{-k}$ gives a heuristic
-$k\approx \log(1/\varepsilon)/\log \om$.
-\end{rmk}
+$k_\varepsilon \approx \log(1/\varepsilon)/\log \om$.
+\end{rmk}                    % rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 % AB notice how I was explict about the eps-dependence, very easy to be.
 
 
@@ -1060,6 +1059,8 @@ h_{\text{osc}} = \frac{\om(t_i)}{\om'(t_i)}.
 \cref{TR} will also support this by showing that
 the ratio of bounds on $\om'$ and $\om$ appears in the rate of
 convergence of successive Riccati residuals.
+In practice to approximate $\om'(t_i)$ use Chebyshev differentiation
+from the grid of the previous timestep.
 
 % AB note how I'm trying to remove repetition, speculation,
 % and keep it to the point.
@@ -1198,25 +1199,31 @@ then estimated and the number of nodes, as well as the stepsize, is
 adapted until a local error value of at most $\varepsilon$ is reached, as described in
 \cref{chebysteps}.
 
-A flowchart showing how estimating the stepsizes and choosing the steptype ties
+A flowchart showing how estimating the stepsizes and choosing the step type ties
 together is shown in the left panel of \cref{balls-flowchart}.
 
 
 % EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 \section{Error analysis for the Riccati iteration\label{errorana}}
 
-The goal of this section is rigorous analysis of the residual
-reduction of the defect correction of Section~\ref{phasefun}.
-From now on we abbreviate the residual function by $R_j = R_j(t) := R[x_j](t)$.
-\cref{PRiter} described the evolution of $R_j$
-under the proposed iteration, which is local in $t$.
-For smooth $x_j$ of size $\bigO(\om)$, and smooth $R_j$,
-it suggests geometric reduction in $R_j$ by a factor $\bigO(\om)$ per iteration;
-however, this is misleading in general because of
-growth of high-order $t$-derivatives.
-The series will turn out to be merely asymptotic in the large parameter $\om$.
-We now make this argument rigorous, for $\om$ analytic
-and sufficiently large throughout some neighborhood of $t$.
+Here we prove our main rigorous result:
+the defect correction of Section~\ref{phasefun}
+in the case of analytic coefficients induces
+temporary geometric decrease of the Riccati residual by a factor $\bigO(\om)$ per iteration.
+%up to a certain number of iterations.
+Indefinite geometric decrease is not in general possible because of
+factorial growth due to repeated differentiation;
+the iteration is asymptotic in $\om\gg 1$, but not convergent.
+We abbreviate the residual function by $R_j = R_j(t) := R[x_j](t)$.
+Our main tools in proving the following will be \cref{PRiter} (the iteration for $R_j$), induction, and complex analysis.
+
+%For smooth $x_j$ of size $\bigO(\om)$, and smooth $R_j$,
+%it suggests geometric reduction in $R_j$ by a factor $\bigO(\om)$ per iteration;
+%however, this is misleading in general because of
+%growth of high-order $t$-derivatives.
+%The series will turn out to be merely asymptotic in the large parameter $\om$.
+%We now make this argument rigorous, for $\om$ analytic
+%and sufficiently large throughout some neighborhood of $t$.
 
 %One might hope that, given $x_j'$ and $x_j$ of order $\om$,
 %and a lower bound on $x_j$ of the same order,
@@ -1224,85 +1231,88 @@ and sufficiently large throughout some neighborhood of $t$.
 %then the last term is negligible
 %then if $R_j$ and $R_j'$ are sufficiently small
 
-
-\begin{thm}\label{TR}
-  Fix $t\in\R$, and let the frequency function $\om$ be analytic
+\begin{thm}\label{TR}   % ttttttttttttttttttttttttttttttttttttttttttttttttt
+  Fix $t\in\R$, and let the frequency function $\om$ and damping function $\g$ be analytic
   in the closed ball $B_\rho(t) := \{z\in\C : |z-t| \le \rho\}$,
-  for some $\rho>0$, with bounds
-    \begin{alignat}{4}
-        \eta_1 &\leq |\om&&(z)| &&\leq \eta_2, \qquad &&\forall z\in B_\rho(t), \label{ommag} \\
-        |\om'(z)| &\leq &&\eta_3 &&\leq \frac{\eta_1^2}{17}, &&\forall z\in B_\rho(t), \label{omder} \\
-        |\g(z)| &\leq &&\eta_4 &&\leq \frac{\eta_1^2}{34\eta_2}, \qquad &&\forall z\in B_\rho(t), \label{gammaupper}
-  \end{alignat}
-  that is, its derivative should be sufficiently small.
-  Let $k\in\{0,1,\dots\}$ be sufficiently small such that
+  for some $\rho>0$, with the bounds in this ball
+  \bea
+  \eta_1\;\; \leq &|\om(z)| & \leq \;\;\eta_2,          \label{ommag} \\
+  &|\om'(z)| &\leq \;\;\eta_3 \;\;\leq\;\; \frac{\eta_1^2}{17}, \label{omder} \\
+  &|\g(z)| &\leq \;\;\eta_4 \;\;\leq\;\; \frac{\eta_1^2}{34\eta_2}. \label{gammaupper}
+  \eea
+  %\forall z\in B_\rho(t),
+% AB: not sure why you left this in:  "that is, its derivative should be sufficiently small." since there is gamma and omega.
+  Let the nonnegative integer $k$ be small enough that
   \be
-    r := \frac{1}{2\te_1 \rho} \left(1 + \frac{\te_2}{\te_1}\right) k + \frac{\te_3}{4\te_1^2} \leq \frac{3}{4},
+    r := \frac{1}{2\te_1 \rho} \left(1 + \frac{\te_2}{\te_1}\right) k + \frac{\te_3}{4\te_1^2} \;\leq\; \frac{3}{4},
   \label{r}
   \ee
   where
-  % *** note attempt at new consts:
-  \begin{align}
-    \te_3 &:= \eta_3 + 2\eta_2\eta_4, \label{eta3}
-    \\
-    \te_1 &:= \eta_1 - \eta_4 - \frac{17 \te_3}{4 \eta_1},  \label{eta1}
+  \bea
+    \te_1 &=& \eta_1 - \eta_4 - \frac{17 \te_3}{4 \eta_1},  \label{eta1}
     \\ 
-    \te_2 &:= \eta_2 + \eta_4 + \frac{17 \te_3}{4 \eta_1}. \label{eta2}
-  \end{align}
+    \te_2 &=& \eta_2 + \eta_4 + \frac{17 \te_3}{4 \eta_1},   \label{eta2}
+    \\
+    \te_3 &=& \eta_3 + 2\eta_2\eta_4. \label{eta3}
+    % AB decided ordering 1,2,3 trumps fact that 1,2 depend on 3.
+  \eea
   Then after any number $j\le k$ of iterations of \cref{init}--\cref{iter},
   the function $x_j$ has Riccati residual \cref{R} bounded at the point $t$ by
   \be
-  |R_j(t)| \le \te_3 r^j.
+  |R_j(t)| \;\le\; \te_3 r^j.
   \label{Rjbnd}
   \ee
-\end{thm}
-%
+\end{thm}  % ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
+
 \begin{figure*}[tb]
     \centering
-    \subfloat{\begin{adjustbox}{width=\width, valign=c}\input{plots/flowchart.tikz}\end{adjustbox}}
+    \subfloat{\begin{adjustbox}{width=0.45\textwidth, valign=c}\input{plots/flowchart.tikz}\end{adjustbox}}
     \hfill
     \subfloat{\includegraphics[width=0.5\textwidth, valign=c]{plots/complexsetup.pdf}}
-    \caption{\label{balls-flowchart} Left: Flowchart showing stepsize refinement and the logic
-    behind choosing the steptype in our proposed algorithm for a step from
-    $t_j$ of size $h$. Right: Visualization of the nested set of
-    closed balls in the complex plane for the proof of \cref{TR}, centered on
-    $t = t_j$.}
+    \caption{\label{balls-flowchart} Left: Flowchart showing choice of stepsize $h$ and step type (Riccati vs standard Chebyshev) for our proposed algorithm.
+      $t_i$ is the start of the current timestep.
+    Right: Sketch of a nested equispaced set of
+      balls centered on the target time $t$, used in the proof of \cref{TR}.}
 \end{figure*}
-%
-This shows, for $\om$ of sufficiently small derivative
-relative to its magnitude,
+
+This shows, for $\om'$ and $\g$ sufficiently small,
 temporary geometric convergence up to $k$ iterations,
 but at a rate $r$ that deteriorates with $k$.
-And for any $k$ to exist satisfying the condition on $r$, $\om$ must have
+For any $k$ to satisfy \eqref{r}, $\om$ must have
 a sufficiently large lower bound $\eta_1$, i.e., $t$
 must be in a sufficiently oscillatory region for the original ODE.
+The condition \eqref{omder} on $\om'$ is similar to
+that in WKB: the \emph{relative $\om$ change per period} should be less than some small constant.
 
 \begin{rmk}\label{slight}
-    By \cref{omder}, $\te_1 \ge 8\eta_1/17$ and $\te_2 \le \eta_2 + 9\eta_1/17$,
-  thus $[\te_1,\te_2]$ is only a slight
-  expansion of the interval $[\eta_1,\eta_2]$ containing the range of
-    $|\om|$ in the ball.
-  Applying this we see that the last term in \cref{r}
-    is no more than $17/128 \leq 0.14$, thus can cause only slight deterioration in the rate.
+  By construction, $[\te_1,\te_2]$ is only a limited
+  expansion of the interval $[\eta_1,\eta_2]$ containing the range of $|\om|$ in the ball.
+  In particular, by the inequalities \eqref{ommag}--\eqref{gammaupper} and
+  definitions \eqref{eta1}--\eqref{eta3},
+  % AB: cref actually failed here; I prefer eqref anyway.
+  $\te_1 \ge 8\eta_1/17$ and $\te_2 \le \eta_2 + 9\eta_1/17$.
+  Applying this we see that the last term in the definition of $r$ in \cref{r}
+  is no more than $17/128 \leq 0.14$, thus can at worst cause only modest
+  deterioration in the rate.
 \end{rmk}
 
 \begin{rmk}
-    In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small) and the damping term is small ($\eta_4$ small),
-  then $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as $2\pi$
-    time the number of oscillation periods across the ball radius.
-    Then, for example, with a ball of radius of only 5 periods, $r$ satisfies \cref{r}
-    for $k\le 25$.
+  In the limit when $\om$ tends to be constant in the ball ($\eta_3$ small) and damping is small ($\eta_4$ small),
+  then the geometric rate $r$ tends to $k/\om \rho$, where we can interpret $\om\rho$ as $2\pi$
+  times the number of oscillation periods across the ball radius.
+  Then, for example, with a radius of only 5 periods, $r$ satisfies \cref{r}
+  for $k\le 25$.
 \end{rmk}
 
 \begin{proof}
   Define the concentric nested set of closed balls $B_j := B_{\rho_j}(t)$,
   with radii $\rho_j := (1-j/k)\rho$, $j=0,1,\dots,k$. Note that
   $B_0$ is the original ball in the statement of the theorem, while
-    $B_k = \{t\}$ is the single point of interest. This setup is shown in the
+    $B_k = \{t\}$ is the single point of interest; see the
     right panel of \cref{balls-flowchart}.
-  For any function $f$ analytic in $B_j$ we abbreviate the $\infty$-norm by
+  For any function $f$ analytic in $B_j$ we abbreviate its $\infty$-norm by
   $\|f\|_j := \max_{z \in B_j}|f(z)|$.
-  We will need a bound for $f'$ in $B_{j+1}$ in terms of $\|f\|_j$ by
+  We will bound $f'$ in $B_{j+1}$ in terms of $\|f\|_j$ by
   applying Cauchy's theorem for derivatives
   \cite{steinshakarchi},
   \be
@@ -1390,15 +1400,14 @@ $$
 \leq \frac{\te_3}{2\te_1} \cdot 4,
 %\leq \frac{95\eta_3}{198\eta_1}
 $$
-
 where the upper bound in \cref{r} was used to bound the geometric series.
-Using \cref{eta1,eta3} for $\te_1$ and $\te_3$ we write this upper bound as
+Using \eqref{eta1} for $\te_1$ and \eqref{eta3} for $\te_3$ we write this upper bound as
 $$
 \left|\sum_{\ell=0}^{j} \frac{R_\ell}{2\left( x_\ell + \g \right)} \right|
 \leq
 2\frac{\eta_3 + 2\eta_2\eta_4}{\eta_1 - \eta_4 - \frac{17\eta_3}{4\eta_1} - \frac{17\eta_2\eta_4}{2\eta_1}},
 $$
-then extend it by lower-bounding the denominator via \cref{omder} and the crude bound ${\eta_4 \leq \eta_1/34}$ from \cref{gammaupper}. This gives
+then extend it by lower-bounding the denominator via \eqref{omder} and the crude bound ${\eta_4 \leq \eta_1/34}$ from \eqref{gammaupper}. This gives
 $$
 \left|\sum_{\ell=0}^{j} \frac{R_\ell}{2\left( x_\ell + \g \right)} \right| 
 \leq
@@ -1419,7 +1428,7 @@ since $x_0(t) = i\om(t)$, noting $[\eta_1,\eta_2] \subset [\te_1,\te_2]$,
 while $R_0(t) = i\left(\om'(t) + 2\g\om \right)$ is bounded in magnitude by $\te_3$.
 \end{proof}
 
-In the above theorem, the choice of $4/5$ in \cref{r} was merely a convenient one, chosen so that the bounds $[\te_1,\te_2]$ on $|x_j|$
+In the above theorem, the choice of $3/4$ in \cref{r} was merely a convenient one, chosen so that the bounds $[\te_1,\te_2]$ on $|x_j|$
 involving the geometric sum were
 not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
 %It is possible to write simpler but less tight formulae for $r$.
@@ -1428,11 +1437,9 @@ not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
 \subsection{Practical aspects of residual reduction \label{pracres}}
 
 The fact that, as $k$ grows,
-the rate $r$ in \cref{TR} deteriorates
-we believe to be an inevitable consequence of
-the series being asymptotic in $1/\om$ but not convergent.
-%We support this in numerical results in ***.
-
+the rate $r$ bound in \cref{TR} deteriorates, we believe to be
+an inevitable consequence of
+the series generated by the iteration being asymptotic in $1/\om$ but not in general convergent.
 However, given a function $\om(t)$ uniformly large enough
 in a ball,
 by stopping at a roughly optimal $k$ (an idea
@@ -1442,12 +1449,11 @@ exponential convergence with respect to the size of the frequency $\om$,
 as follows.
 
 \begin{cor}[Superasymptotic approximation]\label{super}
-  Suppose $\om$ and $\g$ satisfy the conditions \cref{ommag,omder,gammaupper}
-  of \cref{TR}
+  Suppose $\om$ and $\g$ satisfy the conditions \eqref{ommag}--\eqref{gammaupper}
   about a point $t\in\R$,
   and let $\alpha := (1+\te_2/\te_1)/2\te_1\rho$ be the
   first term in the rate \cref{r} arising from these bounds.
-  Then there is a $k\in\{0,1,\dots\}$ such that
+  Then there is a nonnegative integer $k$ such that
   $$
   |R_k(t)| \; \le \; e \te_3 e^{-1/5\alpha}~.
   $$
@@ -1456,9 +1462,9 @@ as follows.
   Set $k$ to be the integer in the interval $[1/5\alpha-1, \, 1/5\alpha)$.
     Then since the final term in \cref{r} is bounded by $17/128 \leq 0.14$
     by \cref{slight}, and the
-    first term $k\alpha \le 1/5$, we get $r\le e^{-1}$, which
+    first term is $k\alpha \le 1/5$, we get $r\le e^{-1}$, which
     is also $\le 3/4$ so that \cref{Rjbnd} holds.
-    Choosing $j=k$, and inserting a lower bound on $k$,
+    Choosing $j=k$, and inserting the lower bound on $k$,
     $|R_k(t)| \le \te_3 r^k \le \te_3 e^{-(1/5\alpha-1)}$, which
     finishes the proof.
   \end{proof}
@@ -1479,9 +1485,10 @@ $1.1$ periods of oscillation across the ball radius.
 % log(10)*3/(2*pi) = 1.099
 
 However, this optimal number of iterations grows as $k = \bigO(\om)$,
-so for large $\om$ is impractical (and unnecessary).
-In practice we use an adaptive stopping criterion for $k$ based
-on user-defined tolerance.
+so for large $\om$ is impractical, and unnecessary.
+In practice we use the adaptive residual stopping criterion for $k$
+described in \cref{s:steptype}.
+%on user-defined tolerance
 By returning to \cref{TR} and dropping the small second term
 in \cref{r} we get, in the limit of constant $\om$ in the ball,
 $$
@@ -1491,27 +1498,34 @@ This shows \textit{nearly} geometric convergence in $k$,
 sufficient to reach machine accuracy efficiently with a few iterations
 when $\om$ is large.
 For large $\rho\om$ one may approximately invert this to predict the iteration number $k$ sufficient for $|R_k| \approx \varepsilon$, to get
-$$
-k_\varepsilon \approx \frac{\log \varepsilon^{-1}}{\log \rho\om}~.
-$$
+$ k_\varepsilon \approx \frac{\log \varepsilon^{-1}}{\log \rho\om}$,
+a refinement of Remark~\ref{r:fewer}.
 %*** compare to numerics.
 
-Finally, note that a stopping criterion for $k$ based on the residual $R[x_k]$ of the Riccati equation is viable because the residual is directly related to that of the original ODE.
-\begin{cor}[Relationship of residuals]\label{residualu}
+% AB here
+Finally we show that the stopping criterion for $k$ based on the absolute
+residual $R[x_k]$ of the Riccati equation is relevant because this is equal
+to the \emph{relative residual} of the original ODE.
+% AB this is a Prop since it's a short indep result. A Cor is a downstream result depending on a prior theorem.
+\begin{pro}[Relationship of residuals]\label{residualu}
     Let $R[x_k](t)$ be the residual of the Riccati equation as defined in
-    \cref{R} after $k$ iterations of \cref{init,iter}. Then if
+    \cref{R}.
+    % after $k$ iterations of \cref{init,iter} <- not part of the statement.
+    Then if
     $\tilde{R}[u_k](t)$ is the associated residual of the original ODE
     \cref{ode}, defined as
     \be\label{Rode}
-    \tilde{R}[u_k](t) := u''_k + 2\gamma(t)u'_k + \omega^2(t),
+    \tilde{R}[u_k](t) := u''_k + 2\gamma(t)u'_k + \omega^2(t) u_k,
+    % note correction of last term
     \ee
-    and $u_k = e^{\int^t x_k(\sigma)\mathrm{d}\sigma}$, then
+    for $u_k(t) = e^{\int_0^t x_k(\sigma)\mathrm{d}\sigma}$, then
+    % AB note t needs to be on left if on right
     \be
-    \tilde{R}[u_k] = u_k R[x_k].
+    \frac{\tilde{R}[u_k](t)}{u_k(t)} = R[x_k](t).
     \ee
-\end{cor}
+\end{pro}
 \begin{proof}
-    The proof follows straightforwardly from substitution of $u_k(x_k)$ into \cref{Rode}.
+    This follows straightforwardly from substitution of the above form of $u_k$ into \cref{Rode}.
 \end{proof}
 
 
