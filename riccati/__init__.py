@@ -302,7 +302,7 @@ def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
         xscaled = h/2*info.xn + x0 + h/2
     info.h = h
     # Call nonoscillatory step
-    y10, y11, maxerr, s, res = nonosc_step(info, x0, h, y0[0], y0[1], epsres = epsres)
+    y10, y11, maxerr, s = nonosc_step(info, x0, h, y0[0], y0[1], epsres = epsres)
     if s != 1:
         # Unsuccessful step
         success = 0
@@ -429,9 +429,6 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
     epsres: float
         Tolerance for the relative accuracy of Chebyshev steps.
 
-    return y[0], dy[0], maxerr, success, res
-
-
     Returns
     -------
     y[0], dy[0]: complex
@@ -454,7 +451,7 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
         N *= 2
         if N > Nmax:
             success = 0
-            return 0, 0, maxerr, success, res
+            return 0, 0, maxerr, success
         y, dy, x = spectral_cheb(info, x0, h, y0, dy0, int(np.log2(N/info.nini))) 
         maxerr = np.abs((yprev[0] - y[0])/y[0])
         if np.isnan(maxerr):
@@ -661,7 +658,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
         while success == 0:
             # Solution is not oscillatory, or previous step failed
             # Attempt Cheby step of size hslo
-            y, dy, err, success, res = nonosc_step(info, xcurrent, hslo, yprev, dyprev, epsres = eps)
+            y, dy, err, success = nonosc_step(info, xcurrent, hslo, yprev, dyprev, epsres = eps)
             phase = 0
             steptype = 0
             # If step still unsuccessful, halve stepsize

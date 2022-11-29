@@ -16,21 +16,6 @@ def test_cheb():
         maxerr = max(np.abs(np.matmul(D, f(x)) - df(x))) 
         assert  maxerr < 1e-8
 
-def test_single_osc_step():
-    w = lambda x: np.sqrt(x) 
-    g = lambda x: np.zeros_like(x)
-    info = riccati.setup(w, g)
-    x0 = 10.0
-    h = 20.0
-    epsres = 1e-12
-    y0 = sp.airy(-x0)[0]
-    dy0 = -sp.airy(-x0)[1]
-    y_ana = sp.airy(-(x0+h))[0]
-    dy_ana = -sp.airy(-(x0+h))[1]
-    y, dy, res, success, phase = riccati.single_osc_step(info, x0, h, y0, dy0, epsres = epsres)
-    y_err = np.abs((y - y_ana)/y_ana)
-    assert y_err < 1e-8 and res < epsres
-
 def test_osc_step():
     w = lambda x: np.sqrt(x) 
     g = lambda x: np.zeros_like(x)
@@ -58,7 +43,7 @@ def test_nonosc_step():
     eps = 1e-12
     y0 = sp.airy(-x0)[2]
     dy0 = - sp.airy(-x0)[3]
-    y, dy, err, success, res = riccati.nonosc_step(info, x0, h, y0, dy0, epsres = eps)
+    y, dy, err, success = riccati.nonosc_step(info, x0, h, y0, dy0, epsres = eps)
     y_ana = sp.airy(-x0-h)[2]
     dy_ana = -sp.airy(-x0-h)[3]
     y_err = np.abs((y - y_ana)/y_ana)
