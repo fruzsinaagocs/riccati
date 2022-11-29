@@ -62,7 +62,7 @@ Please check.
 
 -> n is actually adapted between nmin and nmax, with these being chosen by the
 used but having default values of nmin = 16 and nmax = 64. In each iteration,
-the number of nodes is doubled.
+the number of nodes is doubled. Can we change this back to how it was?
 
 * apostrophes are too casual ( "method's" etc)
 
