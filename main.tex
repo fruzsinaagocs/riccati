@@ -118,15 +118,19 @@ We introduce an efficient numerical method for second order linear ODEs whose
 solution may vary between highly oscillatory and slowly changing over the solution interval.
 %
 In oscillatory regions the solution is generated via a nonoscillatory phase
-function that obeys the nonlinear Riccati equation. Here we propose a
-defect-correction iteration that gives an asymptotic series for the phase
-function; this iteration is spectrally approximated on a Chebyshev grid with a small number of nodes.
+function that obeys the nonlinear Riccati equation.
+%
+We propose a
+defect-correction iteration that gives an asymptotic series for such a phase
+function; this is numerically approximated on a Chebyshev grid with a small number of nodes.
 %
 For analytic coefficients we prove that each iteration, up to a certain
-maximum, reduces the residual by a factor of order of the local frequency. 
+maximum number,
+reduces the residual by a factor of order of the local frequency. 
 %
-When the solution changes slowly, the algorithm automatically switches to a
-conventional spectral collocation method on Chebyshev grids.
+The algorithm adapts both the interval size and the choice of method,
+switching to a conventional spectral collocation method
+away from oscillatory regions.
 %method based on an adaptively varied number of Chebyshev nodes.
 % FA: The number of Cheby nodes is actually adaptive --> change back?
 %
@@ -428,7 +432,9 @@ Here we present an approach using an asymptotic expansion for the derivative of
 a nonoscillatory Riccati phase function, meaning that we construct an expansion
 for $x(t) = (\log u(t))'$ with the phase function being $z(t) = \log u(t) =
 \int^t x(\sigma)\d \sigma$.
-The asymptotic series for the phase function's derivative is constructed
+An asymptotic sequence of functions approximating $x(t)$
+%the phase function's derivative
+is constructed
 via a defect
 correction scheme \cite{bohmer1984},
 where each iteration involves simply taking a derivative
@@ -450,7 +456,7 @@ locally on one interval with an adaptively-chosen length, rather than globally.
 Solutions to \cref{ode}--\cref{ic1} are then constructed by time-stepping over the
 integration range, repeatedly matching Cauchy data at interval endpoints.
 %
-Our iteration only involves one previous term (it is a 2-term recurrence),
+Our iteration only involves one previous term (a 2-term recurrence),
 which is simpler than the traditional WKB expansion
 \cref{wkbrecur} which requires all past terms.
 %
@@ -471,11 +477,11 @@ The Kummer's phase function method, as with WKB or QLM methods,
 is naturally only applicable in the high frequency regime.
 Thus, in the present work, we borrow ideas from \cite{agocs2020efficient} to
 create a fully adaptive algorithm that can switch 
-between oscillatory and non-oscillatory methods,
+between oscillatory and nonoscillatory methods,
 and choose the time-step $h$ to achieve a user-requested
 tolerance efficiently.
-Here, our nonoscillatory method is a standard spectral collocation scheme
-\cite{tref}.  % AB added this out of respect
+Our nonoscillatory method is a standard adaptive spectral collocation scheme.
+%\cite{tref}.  % AB added this out of respect, then removed since cited later.
 %This is achieved by switching between the Riccati asymptotic expansion and a conventional
 %spectral method on the fly as the solver
 %steps through the full user-requested interval $[t_0, t_1]$.
@@ -523,7 +529,7 @@ which will correspond to a single time-step of the overall ODE solver.
 This interval has to be sufficiently small so that changes in the coefficients $\om(t)$,
 $\g(t)$ are small, but will contain a large number of oscillations of $u(t)$ is
 $\om(t)$ is sufficiently large.
-Writing $u = e^z$ where $z'(t) = x(t)$ is the derivative of the phase function $z(t)$,
+Writing $u = e^z$ where $x(t) = z'(t)$ is the derivative of the phase function $z(t)$,
 any nonvanishing $u(t)$ satisfies \cref{ode} if and only if $x(t)$ satisfies the nonlinear Riccati equation
 \be
 x' + x^2 + 2\g(t)x + \om(t)^2 = 0.
@@ -559,11 +565,11 @@ existence of a Riccati phase function goes as follows:%
 \footnote{We thank Jim Bremer for explaining this argument to us.}
 %corresponding to ODE solutions $u(t) = \alpha(t)^{-1/2} e^{\pm i\int \alpha(t) \d t}$,
 if $\alpha(t)$ satisfies \cref{kummer},
-then defining $\beta = -\alpha'/2\alpha$ allows \cref{kummer}
+then defining $\beta' = -\alpha''/2\alpha'$ allows \cref{kummer}
 to be written
-$\beta' - \alpha^2 + \beta^2 + \om(t)^2 = 0$, and these last two equations
+$\beta'' - (\alpha')^2 + (\beta')^2 + \om(t)^2 = 0$, and these last two equations
 are the real and imaginary parts of \cref{ricc}
-with $x = i\alpha + \beta$.
+with $x = i\alpha' + \beta'$.
 
 % AB *** what did this mean?: When $\om\gg 1, \g$,
 % AB: the approx forms fit better above; are a distraction to the proposal here
@@ -1542,7 +1548,11 @@ to the \emph{relative residual} of the original ODE.
 \end{proof}
 
 
+
+% NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 \section{Numerical results \label{numresults}}
+
+In our experiments, 
 
 Before discussing the results of numerical experiments, we define a few useful quantities. 
 
