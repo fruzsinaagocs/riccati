@@ -774,16 +774,20 @@ At this point it is useful to illustrate the residual reduction
 with an example.
 In the left panel of \cref{convergence-plot}, we apply
 % AB note we didn't apply the continuous version, rather the discr one
-the above numerically-discretized iteration to the ``burst'' equation
+the above numerically-discretized iteration to the
+%``burst''
+equation
 % *** cite it
 % FA: Nothing to cite here, this is just a name we made up.
 \begin{equation}\label{bursteq}
   u'' + \om^2(t) u = 0, \quad  \om(t)=\frac{\sqrt{m^2 - 1}}{1+t^2},
   % AB: note it's easier fo the reader to see explicitly the form of om
 \end{equation}
-over a timestep interval $t \in [0, 0.5]$ covered by the $n=16$ Chebyshev grid.
-This interval is chosen longer that would occur in practice in order
-to illustrate different behaviors.
+over a single timestep interval $t \in [0, 0.5]$ covered by a $n=16$ Chebyshev grid.
+This choice of $\om(t)$ is analytic in the neighborhood of the interval,
+having poles at $\pm i$.
+%This interval is chosen longer that would occur in practice in order
+%to illustrate different behaviors.
 % AB: I am totally guessing here... could you explain why it is so long?
 % Would [0,0.5] be that different?
 % FA: I tried, [0,0.5] makes extremely little difference. I just chose it
@@ -826,9 +830,13 @@ convergence is extremely rapid, with machine precision reached at $k=5$.
 % AB: new thought...
 Interestingly, at moderately large $\om_{\text{max}} \approx 10^3$ the initial decay is
 still very useful, but the rate decreases after $k=6$; we
-suspect this ``kink'' is due to growth in the
-approximation of the high-order derivatives of $\om(t)$, which has nearby
-poles at $t=\pm i$.
+suspect this ``kink'' is due to
+the discrete nature of the $D_n$ matrix diverging from
+the true derivative after repeated applications.
+%growth in the
+%approximation of the high-order derivatives of $\om(t)$, which has nearby
+%poles at $t=\pm i$.
+%
 % *** AB this suggests rerunning for an ODE that doesn't have such nearby
 % singularities in om. Or smaller interval. Or larger n. But you need
 % to push the boundaries of exploration here.
