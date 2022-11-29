@@ -120,13 +120,14 @@ solution may vary between highly oscillatory and slowly changing over the soluti
 In oscillatory regions the solution is generated via a nonoscillatory phase
 function that obeys the nonlinear Riccati equation. Here we propose a
 defect-correction iteration that gives an asymptotic series for the phase
-function; this iteration is spectrally approximated on a Chebyshev grid with a small number of nodes.
+function; this iteration is numerically approximated on a Chebyshev grid with a small number of nodes.
 %
 For analytic coefficients we prove that each iteration, up to a certain
 maximum, reduces the residual by a factor of order of the local frequency. 
 %
-When the solution changes slowly, the algorithm automatically switches to a
-conventional spectral collocation method on Chebyshev grids.
+The algorithm adapts both the interval size and the choice of method,
+switching to a conventional spectral collocation method away from
+oscillatory regions.
 %method based on an adaptively varied number of Chebyshev nodes.
 % FA: The number of Cheby nodes is actually adaptive --> change back?
 %
