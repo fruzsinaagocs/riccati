@@ -127,6 +127,19 @@ currently it's confusing since the label on the Im axis should be -rho.
 
 * fig 2 flowchart: t_i is used in text, so change t_j to t_i to match.
 
+Results:
+
+* tricky thing about kappa defn is that relies on continuity of log
+(correct branch cut, needed for Im to count the windings), but this
+isn't entirely apparent from (48).
+Rephrase.
+
+* You use "it is worth noting that..." a lot. These filler words don't
+  add much. If something needs to be split out for reference
+  elsewhere, use Remark env.
+
+
+
 
 
 
