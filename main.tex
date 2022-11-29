@@ -418,7 +418,11 @@ transition which excites only an exponentially small oscillation amplitude.
 The parameters of this partition of unity require problem-dependent
 adjustment.
 Nevertheless Bremer's is the most efficient
-and accurate prior method known to the authors.
+and accurate prior method known to the authors\footnote{During the preparation
+of this manuscript, a new and more general phase function-based method able to
+tackle zeros in $\om$ has been proposed by the same author
+\cite{bremer2022turningp}. No comparison to this novel solver is made in this
+work due to its current lack of publicly available implementation. }.
 
 % US
 Here we present an approach using an asymptotic expansion for the derivative of
@@ -1119,7 +1123,7 @@ finer estimates.
 %numerically on an $(n+1)$-point Chebyshev grid (with $n \approx 16$). Ultimately,
 % AB I found the above rambling. The below is a more direct statement:
 
-The discretization in \cref{discr} is certainly no more accurate than
+The discretization used in the Riccati defect correction method in \cref{discr} is certainly no more accurate than
 the error in which the coefficient functions $\om$ and $\g$ are represented
 on the Chebyshev grid.
 %degree Chebyshev polynomials that determines the error in asymptotic steps, which
@@ -1128,9 +1132,7 @@ Let $\mbf{f}\in\R^{n+1}$ indicate the vector of nodes values
 $\{f(\tau_l)\}$ for a function $f$ which will be either $\om$ or $\g$.
 Let $f^\star(t)$ be the Lagrange polynomial interpolant through the
 nodes $\{\tau_l\}_{l=0}^n$.
-Let $\tau^\star_l := t_i + h(l+1/2)/(n+1)$, $l=0,\dots,n$ be an equispaced set of
-test points in the interval.
-% AB *** note I fixed your formula, but you have to check it
+Let $\tau^\star_l := t_i + \tfrac{h}{2}[1 + \cos(l\pi/n + \pi/(2n)]$, $l=0,\dots,n-1$ be the set of $n$ points that lie halfway in between the $n+1$ Chebyshev nodes on the unit half-circle.
 Then define the error estimate
 \be
     \Delta_n[f] := \max_{l = 0, 1, \ldots, n} \biggl| \frac{f(\tau^{\star}_l) -
@@ -1139,35 +1141,28 @@ Then define the error estimate
 where $f$ is $\om$ or $\g$.
 In fact $\{f^{\star}(t^{\star}_l)\} = L_n \mbf{f}$ for some interpolation matrix
 $L_n$ that is independent of the interval choice, so in practice
-$L_n$ is computed only once, for instance by inverting Vandermonde systems
-or using standard barycentric formulae \cite{tref}.
+$L_n$ is computed only once, by solving a Vandermonde system in a backwards
+stable fashion. Even though the system is exponentially ill-conditioned in $n$,
+the interpolation itself is very accurate if the underlying function is
+sufficiently smooth and Chebyshev (or Legendre) nodes are used. For details,
+see \cite[Appendix A]{helsing_close}.
 % AB *** either we explain this and cite Helsing appendix and my prior work,
 %  or we just say its done by barycentric formulae and cite Berrut-Tref.
 %  You decide.
+% FA: Finally found the reference for this!
 
-%\be
-%t^{\star}_n := \{t^{\star}_j\}, \quad t^{\star}_j = t_i + \frac{h}{2} + \frac{h}{2}\frac{j + \frac{1}{2}}{n\pi}, \quad j = 0, 1, \ldots, n,
-% AB *** I don't understand this since they fall outside interval, plus why \pi is here??
-%\ee
-%and the $f^{\star}(t^{\star}_j)$ are interpolated using the $f(t_n)$ values,
-%\be
-%f^{\star}(t^{\star}_n) = L_n f(t_n).
-%\ee
-%The interpolation matrix $L_n$ is computed using a Vandermonde matrix \cite{atap}. The entries of $L_n$ are invariant under the simultaneous rescaling of
-%$t_n$ and $t^{\star}_n$ to lie within the standard interval $[-1, 1]$,
-%therefore $L_n$ need only to be computed once.
 Letting $\Delta$ denote the larger of $\Delta_n[\om]$ and $\Delta_n[\g]$, we accept or update the stepsize as follows,
 \be
   %    \Delta :=& \max \left(\Delta_n[\om], \; \Delta_n[\g]\right), \\
   % AB: not sure that deserves a separate formula, esp since want look simpler
     h \leftarrow \begin{cases}
         h &\text{if } \Delta \leq \varepsilon_h, \\
-        \min \left( 0.7h, 0.9 h \left( \frac{\varepsilon_h}{\Delta} \right)^{\frac{1}{n+1}} \right) &\text{otherwise}.
+        \min \left( 0.7h, 0.9 h \left( \frac{\varepsilon_h}{\Delta} \right)^{\frac{1}{n+1}} \right) &\text{otherwise},
     \end{cases}
     \ee
     % AB got here
-In the above, the $1/(n+1)$ in the exponent is justified by noting that the
-error in $n+1$-point Chebyshev interpolation is proportional to $h^(n+2)$, therefore if
+where $\eps_h$ is a parameter quantifying relative tolerance (separate from $\eps$). In the above, the $1/(n+1)$ in the exponent is justified by noting that the
+error in ($n+1$)-point Chebyshev interpolation is proportional to $h^{n+2}$, therefore if
 $\Delta$ exceeds $\varepsilon_h$, using an exponent slightly larger than $1/(n+2)$ takes
 the local error back down to a value smaller than $\varepsilon_h$, which is further
 ensured by multiplying by the safety factor 0.9. We decrease the step to $0.7h$
