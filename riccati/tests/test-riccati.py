@@ -1,6 +1,6 @@
 # Unit tests for riccati.py
 import numpy as np
-import riccati_refactor as riccati
+import riccati
 import scipy.special as sp
 import matplotlib
 from matplotlib import pyplot as plt

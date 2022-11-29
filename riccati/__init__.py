@@ -4,14 +4,24 @@ import scipy.linalg
 
 def cheb(n):
     """
-    Returns the (n+1)*(n+1) differentiation matrix D and (n+1) Chebyshev nodes
+    Returns a differentiation matrix D of size (n+1, n+1) and (n+1) Chebyshev nodes
     x for the standard 1D interval [-1, 1]. The matrix multiplies a vector of
     function values at these nodes to give an approximation to the vector of
-    derivative values. Nodes are output in descending order from 1 to -1. 
+    derivative values. Nodes are output in descending order from 1 to -1. The nodes are given by
+    
+    .. math:: x_p = \cos \left( \\frac{\pi n}{p} \\right), \quad n = 0, 1, \ldots p.
 
-    Parameters:
+    Parameters
+    ----------
+    n: int
+        Number of Chebyshev nodes - 1.
 
-    Returns:
+    Returns
+    -------
+    D: numpy.ndarray [float]
+        Array of size (n+1, n+1) specifying the differentiation matrix.
+    x: numpy.ndarray [float]
+        Array of size (n+1,) containing the Chebyshev nodes.
     """
     if n == 0:
         x = 1
@@ -34,7 +44,25 @@ def cheb(n):
 def interp(s, t):
     """
     Creates interpolation matrix from an array of source nodes s to target nodes t.
-    Taken from https://github.com/ahbarnett/BIE3D/blob/master/utils/interpmat_1d.m
+    Taken from `here`_ .
+
+    .. _`here`: https://github.com/ahbarnett/BIE3D/blob/master/utils/interpmat_1d.m
+
+
+    Parameters
+    ----------
+    s: numpy.ndarray [float]
+        Array specifying the source nodes, at which the function values are known.
+    t: numpy.ndarray [float]
+        Array specifying the target nodes, at which the function values are to
+        be interpolated.
+
+    Returns
+    -------
+    L: numpy.ndarray [float]
+        Array defining the inteprolation matrix L, which takes function values
+        at the source points s and yields the function evaluated at target
+        points t. If s has size (p,) and t has size (q,), then L has size (q, p).
     """
     r = s.shape[0]
     q = t.shape[0]
@@ -50,8 +78,26 @@ def choose_nonosc_stepsize(info, x0, h, epsh = 0.2):
     """
     Chooses the stepsize for spectral Chebyshev steps, based on the variation
     of 1/w, the approximate timescale over which the solution changes. If over
-    the suggested interval h 1/w changes by 20% or more, the interval is
+    the suggested interval h 1/w changes by a fraction of :math:`\pm``epsh` or more, the interval is
     halved, otherwise it's accepted.
+
+    Parameters
+    ----------
+    info: Solverinfo object
+        Solverinfo object which is used to retrieve Solverinfo.xp, the
+        (p+1) Chebyshev nodes used for interpolation to determine the stepsize.
+    x0: float
+        Current value of the independent variable.
+    h: float
+        Initial estimate of the stepsize.
+    epsh: float
+        Tolerance parameter defining how much 1/w(x) is allowed to change over
+        the course of the step.
+
+    Returns
+    -------
+    h: float
+        Refined stepsize over which 1/w(x) does not change by more than epsh/w(x).
     """
     xscaled = x0 + h/2 + h/2*info.xp
     ws = info.w(xscaled)
@@ -62,14 +108,41 @@ def choose_nonosc_stepsize(info, x0, h, epsh = 0.2):
 
 def choose_osc_stepsize(info, x0, h, epsh = 1e-12):
     """
-    Chooses the stepsize h over which the functions w(x), g(x) can be
-    represented sufficiently accurately. p/2 nodes are randomly chosen over the
-    interval [x0, x0+h] where p is the number of Chebyshev nodes osc_step()
-    uses, i.e. the number of nodes that will be used to compute the Barnett
-    series. The interpolated w, g are then checked at these points and compared
-    to the actual function values. If the largest relative error in w, g
-    exceeds epsh, h is halved.
-    TODO: Actually add g, so far only have w
+    Chooses the stepsize `h` over which the functions w(x), g(x) can be
+    represented sufficiently accurately. Evaluations of w(x) and g(x) at (p+1)
+    Chebyshev nodes (given by `info.xp`) between [`x0`, `x0+h`] are used to infer
+    w(x), g(x) values at p points halfway between the (p+1) nodes on the half
+    circle, 
+
+    .. math:: x_{p,\mathrm{interp}} = \cos\left( \\frac{\pi(2n+1)}{2p} \\right), \quad n = 0, 1, \ldots, p-1.
+
+    These target nodes given by `info.xpinterp`. The same (p+1) points
+    will then be used to compute a Riccati step.  The interpolated values are
+    then compared to the actual values of w(x), g(x) at `info.xpinterp`. If the
+    largest relative error in w, g exceeds `epsh`, `h` is halved.
+
+    Parameters
+    ----------
+    info: Solverinfo object
+        `Solverinfo` object used for two purposes: `info.xpinterp`,
+        `info.xp` are looked up to determine the source and target points
+        to determine whether Chebyshev interpolation of w(x), g(x) is accurate
+        enough over the step; and `info.wn`, `info.gn` may be used to read off the
+        w, g values at the source points.
+    x0: float
+        Current value of the independent variable.
+    h: float
+        Initial estimate of the stepsize.
+    epsh: float
+        Tolerance parameter defining the maximum relative error Chebyshev
+        interpolation of w, g is allowed to have over the course of the
+        proposed step [`x0`, `x0+h`].
+
+    Returns
+    -------
+    h: float
+        Refined stepsize over which Chebyshev interpolation of w, g has a
+        relative error no larger than epsh.
     """
     w, g, L = info.w, info.g, info.L
     t = x0 + h/2 + h/2*info.xpinterp
@@ -100,10 +173,43 @@ def choose_osc_stepsize(info, x0, h, epsh = 1e-12):
 
 def osc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 1e-12):
     """
-    Allows continuous evolution between x0 and x1. Starting from x0 and y =
-    [y0, yd0] takes a Riccati step of size h or until x1 is reached. 
-    Will need to call choose_osc_stepsize() before the first call to this to
-    set info.wn, info.gn correctly, or set them by hand.
+    Allows continuous evolution between the independent variable values `x0`
+    and `x1`. Starting from `x0` and `y = [y0, yd0]`, this function takes a
+    Riccati step of size `h` or until `x1` is reached, and updates the
+    attributes of `info` such that it can be called inside a `while` loop.
+        
+    Parameters
+    ----------
+    info: `Solverinfo` object
+        `Solverinfo` object used to read off `info.Dn` for differentiation, and
+        `info.wn`, `info.gn` for evaluations of w(x), g(x) over [x0, x0+h].
+    x0: float
+        Starting value of the independent variable.
+    x1: float
+        Maximum value of the independent variable. This may not be reached in a
+        single step (i.e. a single call of `osc_evolve`), but will not be
+        exceeded.
+    h: float
+        Stepsize. If the step would result in the independent variable
+        exceeding `x1`, this will be adjusted.
+    y0: np.ndarray [complex]
+        Value of the state vector at `x0`.
+    epsres: float
+        Tolerance for the relative accuracy of Riccati steps.
+    epsh: float
+        Tolerance for choosing the stepsize for Riccati steps.
+    
+    Returns
+    -------
+    success: int
+        0 if the step failed, 1 if successful.
+
+
+    Warnings
+    --------
+    The user will need to set `info.wn`, `info.gn` correctly, as appropriate
+    for a step of size `h`, before this function is called. This can be done by
+    e.g. calling `choose_osc_stepsize`.
     """
     # Make sure info's attributes are up-to-date:
     # success = 0
@@ -127,7 +233,7 @@ def osc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 1e-12):
         # Successful step
         success = 1
         info.y = np.array([y10, y11])
-        info.x += h
+        info.x = x0 + h
         # Determine new stepsize
         wnext = info.wn[0]
         gnext = info.gn[0]
@@ -139,10 +245,49 @@ def osc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 1e-12):
 
 def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
     """
-    Allows continuous evolution between x0 and x1. Starting from x0 and y =
-    [y0, yd0] takes a Chebyshev step of size h or until x1 is reached. 
-    Will need to call choose_nonosc_stepsize() before the first call to this to
-    set info.wn, info.gn correctly, or set them by hand.
+    Allows continuous evolution between the independent variable values `x0`
+    and `x1`. Starting from `x0` and `y = [y0, yd0]` takes a Chebyshev step of
+    size `h` or until `x1` is reached, and updates the attributes of `info`
+    such that it can be called inside a `while` loop.
+
+    Parameters
+    ----------
+    info: `Solverinfo` object
+        `Solverinfo` object used to read off `info.Dn` for differentiation, and
+        `info.wn`, `info.gn` for evaluations of w(x), g(x) over [x0, x0+h].
+    x0: float
+        Starting value of the independent variable.
+    x1: float
+        Maximum value of the independent variable. This may not be reached in a
+        single step (i.e. a single call of `osc_evolve`), but will not be
+        exceeded.
+    h: float
+        Stepsize. If the step would result in the independent variable
+        exceeding `x1`, this will be adjusted.
+    y0: np.ndarray [complex]
+        Value of the state vector at `x0`.
+    epsres: float
+        Tolerance for the relative accuracy of Riccati steps.
+    epsh: float
+        Tolerance for choosing the stepsize for Riccati steps.
+
+    Notes
+    -----
+    Note that `epsh` is defined differently for Riccati and Chebyshev steps;
+    the same value may therefore not be appropriate for both `osc_evolve()` and
+    `nonosc_evolve()`.
+    
+    Returns
+    -------
+    success: int
+        0 if the step failed, 1 if successful.
+
+
+    Warnings
+    --------
+    The user will need to set `info.wn`, `info.gn` correctly, as appropriate
+    for a step of size `h`, before this function is called. This can be done by
+    e.g. calling `choose_osc_stepsize`.
     """
 
     # Make sure info's attributes are up-to-date:
@@ -172,19 +317,57 @@ def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
         info.h = choose_nonosc_stepsize(info, info.x, hosc_ini, epsh = epsh)  
     return success
 
-
-def single_osc_step(info, x0, h, y0, dy0, epsres = 1e-12):
+def osc_step(info, x0, h, y0, dy0, epsres = 1e-12):
     """
-    Standalone single Riccati step.
-    Advances the solution from x0 to x0+h, starting from the initial conditions
-    y(x0) = y0, y'(x0) = dy0. It uses the Barnett series of order o (up to and
-    including the (o)th correction), and the underlying functions w, g are
-    represented on an (n+1)-node Chebyshev grid.
+    A single Riccati step to be called from within the `solve()` function.
+    Advances the solution from `x0` by `h`, starting from the initial conditions
+    `y(x0) = y0`, `y'(x0) = dy0`. The function will increase the order of the
+    asymptotic series used for the Riccati equation until a residual of
+    `epsres` is reached or the residual stops decreasing. In the latter case,
+    the asymptotic series cannot approximate the solution of the Riccati
+    equation with the required accuracy over the given interval; the interval
+    (`h`) should be reduced or another approximation should be used instead.
+
+    Parameters
+    ----------
+    info: `Solverinfo` object
+        `Solverinfo` object used to read off various matrices required for
+        numerical differentiation, and `info.wn`, `info.gn` for evaluations of
+        w(x), g(x) over [x0, x0+h].
+    x0: float
+        Starting value of the independent variable.
+    h: float
+        Stepsize.
+    y0, dy0: complex
+        Value of the dependent variable and its derivative at `x = x0`.
+    epsres: float
+        Tolerance for the relative accuracy of Riccati steps.
+
+    Returns
+    -------
+    y1[0], dy1[0]: complex
+        Value of the dependent variable and its derivative at the end of the
+        step, `x = x0 + h`.
+    maxerr: float
+        Maximum value of the residual (after the final iteration of the
+        asymptotic approximation) over the Chebyshev nodes across the interval.
+    success: int
+        Takes the value `1` if the asymptotic series has reached `epsres`
+        residual, `0` otherwise.
+    phase: complex
+        Total phase change (not mod :math: `2\pi`!) of the dependent variable
+        over the step.
+
+    Warnings
+    --------
+    This function relies on `info.wn`, `info.gn` being set correctly, as
+    appropriate for a step of size `h`. If `solve()` is calling this funciont,
+    that is automatically taken care of, but otherwise needs to be done
+    manually.
     """
     success = 1
-    xscaled = h/2*info.xn + x0 + h/2
-    ws = info.w(xscaled)
-    gs = info.g(xscaled)
+    ws = info.wn
+    gs = info.gn
     Dn = info.Dn
     y = 1j*ws
     delta = lambda r, y: -r/(2*(y + gs))
@@ -192,9 +375,7 @@ def single_osc_step(info, x0, h, y0, dy0, epsres = 1e-12):
     Ry = 1j*2*(1/h*Dn.dot(ws) + gs*ws)
     maxerr = max(np.abs(Ry))
     prev_err = np.inf
-    o = 0 # Keep track of number of terms
     while maxerr > epsres:
-        o += 1
         deltay = delta(Ry, y)
         y = y + deltay
         Ry = R(deltay)       
@@ -203,8 +384,6 @@ def single_osc_step(info, x0, h, y0, dy0, epsres = 1e-12):
             success = 0
             break
         prev_err = maxerr
-    if success == 1:
-        pass
     du1 = y
     du2 = np.conj(du1)
     # LU
@@ -220,81 +399,53 @@ def single_osc_step(info, x0, h, y0, dy0, epsres = 1e-12):
     phase = np.imag(u1[0])
     return y1[0], dy1[0], maxerr, success, phase
 
-
-def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
+def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
     """
-    Advances the solution from x0 to x0+h, starting from the initial conditions
-    y(x0) = y0, y'(x0) = dy0. It uses the Barnett series of order o (up to and
-    including the (o)th correction), and the underlying functions w, g are
-    represented on an (n+1)-node Chebyshev grid.
-    ! Relies on info.wn and info.gn being populated with w(x0, ..., x0+h), etc.
+    A single Chebyshev step to be called from the `solve()` function.
+    Advances the solution from `x0` by `h`, starting from the initial
+    conditions `y(x0) = y0`, `y'(x0) = dy0`.
+    The function uses a Chebyshev spectral method with an adaptive number of
+    nodes. Initially, `info.nini` nodes are used, which is doubled in each
+    iteration until `epsres` relative accuracy is reached or the number of
+    nodes would exceed `info.nmax`. The relative error is measured as the
+    difference between the predicted value of the dependent variable at the end
+    of the step obtained in the current iteration and in the previous iteration
+    (with half as many nodes). If the desired relative accuracy cannot be
+    reached with `info.nmax` nodes, it is advised to decrease the stepsize `h`,
+    increase `info.nmax`, or use a different approach. 
+
+    Parameters
+    ----------
+    info: `Solverinfo` object
+        `Solverinfo` object used to read off various matrices required for
+        numerical differentiation, and `info.wn`, `info.gn` for evaluations of
+        w(x), g(x) over [x0, x0+h].
+    x0: float
+        Starting value of the independent variable.
+    h: float
+        Stepsize.
+    y0, dy0: complex
+        Value of the dependent variable and its derivative at `x = x0`.
+    epsres: float
+        Tolerance for the relative accuracy of Chebyshev steps.
+
+    return y[0], dy[0], maxerr, success, res
+
+
+    Returns
+    -------
+    y[0], dy[0]: complex
+        Value of the dependent variable and its derivative at the end of the
+        step, `x = x0 + h`.
+    maxerr: float
+        (Absolute) value of the relative difference of the dependent variable
+        at the end of the step as predicted in the last and the previous
+        iteration.
+    success: int
+        Takes the value `1` if the asymptotic series has reached `epsres`
+        residual, `0` otherwise.
     """
     success = 1
-    xscaled = h/2*info.xn + x0 + h/2
-    ws = info.wn
-    gs = info.gn
-    Dn = info.Dn
-    y = 1j*ws
-    delta = lambda r, y: -r/(2*(y + gs))
-    R = lambda d: 2/h*Dn.dot(d) + d**2
-    Ry = 1j*2*(1/h*Dn.dot(ws) + gs*ws)
-    maxerr = max(np.abs(Ry))
-    prev_err = np.inf
-    o = 0 # Keep track of number of terms
-    if plotting == False:
-        while maxerr > epsres:
-            o += 1
-            deltay = delta(Ry, y)
-            y = y + deltay
-            Ry = R(deltay)       
-            maxerr = max(np.abs(Ry))
-            if maxerr >= prev_err:
-                success = 0
-                break
-            prev_err = maxerr
-        if success == 1:
-            pass
-    else:
-        while o < k:
-            o += 1
-            deltay = delta(Ry, y)
-            y = y + deltay
-            Ry = R(deltay)       
-            maxerr = max(np.abs(Ry))
-    du1 = y
-    du2 = np.conj(du1)
-    # LU
-    u1 = h/2*scipy.linalg.lu_solve((info.DnLU, info.Dnpiv), du1, check_finite = False)
-    u1 -= u1[-1]
-    u2 = np.conj(u1)
-    f1 = np.exp(u1)
-    f2 = np.conj(f1)
-    ap = (dy0 - y0*du2[-1])/(du1[-1] - du2[-1])   
-    am = (dy0 - y0*du1[-1])/(du2[-1] - du1[-1])
-    y1 = ap*f1 + am*f2
-    dy1 = ap*du1*f1 + am*du2*f2
-    phase = np.imag(u1[0])
-    if plotting:
-        xplot = np.linspace(x0, x0+h, 500)
-        L = interp(xscaled, xplot)
-        u1plot = L.dot(u1)
-        f1plot = np.exp(u1plot)
-        f2plot = np.conj(f1plot)
-        yplot = ap*f1plot + am*f2plot
-        return xplot, yplot, xscaled, y1, maxerr
-    else:
-        return y1[0], dy1[0], maxerr, success, phase
-
-def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
-
-    """
-    Advances the solution from x0 to x0+h, starting from the initial conditions
-    y(x0) = y0, y'(x0) = dy0. It uses a Chebyshev spectral method with enough
-    nodes to achieve epsres relative accuracy, starting from an initial n
-    nodes.
-    """
-    success = 1 #TODO: this doesn't do anything in Cheb, can always add more nodes
-    res = 0 #TODO: does nothing
     maxerr = 10*epsres
     N = info.nini
     Nmax = info.nmax
@@ -305,13 +456,13 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
             success = 0
             return 0, 0, maxerr, success, res
         y, dy, x = spectral_cheb(info, x0, h, y0, dy0, int(np.log2(N/info.nini))) 
-        maxerr = np.abs((yprev[0] - y[0]))
+        maxerr = np.abs((yprev[0] - y[0])/y[0])
         if np.isnan(maxerr):
             maxerr = np.inf
         yprev = y
         dyprev = dy
         xprev = x
-    return y[0], dy[0], maxerr, success, res
+    return y[0], dy[0], maxerr, success
 
 def spectral_cheb(info, x0, h, y0, dy0, niter):
     """
@@ -385,8 +536,8 @@ def setup(w, g, h0 = 1, nini = 16, nmax = 64, n = 16, p = 16):
     2*nmax+1).  Needs to be called before the first time the solver is ran or
     if nini or nmax are changed. 
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     w: callable(t)
         Freqyency fynction in y'' + 2g(t)y' + w^2(t)y = 0.
     g: callable(t)
@@ -405,22 +556,53 @@ def setup(w, g, h0 = 1, nini = 16, nmax = 64, n = 16, p = 16):
         (Fixed) number of Chebyshev nodes to use for interpolation when
         determining the stepsize for Riccati steps.
 
-    Returns:
-    --------
+    Returns
+    -------
+    info: Solverinfo object
+        Solverinfo object created with attributes set as per the input parameters.
     """
     info = Solverinfo(w, g, h0, nini, nmax, n, p)
     return info
 
-def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_stop = False, t_eval = []):
+def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_stop = False):
     """
     Solves y'' + 2gy' + w^2y = 0 on the interval (xi, xf), starting from the
     initial conditions y(xi) = yi, y'(xi) = dyi. Keeps the residual of the ODE
     below eps, and returns an interpolated solution (dense output) at points
     xeval.
 
-    Parameters:
+    Parameters
+    ----------
+    info: Solverinfo object
+        Objects containing differentiation matrices, etc.
+    xi, xf: float
+        Solution range.
+    yi, dyi: complex
+        Initial conditions, value of the dependent variable and its derivative at `xi`.
+    eps: float
+        Relative tolerance for the local error of both Riccati and Chebyshev type steps.
+    epsh: float
+        Relative tolerance for choosing the stepsize of Riccati steps.
+    xeval: list
+        List of x-values where the solution is to be interpolated (dense output) and returned.
+    hard_stop: bool
+        Whether to force the solver to have a potentially smaller last
+        stepsize, in order to stop exactly at `xf` (rather than allowing the
+        solver to step over it and get the value of the solution by
+        interpolation).
 
-    Returns:
+    Returns
+    -------
+    xs: list [float]
+        Values of the independent variable at the internal steps of the solver.
+    ys, dys: list [complex]
+        Values of the dependent variable and its derivative at the internal steps of the solver.
+    successes: list [int]
+        Has elements 1 and 0: 1 denoting each successful step, 0 denoting unsuccessful steps. 
+    phases:  list [complex]
+        Complex phase of the solution accumulated during each successful Riccati step.
+    steptypes: list [int]
+        Types of successful steps taken: 1 for Riccati and 0 for Chebyshev. 
     """
     w = info.w
     g = info.g
