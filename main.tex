@@ -1560,7 +1560,6 @@ to the \emph{relative residual} of the original ODE.
 
 
 
-% NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 \section{Numerical results \label{numresults}}
 
 % AB: here I simplified, but also realised kappa defs needed thinking out
@@ -1586,7 +1585,7 @@ the relative condition number
 \emph{with respect to variation in} $\om_0$ is also relevant.
 The latter is
 $|\om_0/f_{\om_0}(1)| \cdot |\partial f_{\om_0}(1)/\partial \om_0| = \om_0$,
-here the same as the condition number with respect to $t$.
+in this case the same as the condition number with respect to $t$.
 Thus, if $\om_0=10^{7}$, so that $\kappa=10^7$ by either %above
 definition,
 then using double-precision arithmetic with
@@ -1594,13 +1593,13 @@ $\varepsilon_{\mathrm{mach}} \approx 10^{-16}$
 no algorithm can achieve an error less than $\bigO(\kappa\cdot \varepsilon_{\mathrm{mach}}) \approx 10^{-9}$,
 the error for a backward-stable algorithm.
 
-For more general oscillatory solutions to the IVP \eqref{ode}--\eqref{ic1},
+For more general oscillatory solutions to the IVP \cref{ode}--\cref{ic1},
 the two above types of condition number generally differ;
 in practice it is the condition number with respect to
 variation in the coefficient function $\om(t)$ that dominates.
 % This is because om(t) << int_0^t om(s) ds usually
-In particular, scaling $\om(t)=\om_0 \Omega(t)$ as in the Introduction,
-then noting the zero-order approximation
+In particular, scaling $\om(t)=\om_0 \Omega(t)$ as in \cref{introduction},
+then taking the zero-order approximation
 $u(t) = e^{\pm i \om_0 \int_{t_0}^t \Omega(\sigma) \d\sigma}$,
 we see that its relative condition number with respect to
 $\om_0$ is $\int_{t_0}^t \om(\sigma) \d\sigma$, the total phase
@@ -1612,20 +1611,18 @@ for instance discussed by Bremer \cite{bremer2018} as
 inevitable accuracy loss in taking the sine or cosine of the phase function.
 The above motivates our use of the following.
 \begin{defn}[Condition number and achievable accuracy for an oscillatory region]
-  Let $u$ be a solution to \eqref{ode} on $(a,b)$ of the form
+  Let $u$ be a solution to \cref{ode} on $(a,b)$ of the form
   $u(t) = e^{z(t)}$ where $\im z'(t) \neq 0$ for all $t\in(a,b)$.
   % ie, fixed sign, so winding can never stop and unwind, which would require
   % instead a BV norm on z, or L1 norm on x.
   Then we define the condition number of the problem of evaluation of $u$
   by
   \be
-  \kappa := \im\, [ z(b) - z(a) ],
-  \label{conditionnodef}
+  \kappa := \im\, [ z(b) - z(a) ], \label{conditionnodef}
   \ee
   and the resulting best achievable accuracy using finite precision by
   \be
-  \varepsilon := \kappa \cdot \varepsilon_{\mathrm{mach}}.
-  \label{mineps}
+  \varepsilon := \kappa \cdot \varepsilon_{\mathrm{mach}}.  \label{mineps}
   \ee
 \end{defn}
 In practice we use a numerical phase function solution to estimate $\kappa$.
@@ -1639,24 +1636,29 @@ the various intervals in each of which a local phase function exists.
 Note that the above definition does not
 capture additional $\kappa$ fluctuations inherent in real-valued
 functions:
-\eg,
+\eg
 taking the real part of the toy example, $f_{\om_0}(t) = \cos \om_0 t$,
-then $\kappa$ with respect to $t$ becomes $|t\om_0 \tan \om_0 t|$,
+$\kappa$ with respect to $t$ becomes $|t\om_0 \tan \om_0 t|$,
 which fluctuates wildly from $0$ to $\infty$,
 although a typical value is again $\bigO(\om_0)$.
 
-In the below we denote absolute error in a numerical solution by
+In the sections to follow we denote absolute error in a numerical solution by
 $\Delta u(t) := u(t) - \tilde u(t)$, where
 $u$ is a reference solution computed either analytically
 or by a convergence reference solver,
+% FA: *** convergence -> convergent reference solver?? Is this a term usually used?
 and $\tilde u$ is the solution given by the method under test.
 
-All computations were performed on an Intel Xeon *** CHIP NAME,
-NUMBER OF CORES, GHZ workstation with *** GB of RAM.
-Give Python / Numpy etc versions?
-
-*** URL for codes for experiments and an implementation of the proposed
-method.
+All computations were performed on an Intel Xeon Gold 6244,
+32-core, 3.6 GHZ workstation with 264 GB of RAM.
+% FA: *** Seriously, that much RAM?! I got this from cat /proc/meminfo, by looking at the MemTotal field.
+The open-source software implementing the proposed method and the above
+experiments in \texttt{Python} is available on GitHub\footnote{*** URL HERE}.
+The code relies on the \texttt{numpy} \cite{numpy2020} and \texttt{scipy} \cite{scipy2020}
+packages to perform linear algebra. For the numerical experiments, the
+following versions of software were used: \texttt{Python} 3.8.12,
+\texttt{numpy} 1.23.4, \texttt{scipy} 1.9.2.
+% FA: *** Python, numpy versions verify  TODO once experiments ran again. 
 
 
 \subsection{The Airy equation}\label{airy-demo}
