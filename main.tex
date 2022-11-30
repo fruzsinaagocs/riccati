@@ -1616,10 +1616,11 @@ This motivates our use of the following.
   $u(t) = e^{z(t)}$ where $\im z'(t) \neq 0$ for all $t\in(a,b)$.
   % ie, fixed sign, so winding can never stop and unwind, which would require
   % instead a BV norm on z, or L1 norm on x.
-  Then we define the condition number of the problem of evaluation of $u$
+  Then we define the condition number of the problem of evaluation of $u(t)$
   by
   \be
-  \kappa := \im\, [ z(b) - z(a) ], \label{conditionnodef}
+  \kappa(t) := \max\left[|tz'(t)|, |\im\, ( z(t) - z(a) )|\right]
+  \label{conditionnodef}
   \ee
   and the resulting best achievable accuracy using finite precision by
   \be
@@ -1651,8 +1652,8 @@ or by a convergence reference solver,
 and $\tilde u$ is the solution given by the method under test.
 
 All computations were performed on an Intel Xeon Gold 6244,
-32-core, 3.6 GHZ workstation with 264 GB of RAM.
-% FA: *** Seriously, that much RAM?! I got this from cat /proc/meminfo, by looking at the MemTotal field.
+16-core, 3.6 GHz workstation with 264 GB of RAM.
+% FA: Seriously, that much RAM?! I got this from cat /proc/meminfo, by looking at the MemTotal field. Yes, nice, right?
 The open-source software implementing the proposed method and the above
 experiments in \texttt{Python} is available on GitHub\footnote{*** URL HERE}.
 The code relies on the \texttt{numpy} \cite{numpy2020} and \texttt{scipy} \cite{scipy2020}
