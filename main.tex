@@ -1929,12 +1929,14 @@ compute said derivatives numerically.
 
 % AB *** this paragraph seems not like a "results" discussion, more
 % a "priior properties of the methods". Could it be moved earlier?
+\begin{rmk}
 Three solvers (ARDC, the
 Kummer's phase function method, and \texttt{oscode}) offer a dense output option, \ie
 can perform interpolation and compute the numerical solution between
 internal time nodes, and do so by interpolating a slowly-varying phase function,
 therefore they all have evaluation times of
 $\mathcal{O}(10^{-6})$ \si{\s} per new target time.  
+\end{rmk}
 
 \begin{figure}[tb]
     \centering
@@ -1949,7 +1951,7 @@ $\mathcal{O}(10^{-6})$ \si{\s} per new target time.
     integration interval. The grey shaded region in this plot serves as an
     upper bound on any errors that fall within it, since the errors plotted
     here were computed using the Kummer's phase function method as a reference, which is
-    only accurate up to the upper edge of the grey region.}
+    only accurate up to the upper edge of the grey region. This is consistent with the theoretical error minimum \eqref{mineps}.}
 \end{figure}
 
 
@@ -2137,43 +2139,44 @@ ODEs of a single variable, posed as initial value problems (see \cref{ode}),
 whose solution
 may be highly oscillatory for some regions of the solution interval.
 It switches adaptively between a new defect correction iteration for
-the Riccati phase function (in oscillatory regions), and
+the Riccati phase function (the logarithm of a solution in oscillatory regions), and
 a conventional Chebyshev collocation solver (in smooth regions).
 Both schemes are discretized to arbitrarily high order, and
 have step-size adaptivity.
 The resulting run time is independent of the maximum oscillation frequency.
+It improves over prior high-frequency solvers
+in several ways: it is efficient regardless of
+whether the solution oscillates or not; it is arbitrarily high-order accurate;
+it solves a more general problem by not imposing the restriction $\gamma =
+0$ in \cref{ode}; and it finds a nonoscillatory local phase function
+without needing a windowing method.
+
 %first decsribe method, how improves in acc
 %over WKB-type, and in generality/simplicity over Kummer phase type.
 
-We proved (Theorem~\ref{}) for analytic coefficients, with
+The proposed Riccati defect correction is not convergent, merely asymptotic
+with respect to large $\om$.
+However, we proved (Theorem~\ref{TR}) that, for analytic coefficients with
 $\om(t)$ sufficiently large and $\om'$ and $\g$ sufficiently small in a ball,
-that the proposed defect correction reduces the residual of the Riccati
-equation geometrically by a factor of $\bigO(\om)$ per iterate,
-up to a certain number of iterations scaling as $\bigO(\om)$.
+that (at the continuous level) it reduces the Riccati residual
+geometrically by a factor $\bigO(\om)$ per iterate, temporarily
+up to a certain number of iterations which also scales as $\bigO(\om)$.
+The constants are explicit in this theorem, and
+predict rapid residual reduction even when the ball over which $\om$
+is roughly constant is only a few oscillation periods across.
+We leave it to future work to analyse the \emph{discretized iteration}
+(Section~\ref{discr}), and its associated kink phenomenon visible in
+the left panel of Fig.~\ref{convergence-plot}.
 
-
-Our solver is an improvement on existing solvers
-in three ways: it is capable of solving the ODE efficiently regardless of
-whether its solution oscillates or not; it is arbitrarily high-order accurate;
-and it solves a more general problem by not imposing the restriction $\gamma =
-0$ in \cref{ode}.
-
-***
-
-the other is a numerical functional iteration that generates an asymptotic
-solution for the Riccati form of the ODE. This amounts to constructing a
-non-oscillatory phase function (logarithm of the dependent
-variable). The error in this asymptotic expansion was measured in terms of the
-residual of the Riccati equation. We have shown that given a sufficiently
-slowly varying and large $\om$ and suficiently small $\g$, this residual
-converges geometrically for the first $k$ iterations, but at a rate that
-deteriorates with $k$. We formalised and proved this statement in \cref{TR},
-and illustrated this temporary convergence in a numerical experiment. Further
-numerical experiments confirmed the convergence of the overall algorithm and
-compared its performance with that of state-of-the-art and standard solvers.
+Numerical experiments in four ODEs demonstrate that the adaptivity
+achieves close to the requested tolerance, and 
+its high performance,
+including rapid solution times relative to existing oscillatory solvers.
 
 % Future work
 % Allow for imaginary $\om$
+We now discuss some future directions.
+%
 Within the scope of this work, we only allowed $\om^2 \geq 0$. When $\om$ is
 imaginary, any standard numerical solver will pick up the exponentially growing
 solution due to rounding error, which will quickly overpower the evanescent
@@ -2226,6 +2229,8 @@ given accuracy. This application will be explored in a future paper.
 *** TO INSERT: analysis question is to prove the discretized
 defect correction matches the continuous, ie, bound discretization error.
 And study the discrete iteration.
+
+*** inhomog, cite Serkh--Bremer arxiv 2022.
 
 
 \section*{Acknowledgments}

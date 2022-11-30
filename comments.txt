@@ -92,6 +92,9 @@ interval used for testing in the text.
 
 ====== REMAINING TO DO LIST ==================================================
 
+
+* Fig. 4 is never referred to in text! Please fix.
+
 * figure 2 balls: could you move the rho label to look like the radius -
 currently it's confusing since the label on the Im axis should be -rho.
 
