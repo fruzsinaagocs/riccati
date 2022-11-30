@@ -132,6 +132,9 @@ do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
 Consider adding 2nd plot in fig.1 of the R iteration for different interval
 or omega(t) func.
 
+* You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
+The symbols others used are not sacred, for test problems; more important to have coherency.
+
 
 
 
