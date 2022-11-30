@@ -74,6 +74,7 @@
 \newcommand{\qqquad}{\qquad\qquad}
 \newcommand{\qqqquad}{\qqquad\qqquad}
 \newcommand{\eps}{\epsilon}
+\newcommand{\veps}{\varepsilon}
 \DeclareMathOperator{\Span}{Span}
 \DeclareMathOperator{\im}{Im}
 \DeclareMathOperator{\re}{Re}
@@ -1610,7 +1611,7 @@ accrued over $(t_0,t)$.
 The resulting loss in achievable accuracy is well known,
 for instance discussed by Bremer \cite{bremer2018} as
 inevitable accuracy loss in taking the sine or cosine of the phase function.
-The above motivates our use of the following.
+This motivates our use of the following.
 \begin{defn}[Condition number and achievable accuracy for an oscillatory region]
   Let $u$ be a solution to \eqref{ode} on $(a,b)$ of the form
   $u(t) = e^{z(t)}$ where $\im z'(t) \neq 0$ for all $t\in(a,b)$.
@@ -1624,7 +1625,7 @@ The above motivates our use of the following.
   \ee
   and the resulting best achievable accuracy using finite precision by
   \be
-  \varepsilon := \kappa \cdot \varepsilon_{\mathrm{mach}}.
+  \kappa \cdot \veps_{\mathrm{mach}}.   % confusing to make new \veps symbol
   \label{mineps}
   \ee
 \end{defn}
@@ -1639,13 +1640,12 @@ the various intervals in each of which a local phase function exists.
 Note that the above definition does not
 capture additional $\kappa$ fluctuations inherent in real-valued
 functions:
-\eg,
 taking the real part of the toy example, $f_{\om_0}(t) = \cos \om_0 t$,
 then $\kappa$ with respect to $t$ becomes $|t\om_0 \tan \om_0 t|$,
 which fluctuates wildly from $0$ to $\infty$,
 although a typical value is again $\bigO(\om_0)$.
 
-In the below we denote absolute error in a numerical solution by
+In the below tests we denote absolute error in a numerical solution by
 $\Delta u(t) := u(t) - \tilde u(t)$, where
 $u$ is a reference solution computed either analytically
 or by a convergence reference solver,
@@ -1663,11 +1663,13 @@ method.
 
 A simple but effective test for highly oscillatory solvers is the Airy ODE,
 \be
-u'' + tu = 0, \quad t \in [1, 10^8], 
+u'' + tu = 0, \quad t \in [1, 10^8],
+\label{airy}
 \ee
 with initial conditions
 \be
 u(1) = \text{Ai}(-1) + i\text{Bi}(-1), \quad u'(1) = - \text{Ai}'(-1) -i\text{Bi}'(-1).
+\label{airyic}
 \ee
 where Ai, Bi are the Airy functions \cite[Chapter~9]{DLMFairy}.
 Its unique solution is
@@ -1688,25 +1690,44 @@ an increasingly good local appoximation.
 %  changes, why not just state in words that the relative
 %  change in $\omega(t)$ per wavelength becomes arbitrarily small as $t$ grows?
 %  ``Zero order'' sounds precise but I don't think is since what's the expansion, WKB?}
-With this test
-case one can check whether the method adapts its stepsize correctly and
-achieves the maximum possible accuracy, defined in \cref{mineps}.
+%With this test
+%case one can check whether the method adapts its stepsize correctly and
+%achieves the maximum possible accuracy, defined in \cref{mineps}.
 %\AB{that last point applies to any osc ode, right?}
 
 
 %\AB{new para since presenting results now}
+Choosing a tolerance $\veps=10^{-12}$,
 \cref{airy-results} shows the
-internal steps our numerical solver takes while solving the Airy equation,
-colour-coded by step type, as well as the progression of stepsizes, numerical
-error, and number of periods of oscillations traversed in a single step. The
+internal steps our numerical solver takes while solving
+\eqref{airy}--\eqref{airyic},
+colour-coded by step type, as well as the progression of stepsizes,
+the numerical relative error function $\Delta u(t)/u(t)$,
+and number of oscillation periods traversed in a single step,
+$n_{\text{osc}}$.
+The
 stepsize $h$ is expected to reflect the timescale over which $\om$ changes,
-therefore $h \propto \om/\om' \propto t$, which is observed. The numerical
+therefore $h \propto \om(t)/\om'(t) \propto t$, which is observed.
+The numerical
 error traces the theoretical minimum, $\kappa \cdot \varepsilon_{\text{mach}}$, to
 within a digit. The number of oscillations traversed per step can be derived
-from $h(t)$: $n_{\text{osc}} \propto \om h \propto t^{3/2}$, which again is
-clearly seen in \cref{airy-results}.
+from $h(t)$: $n_{\text{osc}} \propto \om h \propto t^{3/2}$,
+a result clearly supported by the bottom-right figure panel.
+% AB don't forget the the summary brag sentence:
+Our solver covers around $10^{11}$ periods using ABOUT $10^3$ timesteps ***,
+taking *** milliseconds of CPU time,
+while achieving an error around $10^{-11}$ (or, when larger, the theoretical
+minimum \eqref{mineps}).
 
-An essential standard measure of robustness for any numerical method is convergence, a plot of accuracy achieved against accuracy demanded. The right panel of \cref{convergence-plot} demonstrates convergence of our method on the Airy equation for different solution interval lengths, achieved by varying $t_1$.
+
+An essential measure of robustness for an adaptive numerical method is convergence, accuracy achieved against accuracy demanded.
+The right panel of \cref{convergence-plot} demonstrates the convergence
+of our method on the Airy equation for different solution interval lengths,
+achieved by varying $t_1$ with $t_0=1$ fixed.
+This shows that the achieved relative accuracy is approximately bounded
+(within close to one digit of accuracy)
+by the requested tolerance $\varepsilon$,
+down to the theoretical minimum error \eqref{mineps}.
 
 \begin{figure}[tb]
     \centering
@@ -1717,9 +1738,9 @@ An essential standard measure of robustness for any numerical method is converge
     by their step type. The top right panel plots the stepsize as a function of
     time, which exhibits linear growth. The bottom left shows the relative
     error achieved by the solver in black, with two dashed lines to guide the
-    eye: the tolerance requirement we set to the solver in grey, and the
-    maximum achievable accuracy (calculated as the product of the condition
-    number~$\kappa$, defined in \cref{conditionnodef}, and machine precision~$\varepsilon_{\text{mach}}$) in blue. On the
+    eye: the chosen solver tolerance $\veps$ in grey, and the
+    best achievable accuracy \eqref{mineps}
+    in blue. On the
     bottom right, we show the number of wavelengths of oscillation traversed in
     a single step, as a function of time. 
 %    This is expected to be roughly proportional to the frequency times timescale over which $\om$ changes, which is $\om^2/\om' = t^{3/2}$, plotted in dashed blue. 
@@ -1730,54 +1751,50 @@ An essential standard measure of robustness for any numerical method is converge
 
 \subsection{Comparison with standard and state-of-the-art oscillatory solvers \label{solvercomp}}
 
-As reviewed in the introduction, a number of numerical methods have been
-created specifically for highly oscillatory ODEs. We compare the performance of
-the present solver with theirs in this section. For reference, a short
-description of the available numerical solvers is found below, along with the
-names by which they will be referred to hereafter. The method we propose will
-be referred to as RDC, short for Riccati defect correction.
-%\AB{maybe we should give ``this work'' a name: Riccati defect correciton (RDC) or something}
-%
+Here we compare the performance of the present solver, which
+we now refer to as Riccati defect correction (RDC), to that of the
+following recent specialised methods for oscillatory ODEs:
 \begin{description}
-\item[The Kummer's phase function method]{is an arbitrarily high-order solver
+\item[Kummer's phase function method:]{ an arbitrarily high-order solver
         described by Bremer \cite{bremer2018}, specifically created for highly
-        oscillatory problems, operating near machine precision. Its main
-        drawbacks are the lack of generalisability to include a friction term
-        and to operate at low frequencies or non-oscillatory regions of the
-        solution. Bremer provides a \texttt{Fortran 90} implementation.
-        % note the "method" is not specific to F90 !
+        oscillatory problems with neither a friction term nor
+        transitions to nonoscillatory behaviour.
+        %operating near machine precision. <- not sure what this means.
+        % AB: note criticizing the method before testing is not good here
+        % - save it for the Intro, or discussion.
+        %Its main
+        %drawbacks are the lack of generalisability to include a friction term
+        %and to operate at low frequencies or non-oscillatory regions of the
+        %solution.
+        We use the \texttt{Fortran 90} implementation provided by its author
+        at
+        \url{https://github.com/JamesCBremerJr/Phase-functions}
+        % AB *** how is \om input, since you describe that for oscode below?
         }
-\item[oscode]   % sorry gives tex errs for me, will work on
+\item[oscode:]   % AB sorry gives tex errs for me, will work on
   %\texttt{\textbf{oscode}}
-{is a low-order numerical solver
+{a low-order numerical solver
         \cite{agocs2020efficient,agocs2020dense} that can accommodate a
         friction term and nonoscillatory regions in the solution. It requires
         only requires the user to specify $\om$ and $\g$, which can be given as
         either closed-form functions or as timeseries. The solver has both a
         \texttt{Python} and \texttt{C++} interface, but for the experiments below it is called in
         \texttt{Python}.}
-    \item[The WKB marching method]{\cite{arnold2011wkb,korner2022wkb} uses the
-        mechanism described in \cite{agocs2020efficient} to switch between an a
-        WKB-inspired method in regions of rapid oscillation and Runge--Kutta
+\item[The WKB marching method] {\cite{arnold2011wkb,korner2022wkb}:
+  a solver using
+        the mechanism of \cite{agocs2020efficient} to switch between an a
+        WKB-inspired method in regions of rapid oscillation and a Runge--Kutta
         method. Its convergence order in the oscillatory regions is one higher
         than that of \texttt{oscode}, but does not (easily) generalise to
-        include a $\g$ term. It further requires the user to specify the
-        derivatives of $\om$ by hand, up to $\om^{(5)}$. This recently
-        developed method is implemented in \texttt{MATLAB}.
-        %\AB{Emphasize it's recent?}
+        include a $\g$ term. It further requires the user to provide
+        the derivative functions of $\om$, up to $\om^{(5)}$.
+%        This recently developed  ... well, all are :)
+        It is implemented in \texttt{MATLAB}.
     }
 \end{description}
-%
-Since solvers not created specifically for oscillatory problems typically have
-a runtime proportional to $\om$\footnote{This would mean unacceptably long
-runtimes for the problems presented in this section.} and the Kummer's phase function
-method is the only existing 
-arbitrarily high-order specialised method with an open-source implementation
-available\footnote{From
-\url{https://github.com/JamesCBremerJr/Phase-functions}.}, we shall use its
-output as the reference solution for the highly oscillatory problem
-investigated in this section. For the sake of comparison, we take the example
-ODE defined in Eq. (237) of \cite{bremer2018},
+
+% AB note how I remove extraneous words...
+As the test problem we take the ODE in \cite[Eq.~(237)]{bremer2018},
 \be\label{bremer237eq}
 u'' + \lambda^2 q(t) = 0, \quad q(t) = 1 - t^2\cos(3t)
 \ee
@@ -1786,6 +1803,19 @@ on $t \in [-1, 1]$, subject to the initial conditions
 u(-1) = 0, \quad u'(-1) = \lambda,
 \ee
 where we vary $\lambda$ between $10^1$ and $10^7$.
+
+%
+For a reference solver we 
+use the Kummer's phase function method, since it has arbitrarily high
+order accuracy and exhibited around $13$ digits of accuracy
+in its published tests at $\lambda = 10^1$ \cite[Table~1]{bremer2018}.
+As expected,
+the ill conditioning of the problem as $\lambda$
+grows
+reduces its accuracy to only $8$ digits at $\lambda = 10^7$.
+This is in accordance with the theoretical minimum error \eqref{mineps}.
+Note that conventional solvers are ruled out as references since
+the number of oscillations we test are simply too large.
 
 Performance statistics of the Kummer's phase function method on this problem is presented in
 Table 1 of \cite{bremer2018}. The maximum error quoted therein was computed

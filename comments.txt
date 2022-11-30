@@ -150,8 +150,14 @@ isn't entirely apparent from (48).
 
 ====== GENERAL TO DOS
 
+* add timings and CPU/Py specs to Sec 4, 4.1.
+
+* Consider splitting Fig. 1 R panel to go with much later Airy results.
+It's weird to have to go back so far in paper to find this figure.
+
 * remove nmax = 64 everywhere
 
+* remove 1/2pi factor from kappa estimate, since radians phase is better estimate than # periods.
 
 * Future work:
  - analyse discretized iteration (matvec plus pointwise square).
