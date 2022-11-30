@@ -1847,41 +1847,45 @@ We now describe the quantities tabulated in \cref{bremer237tab}:
 \begin{description}
     \item[$\bm{\mathrm{max}|\Delta u/u|}$:]{Maximum relative error over the
         integration range, evaluated at the timesteps taken internally by the
-        solver. If less than the estimated error of}
+        solver. If less than the error of the reference Kummer method
+    as reported in \cite[Table~1]{bremer2018}, the latter is stated as its upper bound.}
     \item[$\bm{t_{\mathrm{solve}}}$:]{Total runtime, in seconds, of a single
         ODE solve, averaged over between $10^3$ and $10^5$ runs. This is equivalent to the
         ``phase function construction time'' of
-        \cite[Table~1]{bremer2018}. Note that this alone is not a good basis for
-        comparison for the methods presented, since even though the ODE solves
-        were timed on the same machine, the methods have been implemented in
-        different programming languages.}
+        \cite[Table~1]{bremer2018}.
+        However, due to different implementations and programming languages,
+        this has limited meaning comparing across methods.}
+      % AB *** tricky since are you claiming speedups over Bremer, or not?
+      % This implies you're not.
+      
 %    \item[$\bm{t_{\mathrm{eval}}}$:]{Time it takes for the program to evaluate
 %        the solution at an arbitrary point other than the internal timesteps.
 %        This time should be compared to the ``average phase function evaluation
 %        time'' of Table 1 \cite{bremer2018}, but as all runtimes, should not be
 %        used for the sake of comparison on its own.}
-    \item[$\bm{n_{\mathrm{s,osc}}}$:]{Number of steps taken by the solver with
-        a specialised method in the oscillatory regime. This quantity is only
-        applicable for ARDC, \texttt{oscode}, and the WKB
-        marching method, and means a different  method in each case. For the
-        present solver and \texttt{oscode}, it denotes steps taken with a
-        ``direct'' asymptotic method (that described in \cref{phasefun} and WKB,
-        respectively), and the WKB-inspired stepping scheme of
-        \cite{korner2022wkb} in the case of the WKB marching method. When this
+    \item[$\bm{n_{\mathrm{s,osc}}}$:]{Number of time steps of oscillatory type.
+      %This is only
+       % applicable for ARDC, \texttt{oscode}, and the WKB
+       % marching method, and means a different method in each case. For the
+       % present solver and \texttt{oscode}, it denotes steps taken with a
+       % ``direct'' asymptotic method (that described in \cref{phasefun} and WKB,
+       % respectively), and the WKB-inspired stepping scheme of
+      % \cite{korner2022wkb} in the case of the WKB marching method.
+      % AB *** you're saying it applies to all 3 tested methods, so I removed.
+        When this
         quantity appears as $(n_1, n_2)$, $n_1$ denotes the number of attempted
         steps of the given type, out of which $n_2$ have been successful
         (accepted). The same convention applies to $n_{\text{s,slo}}$ and
         $n_{\text{s,tot}}$.}
-    \item[$\bm{n_{\mathrm{s,slo}}}$:]{Number of steps taken by the solver with
-        a ``standard'' method, in the nonoscillatory regions of the solution.
-        For ARDC, this covers the adaptive-order spectral method
-        based on Chebyshev nodes, but means a fixed-order Runge--Kutta method
-        in all other cases.}
+    \item[$\bm{n_{\mathrm{s,slo}}}$:]{Number of time steps of ``standard''
+      (Runge--Kutta or Chebyshev spectral) type, \ie in the nonoscillatory regions of the solution.}
+%        For ARDC, this covers the adaptive-order spectral method
+%        based on Chebyshev nodes, but means a fixed-order Runge--Kutta method
+%        in all other cases.}
     \item[$\bm{n_{\mathrm{s,tot}}}$:]{Total number of steps performed by the
         solver, sum of $n_{\mathrm{s,osc}}$ and $n_{\mathrm{s,slo}}$.}
     \item[$\bm{n_f}$:]{Total number of function evaluations during a single ODE solve.}
-    \item[$\bm{n_{\mathrm{LS}}}$:]{Total number of linear solve
-        operations on a system of equations (\ie $A\vec{x} = \vec{b}$)
+    \item[$\bm{n_{\mathrm{LS}}}$:]{Total number of linear solves
         performed by ARDC.}
     \item[$\bm{n_{\mathrm{LU}}}$:]{Total number of LU decompositions
         performed by ARDC. }
@@ -1889,22 +1893,27 @@ We now describe the quantities tabulated in \cref{bremer237tab}:
         system of equations in lower- or upper-triangular form) performed by
         ARDC.}
 \end{description}
-%
+
 \begin{table*}[tb]
     \renewcommand{\arraystretch}{1.2}
     \resizebox{\textwidth}{!}{\input{tables/bremer237_oscmethods_masked}}
     \caption{\label{bremer237tab} Accuracy, runtime and evaluation statistics of the algorithms
-    considered (the present method, the Kummer's phase function method, \texttt{oscode},
-    and the WKB marching method) when applied to \cref{bremer237eq}. The column
-    headers of this table, together with the various settings of the solvers
-    are described in the text.}
+      considered (the present method,
+      %the Kummer's phase function method,
+      \texttt{oscode},
+      and the WKB marching method) when applied to \cref{bremer237eq}.
+      See Section~\ref{solvercomp} for an expanation of column headers
+      and solver settings.}
 \end{table*}
-%
+
 \cref{bremer237tab} shows clearly the extremely quick convergence of the asymptotic method within ARDC
 at sufficiently large frequencies: at $\lambda \geq 10^2$, the number of
 function evaluations and steps become constant, causing the runtime to be
 constant as well. It achieves the same accuracy as the Kummer's phase function method in
-this regime, but roughly 10 times faster. Towards $\lambda = 10^7$, only
+this regime, but roughly 10 times faster
+*** QUALIFY EITHER BY TESTING KUMMER ON YOUR MACHINE OR ADDING A
+FULL KUMMER BLOCK TO TABLE 1.  % AB
+Towards $\lambda = 10^7$, only
 $\approx 2$ terms are required for the asymptotic expansion to achieve an
 estimated (local) relative error of $10^{-12}$. 
 
