@@ -129,15 +129,19 @@ currently it's confusing since the label on the Im axis should be -rho.
 
 Results:
 
-* tricky thing about kappa defn is that relies on continuity of log
-(correct branch cut, needed for Im to count the windings), but this
-isn't entirely apparent from (48).
-Rephrase.
 
 * You use "it is worth noting that..." a lot. These filler words don't
   add much. If something needs to be split out for reference
   elsewhere, use Remark env.
 
+* I disagree with the Im [log (u(t1)/|u(t1)|) - log (u(t0)/|u(t0)|)]
+definition since the dividing by the magnitude *inside* the log
+messes up the phase. You'd want
+Im [ log u(t1) - log u(t0) ], right?
+
+* Also: tricky thing about kappa defn is that relies on continuity of log
+(correct branch cut, needed for Im to count the windings), but this
+isn't entirely apparent from (48).
 
 
 
@@ -146,15 +150,24 @@ Rephrase.
 
 ====== GENERAL TO DOS
 
-* correct that we solve for derivative of phase function.
-Not PF itself.  Correct alpha usage in Bremer review.
+* remove nmax = 64 everywhere
 
-* explain diff btw us and Bremer:
-Bremer converts globally to phase func, then solves adaptively on panels over global region, vs we discretize adaptively on panels before converting to phase func.  We patch together solutions at panel level.
-Thus no windowing needed.
 
 * Future work:
  - analyse discretized iteration (matvec plus pointwise square).
   (no reason why high-order derivs on p=16 cheby grid should remain accurate!)
 
 * update struct of paper after later edits
+
+* cite URL for code repo.
+
+
+
+======== DONE
+
+* correct that we solve for derivative of phase function.
+Not PF itself.  Correct alpha usage in Bremer review.
+
+* explain diff btw us and Bremer:
+Bremer converts globally to phase func, then solves adaptively on panels over global region, vs we discretize adaptively on panels before converting to phase func.  We patch together solutions at panel level.
+Thus no windowing needed.

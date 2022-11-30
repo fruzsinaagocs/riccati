@@ -128,7 +128,7 @@ For analytic coefficients we prove that each iteration, up to a certain
 maximum number,
 reduces the residual by a factor of order of the local frequency. 
 %
-The algorithm adapts both the interval size and the choice of method,
+The algorithm adapts both the step size and the choice of method,
 switching to a conventional spectral collocation method
 away from oscillatory regions.
 %method based on an adaptively varied number of Chebyshev nodes.
@@ -774,16 +774,20 @@ At this point it is useful to illustrate the residual reduction
 with an example.
 In the left panel of \cref{convergence-plot}, we apply
 % AB note we didn't apply the continuous version, rather the discr one
-the above numerically-discretized iteration to the ``burst'' equation
+the above numerically-discretized iteration to the
+%``burst''
+equation
 % *** cite it
 % FA: Nothing to cite here, this is just a name we made up.
 \begin{equation}\label{bursteq}
   u'' + \om^2(t) u = 0, \quad  \om(t)=\frac{\sqrt{m^2 - 1}}{1+t^2},
   % AB: note it's easier fo the reader to see explicitly the form of om
 \end{equation}
-over a timestep interval $t \in [0, 0.5]$ covered by the $n=16$ Chebyshev grid.
-This interval is chosen longer that would occur in practice in order
-to illustrate different behaviors.
+over a single timestep interval $t \in [0, 0.5]$ covered by a $n=16$ Chebyshev grid.
+This choice of $\om(t)$ is analytic in the neighborhood of the interval,
+having poles at $\pm i$.
+%This interval is chosen longer that would occur in practice in order
+%to illustrate different behaviors.
 % AB: I am totally guessing here... could you explain why it is so long?
 % Would [0,0.5] be that different?
 % FA: I tried, [0,0.5] makes extremely little difference. I just chose it
@@ -826,9 +830,13 @@ convergence is extremely rapid, with machine precision reached at $k=5$.
 % AB: new thought...
 Interestingly, at moderately large $\om_{\text{max}} \approx 10^3$ the initial decay is
 still very useful, but the rate decreases after $k=6$; we
-suspect this ``kink'' is due to growth in the
-approximation of the high-order derivatives of $\om(t)$, which has nearby
-poles at $t=\pm i$.
+suspect this ``kink'' is due to
+the discrete nature of the $D_n$ matrix diverging from
+the true derivative after repeated applications.
+%growth in the
+%approximation of the high-order derivatives of $\om(t)$, which has nearby
+%poles at $t=\pm i$.
+%
 % *** AB this suggests rerunning for an ODE that doesn't have such nearby
 % singularities in om. Or smaller interval. Or larger n. But you need
 % to push the boundaries of exploration here.
@@ -1451,6 +1459,9 @@ In the above theorem, the choice of $3/4$ in \cref{r} was merely a convenient on
 involving the geometric sum were
 not much wider than the bounds $[\eta_1,\eta_2]$ on $|\om|$.
 %It is possible to write simpler but less tight formulae for $r$.
+Note that in the case of $\gamma\equiv 0$ it is possible to
+simplify the statement and proof of the theorem somewhat,
+and improve some of the constants.
 
 
 \subsection{Practical aspects of residual reduction \label{pracres}}
@@ -1552,58 +1563,101 @@ to the \emph{relative residual} of the original ODE.
 % NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 \section{Numerical results \label{numresults}}
 
-In our experiments, 
+% AB: here I simplified, but also realised kappa defs needed thinking out
+% a but more, fixing formulae.
 
-Before discussing the results of numerical experiments, we define a few useful quantities. 
+Our numerical experiments will test the integration of 2nd-order linear
+ODEs that include regions with highly-oscillatory solutions.
+In such regions the condition number of the problem itself becomes
+large, and this limits the achievable accuracy of \emph{any}
+numerical method that works with finite-precision input data.
+Recall \cite[Ch.~6]{GCbook}
+that the definition of relative condition number for evaluation
+of a fixed function $f(t)$ is $\kappa(t) := |tf'(t)/f(t)|$.
+As a toy example,
+%(see, \eg, \cite[Ex.~6.1.3]{CGbook}),  % for sin x
+for the oscillatory function $f_{\omega_0}(t) = e^{i\om_0t}$, 
+the condition number of evaluating $f_{\omega_0}(1)$ is $\kappa(1) = \om_0$,
+the total phase accrued
+%of order the number of oscillations
+over the interval $[0,1]$.
+However, since $\om_0$ is also an input to this problem,
+the relative condition number
+\emph{with respect to variation in} $\om_0$ is also relevant.
+The latter is
+$|\om_0/f_{\om_0}(1)| \cdot |\partial f_{\om_0}(1)/\partial \om_0| = \om_0$,
+here the same as the condition number with respect to $t$.
+Thus, if $\om_0=10^{7}$, so that $\kappa=10^7$ by either %above
+definition,
+then using double-precision arithmetic with
+$\varepsilon_{\mathrm{mach}} \approx 10^{-16}$
+no algorithm can achieve an error less than $\bigO(\kappa\cdot \varepsilon_{\mathrm{mach}}) \approx 10^{-9}$,
+the error for a backward-stable algorithm.
 
-We measure the achieved accuracy of a method by comparing the numerical
-solution to the analytic (or a reliable reference) solution.
-\begin{defn}[Absolute and relative error]\label{deltau}
-    If an ODE of the form \cref{ode} has analytic (or otherwise reference) solution $u(t)$ and 
-    numerical solution $\tilde{u}(t)$, then its absolute error at a given time $t$ is
-    \be
-    \Delta u := \left| \tilde{u}(t) - u(t)\right|,
-    \ee
-    and its relative error is defined as
-    \be
-    \left| \Delta u/u \right| := \left| \frac{\tilde{u}(t) - u(t)}{u(t)}\right|.
-    \ee
+For more general oscillatory solutions to the IVP \eqref{ode}--\eqref{ic1},
+the two above types of condition number generally differ;
+in practice it is the condition number with respect to
+variation in the coefficient function $\om(t)$ that dominates.
+% This is because om(t) << int_0^t om(s) ds usually
+In particular, scaling $\om(t)=\om_0 \Omega(t)$ as in the Introduction,
+then noting the zero-order approximation
+$u(t) = e^{\pm i \om_0 \int_{t_0}^t \Omega(\sigma) \d\sigma}$,
+we see that its relative condition number with respect to
+$\om_0$ is $\int_{t_0}^t \om(\sigma) \d\sigma$, the total phase
+accrued over $(t_0,t)$.
+%This linear growth in $\kappa$ with respect to the number of oscillations
+%also applies to general oscillatory solutions $u(t)$ for
+The resulting loss in achievable accuracy is well known,
+for instance discussed by Bremer \cite{bremer2018} as
+inevitable accuracy loss in taking the sine or cosine of the phase function.
+The above motivates our use of the following.
+\begin{defn}[Condition number and achievable accuracy for an oscillatory region]
+  Let $u$ be a solution to \eqref{ode} on $(a,b)$ of the form
+  $u(t) = e^{z(t)}$ where $\im z'(t) \neq 0$ for all $t\in(a,b)$.
+  % ie, fixed sign, so winding can never stop and unwind, which would require
+  % instead a BV norm on z, or L1 norm on x.
+  Then we define the condition number of the problem of evaluation of $u$
+  by
+  \be
+  \kappa := \im\, [ z(b) - z(a) ],
+  \label{conditionnodef}
+  \ee
+  and the resulting best achievable accuracy using finite precision by
+  \be
+  \varepsilon := \kappa \cdot \varepsilon_{\mathrm{mach}}.
+  \label{mineps}
+  \ee
 \end{defn}
+In practice we use a numerical phase function solution to estimate $\kappa$.
+In the case where there is no such global phase function
+representation $u=e^z$, 
+we estimate $\kappa$ % (the total unsigned phase accumulated)
+by summing the absolute differences in $\im z$ across
+% AB maybe the unsigned aspect isn't needed if the sign of winding doesn't
+% flip.
+the various intervals in each of which a local phase function exists.
+Note that the above definition does not
+capture additional $\kappa$ fluctuations inherent in real-valued
+functions:
+\eg,
+taking the real part of the toy example, $f_{\om_0}(t) = \cos \om_0 t$,
+then $\kappa$ with respect to $t$ becomes $|t\om_0 \tan \om_0 t|$,
+which fluctuates wildly from $0$ to $\infty$,
+although a typical value is again $\bigO(\om_0)$.
 
-The achieved accuracy of a method is limited by the condition number of the
-problem $\kappa$. The condition number measures the sensitivity of a given system to
-outside perturbations, which may manifest as uncertainty in any of the inputs.
-The condition number has been defined for functions of a single or multiple
-variables, for matrices or linear equations written in matrix form (see, \eg
-\cite{rice1966,trefethenlinalg}), and several other problems. We approximate
-the condition number of an oscillatory ODE as the cumulative number of periods of
-oscillation the solution of the ODE has traversed.
-\begin{defn}[Condition number of an oscillatory ODE]\label{conditionnodef}
-    Since the condition number $\kappa$ of an oscillatory function $f(t) =
-    c_0\exp(i\int^t \om(\sigma)\mathrm{d}\sigma)$, where $c_0$ is a constant,
-    is
-    \begin{equation}\label{conditionno}
-        \kappa_f(t) = \left| \frac{tf'(t)}{f(t)} \right| = i\om(t)t,
-    \end{equation}
-    let the condition number of an ODE of the form \cref{ode} be defined as the total number of oscillations the solution $u$ has passed through over the solution interval, 
-    \begin{equation}
-        \kappa := \frac{1}{2\pi}\Im\left(\log\frac{u(t_1)}{|u(t_1)|}  - \log\frac{u(t_0)}{|u(t_0)|}\right).
-    \end{equation}
-    In practice, we will often approximate $\kappa$ by using the numerical
-    solution $\tilde{u}$ instead of the analytic solution $u$, since the latter may not
-    exist or be available.
-\end{defn}
+In the below we denote absolute error in a numerical solution by
+$\Delta u(t) := u(t) - \tilde u(t)$, where
+$u$ is a reference solution computed either analytically
+or by a convergence reference solver,
+and $\tilde u$ is the solution given by the method under test.
 
-\begin{cor}[Maximum achievable accuracy]\label{mineps}
-In the case of an ODE being solved numerically, the smallest possible
-perturbation to the input data of the system is the (finite) precision with
-which numbers are represented, which is $\varepsilon_{\mathrm{mach}}$, machine
-precision. The best achievable accuracy with any given numerical method on an
-IVP with condition number $\kappa$ is 
-\be
-\varepsilon \geq \kappa \cdot \varepsilon_{\mathrm{mach}}.
-\ee
-\end{cor}
+All computations were performed on an Intel Xeon *** CHIP NAME,
+NUMBER OF CORES, GHZ workstation with *** GB of RAM.
+Give Python / Numpy etc versions?
+
+*** URL for codes for experiments and an implementation of the proposed
+method.
+
 
 \subsection{The Airy equation}\label{airy-demo}
 
@@ -1615,17 +1669,18 @@ with initial conditions
 \be
 u(1) = \text{Ai}(-1) + i\text{Bi}(-1), \quad u'(1) = - \text{Ai}'(-1) -i\text{Bi}'(-1).
 \ee
-where Ai, Bi are the Airy functions \cite[Chapter~9]{DLMFairy}
+where Ai, Bi are the Airy functions \cite[Chapter~9]{DLMFairy}.
 Its unique solution is
 \be
-u(t) = Ai(-t) + iBi(-t).
+u(t) = \text{Ai}(-t) + i\text{Bi}(-t).
 \ee
 %\AB{Good aim to explain why a good test here. I think we need to refine the
 %  points though}
-It serves as a good test case because not only is it hard
+It is difficult
 %\AB{surely any osc soln is equally bad for std methods?}
- for standard numerical methods due to the frequency $\om(t)$ growing with time, but should prove to
-be easy for specialised oscillatory methods since the change in $\om(t)$ per wavelength becomes arbitrarily small, making an asymptotic approximation (such as WKB) 
+for standard numerical methods due to the growing frequency $\om(t) = \sqrt{t}$,
+but is expected
+to be easy for specialised oscillatory methods since the change in $\om(t)$ per wavelength becomes arbitrarily small, making an asymptotic approximation (such as WKB) 
 %-- the zeroth order solution --
 an increasingly good local appoximation.
 %\AB{We're dancing between a precise and merely intuitive claim here.
