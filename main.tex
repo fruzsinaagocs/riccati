@@ -1045,9 +1045,9 @@ If the
 absolute
 % *** AB? relative or abs?
 difference falls below the user-specified
-threshold $\varepsilon$, the step is accepted.
+threshold $\varepsilon$, the step is accepted ($t_i$ is advanced by $h$).
 % *** AB which value is used, the original n or the doubled n one?
-Otherwise the timestep is rejected, and the algorithm
+Otherwise the timestep is rejected ($t_i$ is unchanged), and the algorithm
 repeats with $h$ halved.
 Computation time spent in failed steps is lost, making
 it imperative that the initial stepsize estimate $h$ is chosen carefully. We
