@@ -2143,16 +2143,25 @@ then be performed in around $10^{-6}$ s per target point.
 
 % Summary of paper
 We presented an efficient numerical algorithm for solving linear second order
-ODEs of a single variable, posed as initial value problems (see \cref{ode}), whose solution
-might be highly oscillatory for some regions of the solution interval.
-The
-algorithm's runtime is independent of the characteristic frequency of
-oscillations, like that of a few contemporary solvers that exploit asymptotics to speed up computation in the highly oscillatory region.
-Our solver is an improvement on these contemporary solvers
+ODEs of a single variable, posed as initial value problems (see \cref{ode}),
+whose solution
+may be highly oscillatory for some regions of the solution interval.
+It switches adaptively between a new defect correction iteration on
+the Riccati phase function (for oscillatory regions), and
+a conventional solver (for smooth regions),
+both of which are discretized to arbitrarily high order.
+Its run time is independent of the maximum oscillation frequency.
+
+*** NEED MORE EDIT: first decsribe method, how improves in acc
+over WKB-type, and in generality/simplicity over Kummer phase type.
+
+Our solver is an improvement on existing solvers
 in three ways: it is capable of solving the ODE efficiently regardless of
 whether its solution oscillates or not; it is arbitrarily high-order accurate;
 and it solves a more general problem by not imposing the restriction $\gamma =
-0$ in \cref{ode}. 
+0$ in \cref{ode}.
+
+***
 We described the two methods making up the algorithm which works by
 time-stepping, the mechanism by which the stepsize is adapted based on local
 error estimates, and the procedure that decides which of the two methods to
