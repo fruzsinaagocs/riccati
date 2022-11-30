@@ -100,8 +100,6 @@ currently it's confusing since the label on the Im axis should be -rho.
 * Consider splitting Fig. 1 R panel to go with much later Airy results.
 It's weird to have to go back so far in paper to find this figure.
 
-* remove nmax = 64 everywhere, simplify explanation of 16,32 h-adapt rule.
-
 * remove 1/2pi factor from kappa estimate in code.
 (since radians phase is better estimate than # periods.) Text is done.
 
@@ -134,6 +132,8 @@ or omega(t) func.
 
 * You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
 The symbols others used are not sacred, for test problems; more important to have coherency.
+
+* check Riccati n=40 in Sec 4.2 - seems awfully large.
 
 
 
@@ -198,3 +198,5 @@ Yet it still works. But we have to comment about this.
 
 * burst eqn you state as m^2-1 upstairs but then state om_max = sqrt(m^2+1) ...
 which is it? (inconsistent)
+
+* remove nmax = 64 everywhere, simplify explanation of 16,32 h-adapt rule.

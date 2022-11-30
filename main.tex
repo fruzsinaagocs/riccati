@@ -1044,27 +1044,16 @@ of $n$.
 If the
 absolute
 % *** AB? relative or abs?
-error falls below the user-specified
+difference falls below the user-specified
 threshold $\varepsilon$, the step is accepted.
 % *** AB which value is used, the original n or the doubled n one?
-If the error does not reach $\varepsilon$ by $n=n_{\text{max}}$, $h$
-% *** AB I don't understand this: all you have run is n and 2n, so how
-% do we get to nmax.? You do not describe an iteration here.
-% Since 64^3 is big, I suggest you stick to 16 and 32, then half h if
-%
-is halved and the iteration in $n$ begins again starting with
-$n=n_{\text{min}}$. The parameters $n_{\text{min, max}}$ can be chosen by the
-user, but their default values are set to $n_{\text{min}} = 16$,
-$n_{\text{max}} = 64$. Computation time spent in failed steps is lost, making
+Otherwise the timestep is rejected, and the algorithm
+repeats with $h$ halved.
+Computation time spent in failed steps is lost, making
 it imperative that the initial stepsize estimate $h$ is chosen carefully. We
 describe the procedure for choosing $h$ for both spectral and asymptotic steps
 in detail in the next section.
 % AB good narrative end!
-
-*** TO TRY FIX n=16,32,64 to n=16,32 only - or describe how decision
-to go to 64 is done.
-
-
 
 
 
