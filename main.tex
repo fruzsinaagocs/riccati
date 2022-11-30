@@ -1144,12 +1144,13 @@ Then define the error estimate
 where $f$ is $\om$ or $\g$.
 In fact $\{f^{\star}(t^{\star}_l)\} = L_n \mbf{f}$ for some interpolation matrix
 $L_n$ that is independent of the interval choice, so in practice
-$L_n$ is computed only once, by solving a Vandermonde system in a backwards
-stable fashion. Even though the system is exponentially ill-conditioned in $n$,
-the interpolation itself is very accurate if the underlying function is
-sufficiently smooth and Chebyshev (or Legendre) nodes are used. For details,
-see \cite[Appendix A]{helsing_close}.
-% AB *** either we explain this and cite Helsing appendix and my prior work,
+$L_n$ is computed only once, \eg by solving a Vandermonde system in a backwards
+stable fashion.
+Even though such a system is exponentially ill-conditioned,
+the interpolation itself is very accurate up to $n \lesssim 40$
+for Chebyshev nodes; for details see
+\cite[Appendix A]{helsing_close}.
+% AB either we explain this and cite Helsing appendix and my prior work,
 %  or we just say its done by barycentric formulae and cite Berrut-Tref.
 %  You decide.
 % FA: Finally found the reference for this!
@@ -2135,14 +2136,21 @@ We presented an efficient numerical algorithm for solving linear second order
 ODEs of a single variable, posed as initial value problems (see \cref{ode}),
 whose solution
 may be highly oscillatory for some regions of the solution interval.
-It switches adaptively between a new defect correction iteration on
-the Riccati phase function (for oscillatory regions), and
-a conventional solver (for smooth regions),
-both of which are discretized to arbitrarily high order.
-Its run time is independent of the maximum oscillation frequency.
+It switches adaptively between a new defect correction iteration for
+the Riccati phase function (in oscillatory regions), and
+a conventional Chebyshev collocation solver (in smooth regions).
+Both schemes are discretized to arbitrarily high order, and
+have step-size adaptivity.
+The resulting run time is independent of the maximum oscillation frequency.
+%first decsribe method, how improves in acc
+%over WKB-type, and in generality/simplicity over Kummer phase type.
 
-*** NEED MORE EDIT: first decsribe method, how improves in acc
-over WKB-type, and in generality/simplicity over Kummer phase type.
+We proved (Theorem~\ref{}) for analytic coefficients, with
+$\om(t)$ sufficiently large and $\om'$ and $\g$ sufficiently small in a ball,
+that the proposed defect correction reduces the residual of the Riccati
+equation geometrically by a factor of $\bigO(\om)$ per iterate,
+up to a certain number of iterations scaling as $\bigO(\om)$.
+
 
 Our solver is an improvement on existing solvers
 in three ways: it is capable of solving the ODE efficiently regardless of
@@ -2151,10 +2159,7 @@ and it solves a more general problem by not imposing the restriction $\gamma =
 0$ in \cref{ode}.
 
 ***
-We described the two methods making up the algorithm which works by
-time-stepping, the mechanism by which the stepsize is adapted based on local
-error estimates, and the procedure that decides which of the two methods to
-use. One of the methods is a spectral solver based on Chebyshev nodes, while
+
 the other is a numerical functional iteration that generates an asymptotic
 solution for the Riccati form of the ODE. This amounts to constructing a
 non-oscillatory phase function (logarithm of the dependent
