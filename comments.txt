@@ -167,6 +167,7 @@ It's weird to have to go back so far in paper to find this figure.
 
 * cite URL for code repo.
 
+* Table 1 {bremer237tab} has three row blocks not 4, and needs method labels
 
 
 ======== DONE

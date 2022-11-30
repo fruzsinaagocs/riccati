@@ -1613,6 +1613,7 @@ inevitable accuracy loss in taking the sine or cosine of the phase function
 \cite{bremer2018}.
 This motivates the following.
 \begin{defn}[Condition number and achievable accuracy for an oscillatory region]
+  \label{d:kappa}
   Let $u$ be a solution to \cref{ode} on $(t_0,t_1)$ of the form
   $u(t) = e^{z(t)}$ where $\im z'(t) > 0$ for all $t\in(t_0,t_1)$.
   % ie, fixed sign, so winding can never stop and unwind, which would require
@@ -1758,7 +1759,7 @@ down to the theoretical minimum error \eqref{mineps}.
 \subsection{Comparison with standard and state-of-the-art oscillatory solvers \label{solvercomp}}
 
 Here we compare the performance of the present solver, which
-we now refer to as Riccati defect correction (RDC), to that of the
+we now refer to as adaptive Riccati defect correction (ARDC), to that of the
 following recent specialised methods for oscillatory ODEs:
 \begin{description}
 \item[Kummer's phase function method:]{ an arbitrarily high-order solver
@@ -1802,68 +1803,53 @@ following recent specialised methods for oscillatory ODEs:
 % AB note how I remove extraneous words...
 As the test problem we take the ODE in \cite[Eq.~(237)]{bremer2018},
 \be\label{bremer237eq}
-u'' + \lambda^2 q(t) u = 0, \quad q(t) = 1 - t^2\cos(3t)
+u'' + \om^2(t) u = 0, \qquad \mbox{ where} \;\; \om^2(t) = \lambda^2(1 - t^2\cos3t)
 \ee
 on $t \in [-1, 1]$, subject to the initial conditions
 \be\label{bremer237ic}
 u(-1) = 0, \quad u'(-1) = \lambda,
 \ee
-where we vary $\lambda$ between $10^1$ and $10^7$.
+where we vary the frequency scaling $\lambda$ between $10^1$ and $10^7$.
+% AB consider changing lambda to om_0 throughout, clearer.
 
-%
 For a reference solver we 
-use the Kummer's phase function method, since it has arbitrarily high
-order accuracy and exhibited around $13$ digits of accuracy
+use the Kummer's phase function method, since it is arbitrarily high
+order, and exhibited around $13$ accurate digits
 in its published tests at $\lambda = 10^1$ \cite[Table~1]{bremer2018}.
 As expected,
-the ill conditioning of the problem as $\lambda$
+%by Definition~\ref{d:kappa},
+the ill-conditioning of the problem as $\lambda$
 grows
-reduces its accuracy to only $8$ digits at $\lambda = 10^7$.
-This is in accordance with the theoretical minimum error \eqref{mineps}.
-Note that conventional solvers are ruled out as references since
+reduces its accuracy, giving only $8$ digits by $\lambda = 10^7$.
+This is in accordance with the theoretical minimum error \eqref{mineps},
+thus there will be no meaning given to reported errors below these.
+Note that conventional solvers are ruled out as a reference since
 the number of oscillations we test are simply too large.
-
-Performance statistics of the Kummer's phase function method on this problem is presented in
-Table 1 of \cite{bremer2018}. The maximum error quoted therein was computed
-with respect to a reference solution obtained by a spectral deferred correction
-(SDC) method \cite{dutt2000}. As noted in \cite{bremer2018}, the phase function
-computed by the method is accurate to machine precision, and the only source of
-error at large $\lambda$ stems from roundoff error during the evaluation of
-trigonometric functions with large arguments. The growth of the condition number $\kappa$ with the frequency of oscillations $\lambda$ for a fixed solution interval causes the Kummer's phase function method to
-be accurate to $13$ digits at $\lambda = 10^1$, but only $8$  at $\lambda =
-10^7$. This is important to keep in mind as our reference solution is generated
-by the Kummer's phase function method, meaning that the numerical errors presented in Table
-1 of \cite{bremer2018} serve as \emph{upper bounds} for any lower numerical
-errors reported here. In other words, we can only tell if the present method is
-as accurate as the Kummer's phase function method, not more. We consider this acceptable
-given that the numerical accuracy is limited by the high condition number of
-the problem at hand, and that the present method is likewise limited by
-the accuracy of evaluating trigonometric functions with large arguments.
 
 \cref{bremer237tab} presents the runtime statistics of the present method,
 \texttt{oscode}, and the WKB marching method, respectively, separated by double
 lines. For \texttt{oscode}, the table contains two separate entries that have
 been generated with the relative tolerance set to $10^{-6}$ and $10^{-12}$,
 respectively. This is reflected in the achieved error in the low-$\lambda$
-limit. For all other solvers, we set the relative tolerance to $10^{-12}$, and
-in all cases we use double precision. For our solver, we set the number of
+limit. For all other solvers, we set the relative tolerance to $\veps=10^{-12}$, and
+in all cases work in double precision. For our solver, we set the number of
 Chebyshev nodes in Riccati (oscillatory) steps (see \cref{chebysteps}) to $n = 40$, the
 tolerance for stepsize selection to $\varepsilon_h = 10^{-13}$, and the number
 of Chebyshev nodes in the spectral (nonoscillatory) steps to the default
-$n_{\text{min}} = 16$, $n_{\text{max}} = 64$. For \texttt{oscode} and the WKB
+$n = 16$. For \texttt{oscode} and the WKB
 marching method none of the parameters were modified from their default values
 with the exception of the local tolerance.
-% Slightly imprecise as the number of nodes is (n+1)
+% Slightly imprecise as the number of nodes is (n+1) - AB: fine
 
-The quantities tabulated are described in detail below.
+We now describe the quantities tabulated in \cref{bremer237tab}:
 \begin{description}
     \item[$\bm{\mathrm{max}|\Delta u/u|}$:]{Maximum relative error over the
         integration range, evaluated at the timesteps taken internally by the
         solver.}
     \item[$\bm{t_{\mathrm{solve}}}$:]{Total runtime, in seconds, of a single
-        ODE solve averaged over $10^3$--$10^5$ runs. This is equivalent to the
-        ``phase function construction time'' reported in Table 1 of
-        \cite{bremer2018}. Note that this alone is not a good basis for
+        ODE solve, averaged over between $10^3$ and $10^5$ runs. This is equivalent to the
+        ``phase function construction time'' of
+        \cite[Table~1]{bremer2018}. Note that this alone is not a good basis for
         comparison for the methods presented, since even though the ODE solves
         were timed on the same machine, the methods have been implemented in
         different programming languages.}
@@ -1874,7 +1860,7 @@ The quantities tabulated are described in detail below.
 %        used for the sake of comparison on its own.}
     \item[$\bm{n_{\mathrm{s,osc}}}$:]{Number of steps taken by the solver with
         a specialised method in the oscillatory regime. This quantity is only
-        applicable for the present solver, \texttt{oscode}, and the WKB
+        applicable for ARDC, \texttt{oscode}, and the WKB
         marching method, and means a different  method in each case. For the
         present solver and \texttt{oscode}, it denotes steps taken with a
         ``direct'' asymptotic method (that described in \cref{phasefun} and WKB,
@@ -1886,20 +1872,20 @@ The quantities tabulated are described in detail below.
         $n_{\text{s,tot}}$.}
     \item[$\bm{n_{\mathrm{s,slo}}}$:]{Number of steps taken by the solver with
         a ``standard'' method, in the nonoscillatory regions of the solution.
-        For the present solver, this covers the adaptive-order spectral method
+        For ARDC, this covers the adaptive-order spectral method
         based on Chebyshev nodes, but means a fixed-order Runge--Kutta method
         in all other cases.}
     \item[$\bm{n_{\mathrm{s,tot}}}$:]{Total number of steps performed by the
         solver, sum of $n_{\mathrm{s,osc}}$ and $n_{\mathrm{s,slo}}$.}
     \item[$\bm{n_f}$:]{Total number of function evaluations during a single ODE solve.}
-    \item[$\bm{n_{\mathrm{LS}}}$:]{Denotes the total number of linear solve
+    \item[$\bm{n_{\mathrm{LS}}}$:]{Total number of linear solve
         operations on a system of equations (\ie $A\vec{x} = \vec{b}$)
-        performed by the solver.}
-    \item[$\bm{n_{\mathrm{LU}}}$:]{Counts the number of LU decompositions
-        performed by the solver. }
+        performed by ARDC.}
+    \item[$\bm{n_{\mathrm{LU}}}$:]{Total number of LU decompositions
+        performed by ARDC. }
     \item[$\bm{n_{\mathrm{sub}}}$:]{Number of backsubstitutions (solving a
         system of equations in lower- or upper-triangular form) performed by
-        the solver.}
+        ARDC.}
 \end{description}
 %
 \begin{table*}[tb]
@@ -1912,13 +1898,14 @@ The quantities tabulated are described in detail below.
     are described in the text.}
 \end{table*}
 %
-\cref{bremer237tab} shows clearly the extremely quick convergence of the asymptotic method within our solver
+\cref{bremer237tab} shows clearly the extremely quick convergence of the asymptotic method within ARDC
 at sufficiently large frequencies: at $\lambda \geq 10^2$, the number of
 function evaluations and steps become constant, causing the runtime to be
 constant as well. It achieves the same accuracy as the Kummer's phase function method in
-this regime, but in $\approx 1/10$ time. Towards $\lambda = 10^7$, only
+this regime, but roughly 10 times faster. Towards $\lambda = 10^7$, only
 $\approx 2$ terms are required for the asymptotic expansion to achieve an
 estimated (local) relative error of $10^{-12}$. 
+
 \texttt{oscode} and the WKB
 marching method also achieve fast convergence at sufficiently large
 frequencies, but due to the fact that neither are adaptive in the order of the
@@ -1931,16 +1918,23 @@ sufficiently high frequencies, $\lambda \geq 10^4$, setting a tolerance of
 $\varepsilon = 10^{-6}$ in \texttt{oscode} results in the same accuracy as
 setting $\varepsilon = 10^{-12}$ but at fewer function evaluations and steps,
 again due to the WKB expansion being highly accurate in this regime and to
-\texttt{oscode} potentially overstimating its local error. Finally, it is worth
-noting that the WKB marching method needs fewer function evaluations and has a
+\texttt{oscode} potentially overstimating its local error.
+
+Finally, the WKB marching method needs fewer function evaluations and has a
 slightly shorter runtime (although achieves fewer digits of accuracy) at high
 frequencies because it asks the user to provide high-order derivatives of the
 frequency $\om(t)$, therefore it need not use further evaluations of $\om$ to
-compute said derivatives numerically. Three methods (the present solver, the
+compute said derivatives numerically.
+
+% AB *** this paragraph seems not like a "results" discussion, more
+% a "priior properties of the methods". Could it be moved earlier?
+% Also I changed 1e-6 to 1e-7 since I know that's typ for Bremer results.
+Three solvers (ARDC, the
 Kummer's phase function method, and \texttt{oscode}) offer a dense output option, \ie
-can perform interpolation and compute the numerical solution in-between
-internal steps, and do so by interpolating a slowly-varying phase function,
-therefore they all have evaluation times of $\mathcal{O}(10^{-6})$ \si{\s}.  
+can perform interpolation and compute the numerical solution between
+internal time nodes, and do so by interpolating a slowly-varying phase function,
+therefore they all have evaluation times of
+$\mathcal{O}(10^{-7})$ \si{\s} per new target time.  
 
 \begin{figure}[tb]
     \centering
