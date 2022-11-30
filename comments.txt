@@ -172,6 +172,13 @@ It's weird to have to go back so far in paper to find this figure.
   OR, just quotes some timings in the text, to get the timing ratio on the
   same machine.
 
+* Table 2 uses Ricc, Cheb but Table 1 and text
+uses osc, slo. Please be consistent.
+
+* 
+
+
+
 
 
 ======== DONE

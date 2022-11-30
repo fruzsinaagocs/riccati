@@ -1949,8 +1949,8 @@ $\mathcal{O}(10^{-6})$ \si{\s} per new target time.
 \begin{figure}[tb]
     \centering
     \includegraphics{plots/bremer237-timing.pdf}
-    \caption{\label{bremer237-timing} Performance comparison of our solver (ARDC) and
-    other state-of-the-art algorithms on \cref{bremer237eq}. The left panel
+    \caption{\label{bremer237-timing} Performance comparison of the proposed ARDC method against
+    other state-of-the-art methods for \cref{bremer237eq}. The left panel
     shows the total runtime of the solvers listed in \cref{solvercomp} as the
     frequency parameter $\lambda$ is varied, for two different relative
     tolerance settings: runtimes with $\varepsilon = 10^{-12}$ are plotted with
@@ -1968,35 +1968,56 @@ $\mathcal{O}(10^{-6})$ \si{\s} per new target time.
 \subsection{Special function evaluation: Legendre's equation}
 % Previously: Evaluating special function evaluation: Legendre's equation
 % department of redundancy department
+% AB: :)
 
-Being able to solve highly oscillatory ODEs accurately means the solver can
-quickly evaluate high-order special functions that obey an ODE of the required
-form, such as Legendre's differential equation,
+Here we apply the proposed ARDC method to the rapid evaluation of
+Legendre functions of high degree $\nu$.
+Such functions solve Legendre's differential equation
+\cite[Sec.~14.2]{dlmf}
 \be\label{legendreode}
-(1-t^2)u'' - 2tu' + n(n+1)u = 0, \quad t \in [0.1, 0.9]. 
+(1-t^2)u'' - 2tu' + \nu(\nu+1)u = 0 ,       \qquad -1<t<1.
 \ee
-The problem need not be phrased as an initial value problem: due to the
-linearity of the ODE, two arbitrary linearly independent solutions can be
-linearly combined to satisfy initial or boundary conditions. In this example,
+We test a range of integer $\nu$ values from $10$ to $10^9$,
+and check accuracy against an independent
+evaluation of the Legendre polynomial $P_\nu(t)$
+for test points $t \in [0.1, 0.9]$.
+% AB *** some comment about why [0,0.1] and [0.9,1] are problematic.
+*** Initial conditions at $t_0=0.1$ are chosen to match the value
+and derivative of $P_\nu$.
+% ? AB *** I'm guessing. please correct this, but it has to be explained.
+%
+%The problem need not be phrased as an initial value problem: due to the
+%linearity of the ODE, two arbitrary linearly independent solutions can be
+%linearly combined to satisfy initial or boundary conditions.
+% AB: that is a true general statement, but why is it relevant here: are you trying to propose a method to evaluate special funcs without ICs? It's unclear what the goal is.
+In this example,
 the results of which are shown in \cref{legendre-results}, we set tolerances of
 $\varepsilon = 10^{-12}$, $\varepsilon_h = 10^{-13}$ and the number of
-Chebyshev nodes in oscillatory steps to $n = 16$. 
-% Imprecise again, number of nodes is (n+1)
+Chebyshev nodes in oscillatory steps to $n = 16$.
+% AB: This is much less than n=40 from before - why?
+% Imprecise again, number of nodes is (n+1) - AB, fine
 These results again demonstrate the frequency-independence of the runtime of
-our algorithm and show that the required tolerance (where the condition number
-of the problem allows) is achieved. Note that after the solution of the ODE has
-taken place, evaluating $u$ at intermediate points (\ie not at the internal
-timesteps taken by the solver) is possible via interpolation of the phase
-function $x$ in $\bigO(1)$ time, independently of the order $n$ in \cref{legendreode}.
+our algorithm and show that the required tolerance (up to that allowed by the
+condition number
+of the problem) is achieved.
+% AB: well, we don't list kappa for the prob - would be needed to make that
+% claim.
+For any of the $\nu$ values tested, evaluation at new target points $t$ may
+then be performed in around $10^{-6}$ s per target point.
+*** PLEASE INSERT A TIMING QUOTE HERE.
+
+%Note that after the solution of the ODE has taken place, evaluating $u$ at intermediate points (\ie not at the internal timesteps taken by the solver) is possible via interpolation of the phase function $x$ in $\bigO(1)$ time, independently of the degree $n$ in \cref{legendreode}.
 
 
 \begin{table*}
     \renewcommand{\arraystretch}{1.2}
     \resizebox{\textwidth}{!}{\input{tables/legendre-fastest-morestuff}}
-    \caption{Accuracy, runtime and evaluation statistics of the present algorithm when
-    applied to Legendre's differential equation, \cref{legendreode}. The column
-    headers are identical to those in \cref{bremer237tab} and are explained in
-    the text. \label{legendre-results}}
+    \caption{Accuracy, runtime and evaluation statistics of the proposed ARDC method when
+      applied to Legendre functions via their ODE \cref{legendreode}.
+      The degree is $\nu$; other column
+      headers are identical to those in \cref{bremer237tab}
+      % AB *** they are not identical : osc, slo -> Ricc, Cheb. Which pair is it going to be?
+      and are explained in the text. \label{legendre-results}}
 \end{table*}
 
 
