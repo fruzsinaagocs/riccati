@@ -1665,6 +1665,8 @@ packages to perform linear algebra. For the numerical experiments, the
 following versions of software were used: \texttt{Python} 3.8.12,
 \texttt{numpy} 1.23.4, \texttt{scipy} 1.9.2.
 % FA: *** Python, numpy versions verify  TODO once experiments ran again. 
+% AB *** maybe add comment about nothing was paralellized, bascially single-core
+% implementations.
 
 
 \subsection{The Airy equation}\label{airy-demo}
@@ -1845,7 +1847,7 @@ We now describe the quantities tabulated in \cref{bremer237tab}:
 \begin{description}
     \item[$\bm{\mathrm{max}|\Delta u/u|}$:]{Maximum relative error over the
         integration range, evaluated at the timesteps taken internally by the
-        solver.}
+        solver. If less than the estimated error of}
     \item[$\bm{t_{\mathrm{solve}}}$:]{Total runtime, in seconds, of a single
         ODE solve, averaged over between $10^3$ and $10^5$ runs. This is equivalent to the
         ``phase function construction time'' of
@@ -1928,18 +1930,17 @@ compute said derivatives numerically.
 
 % AB *** this paragraph seems not like a "results" discussion, more
 % a "priior properties of the methods". Could it be moved earlier?
-% Also I changed 1e-6 to 1e-7 since I know that's typ for Bremer results.
 Three solvers (ARDC, the
 Kummer's phase function method, and \texttt{oscode}) offer a dense output option, \ie
 can perform interpolation and compute the numerical solution between
 internal time nodes, and do so by interpolating a slowly-varying phase function,
 therefore they all have evaluation times of
-$\mathcal{O}(10^{-7})$ \si{\s} per new target time.  
+$\mathcal{O}(10^{-6})$ \si{\s} per new target time.  
 
 \begin{figure}[tb]
     \centering
     \includegraphics{plots/bremer237-timing.pdf}
-    \caption{\label{bremer237-timing} Performance comparison of our solver (RDC) and
+    \caption{\label{bremer237-timing} Performance comparison of our solver (ARDC) and
     other state-of-the-art algorithms on \cref{bremer237eq}. The left panel
     shows the total runtime of the solvers listed in \cref{solvercomp} as the
     frequency parameter $\lambda$ is varied, for two different relative

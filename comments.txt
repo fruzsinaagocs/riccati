@@ -150,24 +150,28 @@ isn't entirely apparent from (48).
 
 ====== GENERAL TO DOS
 
-* add timings and CPU/Py specs to Sec 4, 4.1.
 
 * Consider splitting Fig. 1 R panel to go with much later Airy results.
 It's weird to have to go back so far in paper to find this figure.
 
 * remove nmax = 64 everywhere
 
-* remove 1/2pi factor from kappa estimate, since radians phase is better estimate than # periods.
+* remove 1/2pi factor from kappa estimate in code.
+(since radians phase is better estimate than # periods.) Text is done.
 
 * Future work:
  - analyse discretized iteration (matvec plus pointwise square).
   (no reason why high-order derivs on p=16 cheby grid should remain accurate!)
 
-* update struct of paper after later edits
+* update struct of paper paragraph after later edits
 
 * cite URL for code repo.
 
-* Table 1 {bremer237tab} has three row blocks not 4, and needs method labels
+* Table 1 {bremer237tab} needs method labels.
+  Add Bremer timings on your machine, maybe add # func evals in the Table.
+  OR, just quotes some timings in the text, to get the timing ratio on the
+  same machine.
+
 
 
 ======== DONE
@@ -178,3 +182,5 @@ Not PF itself.  Correct alpha usage in Bremer review.
 * explain diff btw us and Bremer:
 Bremer converts globally to phase func, then solves adaptively on panels over global region, vs we discretize adaptively on panels before converting to phase func.  We patch together solutions at panel level.
 Thus no windowing needed.
+
+* add timings and CPU/Py specs to Sec 4, 4.1.
