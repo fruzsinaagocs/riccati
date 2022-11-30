@@ -1595,48 +1595,51 @@ no algorithm can achieve an error less than $\bigO(\kappa\cdot \varepsilon_{\mat
 the error for a backward-stable algorithm.
 
 For more general oscillatory solutions to the IVP \cref{ode}--\cref{ic1},
-the two above types of condition number generally differ;
-in practice it is the condition number with respect to
-variation in the coefficient function $\om(t)$ that dominates.
-% This is because om(t) << int_0^t om(s) ds usually
-In particular, scaling $\om(t)=\om_0 \Omega(t)$ as in \cref{introduction},
+the two above types of condition number generally differ,
+and the larger controls the minimum achievable error.
+For example, scaling $\om(t)=\om_0 \Omega(t)$ as in \cref{introduction},
 then taking the zero-order approximation
 $u(t) = e^{\pm i \om_0 \int_{t_0}^t \Omega(\sigma) \d\sigma}$,
 we see that its relative condition number with respect to
-$\om_0$ is $\int_{t_0}^t \om(\sigma) \d\sigma$, the total phase
+$t$ is $|t\om(t)|$, detemined by the local frequency,
+whereas with respect to
+$\om_0$ it is $\int_{t_0}^t \om(\sigma) \d\sigma$, the total phase
 accrued over $(t_0,t)$.
 %This linear growth in $\kappa$ with respect to the number of oscillations
 %also applies to general oscillatory solutions $u(t)$ for
-The resulting loss in achievable accuracy is well known,
-for instance discussed by Bremer \cite{bremer2018} as
-inevitable accuracy loss in taking the sine or cosine of the phase function.
-This motivates our use of the following.
+The loss in achievable accuracy due to the latter $\kappa$
+is well known, and may be interpreted as 
+inevitable accuracy loss in taking the sine or cosine of the phase function
+\cite{bremer2018}.
+This motivates the following.
 \begin{defn}[Condition number and achievable accuracy for an oscillatory region]
-  Let $u$ be a solution to \cref{ode} on $(a,b)$ of the form
-  $u(t) = e^{z(t)}$ where $\im z'(t) \neq 0$ for all $t\in(a,b)$.
+  Let $u$ be a solution to \cref{ode} on $(t_0,t_1)$ of the form
+  $u(t) = e^{z(t)}$ where $\im z'(t) > 0$ for all $t\in(t_0,t_1)$.
   % ie, fixed sign, so winding can never stop and unwind, which would require
   % instead a BV norm on z, or L1 norm on x.
-  Then we define the condition number of the problem of evaluation of $u(t)$
+  We define the condition number of the problem of evaluation of $u(t)$
   by
   \be
-  \kappa(t) := \max\left[|tz'(t)|, |\im\, ( z(t) - z(a) )|\right]
+  \kappa := \max\left[ \, |tz'(t)|, \, \im \, ( z(t) - z(t_0) )\, \right]
   \label{conditionnodef}
   \ee
-  and the resulting best achievable accuracy using finite precision by
+  and then the resulting best achievable accuracy using finite precision by
   \be
-  \kappa \cdot \veps_{\mathrm{mach}}.   % confusing to make new \veps symbol
+  \kappa \cdot \veps_{\mathrm{mach}}.   % was confusing to duplicate \veps symbol
   \label{mineps}
   \ee
 \end{defn}
 In practice we use a numerical phase function solution to estimate $\kappa$.
+In our examples the first (frequency) term does not dominate the second (accrued phase) term.
 In the case where there is no such global phase function
 representation $u=e^z$, 
-we estimate $\kappa$ % (the total unsigned phase accumulated)
+we estimate this second term
+% total unsigned phase accumulated
 by summing the absolute differences in $\im z$ across
 % AB maybe the unsigned aspect isn't needed if the sign of winding doesn't
-% flip.
+% flip. TV norm issue, really.
 the various intervals in each of which a local phase function exists.
-Note that the above definition does not
+Note that this definition does not
 capture additional $\kappa$ fluctuations inherent in real-valued
 functions:
 taking the real part of the toy example, $f_{\om_0}(t) = \cos \om_0 t$,
@@ -1645,7 +1648,7 @@ which fluctuates wildly from $0$ to $\infty$,
 although a typical value is again $\bigO(\om_0)$.
 
 In the below tests we denote absolute error in a numerical solution by
-$\Delta u(t) := u(t) - \tilde u(t)$, where
+$\Delta u(t) := |u(t) - \tilde u(t)|$, where
 $u$ is a reference solution computed either analytically
 or by a convergence reference solver,
 % FA: *** convergence -> convergent reference solver?? Is this a term usually used?
@@ -1723,8 +1726,7 @@ taking *** milliseconds of CPU time,
 while achieving an error around $10^{-11}$ (or, when larger, the theoretical
 minimum \eqref{mineps}).
 
-
-An essential measure of robustness for an adaptive numerical method is convergence, accuracy achieved against accuracy demanded.
+%An essential measure of robustness for an adaptive numerical method is convergence, accuracy achieved against accuracy demanded.
 The right panel of \cref{convergence-plot} demonstrates the convergence
 of our method on the Airy equation for different solution interval lengths,
 achieved by varying $t_1$ with $t_0=1$ fixed.
@@ -1777,21 +1779,21 @@ following recent specialised methods for oscillatory ODEs:
         }
 \item[oscode:]   % AB sorry gives tex errs for me, will work on
   %\texttt{\textbf{oscode}}
-{a low-order numerical solver
-        \cite{agocs2020efficient,agocs2020dense} that can accommodate a
-        friction term and nonoscillatory regions in the solution. It requires
+{an adaptive solver which switches from low-order WKB (in oscillatory regions) to Runge--Kutta (in smooth regions)
+        \cite{agocs2020efficient,agocs2020dense}, that can accommodate a
+        friction term. It requires
         only requires the user to specify $\om$ and $\g$, which can be given as
         either closed-form functions or as timeseries. The solver has both a
         \texttt{Python} and \texttt{C++} interface, but for the experiments below it is called in
         \texttt{Python}.}
 \item[The WKB marching method] {\cite{arnold2011wkb,korner2022wkb}:
   a solver using
-        the mechanism of \cite{agocs2020efficient} to switch between an a
-        WKB-inspired method in regions of rapid oscillation and a Runge--Kutta
-        method. Its convergence order in the oscillatory regions is one higher
+        the mechanism of \cite{agocs2020efficient} to switch between
+        WKB-inspired and Runge--Kutta
+        methods. Its convergence order in the oscillatory regions is one higher
         than that of \texttt{oscode}, but does not (easily) generalise to
-        include a $\g$ term. It further requires the user to provide
-        the derivative functions of $\om$, up to $\om^{(5)}$.
+        include a $\g$ term. It requires the user to provide
+        the derivative functions of $\om$ up to $\om^{(5)}$.
 %        This recently developed  ... well, all are :)
         It is implemented in \texttt{MATLAB}.
     }
@@ -1800,7 +1802,7 @@ following recent specialised methods for oscillatory ODEs:
 % AB note how I remove extraneous words...
 As the test problem we take the ODE in \cite[Eq.~(237)]{bremer2018},
 \be\label{bremer237eq}
-u'' + \lambda^2 q(t) = 0, \quad q(t) = 1 - t^2\cos(3t)
+u'' + \lambda^2 q(t) u = 0, \quad q(t) = 1 - t^2\cos(3t)
 \ee
 on $t \in [-1, 1]$, subject to the initial conditions
 \be\label{bremer237ic}
