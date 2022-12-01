@@ -1,4 +1,10 @@
 numpy
 scipy
 sphinx
+sphinx-rtd-theme
 numpydoc
+pytest
+mpmpath
+pandas
+num2tex
+matplotlib

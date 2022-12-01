@@ -2,8 +2,6 @@
 import numpy as np
 import riccati
 import scipy.special as sp
-import matplotlib
-from matplotlib import pyplot as plt
 import math
 import mpmath
 
