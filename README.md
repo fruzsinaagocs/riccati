@@ -32,4 +32,4 @@ cd docs/
 make html
 ```
 
-Then open `docs/build/index.html` in your browser.
+Then open `docs/build/html/index.html` in your browser.
