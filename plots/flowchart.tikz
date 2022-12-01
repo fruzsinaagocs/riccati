@@ -3,16 +3,16 @@
 \tikzstyle{every node}=[font=\scriptsize]
 
 %Nodes
-\node[squarednode]      (hsloini)   {$h_{\text{slo}}^{(0)} = \frac{1}{\omega(t_j)}$};
-\node[squarednode]      (hoscini)  [right=0.7cm of hsloini] {$h_{\text{osc}}^{(0)} = \frac{\omega(t_j)}{\omega'(t_j)}$};
+\node[squarednode]      (hsloini)   {$h_{\text{slo}}^{(0)} = \frac{1}{\omega(t_i)}$};
+\node[squarednode]      (hoscini)  [right=0.7cm of hsloini] {$h_{\text{osc}}^{(0)} = \frac{\omega(t_i)}{\omega'(t_i)}$};
 \node[squarednode]      (hslo)  [below=0.4cm of hsloini] {$h_{\text{slo}}$};   
 \node[squarednode]      (hosc)  [below=0.4cm of hoscini] {$h_{\text{osc}}$};    
-\node[squarednode, align=center]      (switch) [below right=0.4cm and -0.4cm of hslo] {$h_{\text{osc}} > h_{\text{slo}}$ \\ and \\$\omega(t_j) h_{\text{osc}}/(2\pi) > 1$};
+\node[squarednode, align=center]      (switch) [below right=0.4cm and -0.4cm of hslo] {$h_{\text{osc}} > h_{\text{slo}}$ \\ and \\$\omega(t_i) h_{\text{osc}}/(2\pi) > 1$};
 \node[squarednode]      (ricc)  [below right=3.1cm and -1.6cm of hoscini] {Riccati step in $x(t)$};  
 \node[squarednode]      (conv)  [below=0.4cm of ricc] {Converged?}; 
 \node[squarednode, align=center]      (cheb)  [left=1cm of conv] {Chebyshev step \\ in $u(t)$}; 
-\node[squarednode, align=center]      (ic)  [below=0.5cm of conv] {Compute $u$ from $x$, \\ match $u(t_j), u'(t_j)$};     
-\node[squarednode, align=center]      (accept)  [below =3.8cm of switch] {Advance solution: $t_{j+1} = t_{j}+h$, \\ $u(t_{j+1}) = u(t_j + h), \quad u'(t_{j+1}) = u'(t_j + h)$ };    
+\node[squarednode, align=center]      (ic)  [below=0.5cm of conv] {Compute $u$ from $x$, \\ match $u(t_i), u'(t_i)$};     
+\node[squarednode, align=center]      (accept)  [below =3.8cm of switch] {Advance solution: $t_{j+1} = t_{j}+h$, \\ $u(t_{j+1}) = u(t_i + h), \quad u'(t_{j+1}) = u'(t_i + h)$ };    
 %\node[inner sep=0, minimum size=0, below left=0.7cm and -0.05cm of switch] (k) {}; % invisible node
 \node[inner sep=0, minimum size=0, above=0.9cm of cheb] (k) {}; % invisible node
 \node[inner sep=0, minimum size=0, below=0.4cm  of accept] (l) {}; % invisible node
