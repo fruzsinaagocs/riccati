@@ -1,3 +1,6 @@
+SEE BELOW FOR TODO LIST.
+------------------------
+
 Abstract: is clear, but now too long by factor 2 (compare those of
 other papers, eg SINUM).  Eg sentence 2 onwards of Abs read like Intro
 (have too much detail for Abs), could move there.
@@ -57,31 +60,6 @@ or "Assuming ...  one then matches..."
 
 ---------- ongoing Alex comments / changes rationale  11/21/22
 
-* Abs claims n is adapted in the Cheby scheme, but it's not, right? Just h?
-Please check.
-
-* apostrophes are too casual ( "method's" etc)
-
-* I am not using the sec 6 list of changes - suggest cut so the
-paper looks as it should.
-
-* oscode & related: local vs global h-order (and power of om_0 ?)
-needed clarified
-
-* QLM is Newton iter not series, clarified.
-
-* note don't mix \dot{x} and x'
-
-* suggest Bremer's method is not called "the phase function method".
-
-* I corrected prefactor of al''/al in {kummer} to 1/2.
-
-* Check "smoothness" of Fourier xform of log Omega.
-
-* Is our method an "expansion", an "iteration", a "series", a "defect correction" ? It is best to stick to one. I think "iteration" and "defect correction" are clearest.  Hence edits.
-
-* the "structure of this paper" para: note I highlighted *rigorous* analysis.
-
 * Prop 1: why is non-vanishing of x needed given that x+gamma in denominator?
 After prop 1: you needed to update the statement about LB on x_j to be about
 x_j+gamma.
@@ -98,39 +76,130 @@ clashed.
 The ICs cannot be relevant since the iter doesn't control them, right?
 Not sure why ICs are given.
 
-* burst eqn you state as m^2-1 upstairs but then state om_max = sqrt(m^2+1) ...
-which is it? (inconsistent)
-
-* burst demo: your choice of test interval [0,2] is very wide, with omega dropping by factor 5 over the interval, and having a nearby singularity at +-i.
-Yet it still works. But we have to comment about this.
-
 * plots/residual-k-corr.pdf would better label j for iteration not k,
 to match paper. We used k as the stopping iter, mostly.
 * also for this plot, the y axis is mislabeled. [t_j,t_j+1] is not the
 interval used for testing in the text.
 
-* push the boundaries of understanding the k=5 kink in the demo - is it
-do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
+* You use "it is worth noting that..." a lot. These filler words don't
+  add much. If something needs to be split out for reference
+  elsewhere, use Remark env.
 
-* consider using block 2x2 notation for {discreteodeic} to save vertical space
-
-* fixed om to om^2 in diag term in {discreteode}
-
+* burst eqn has analytic soln, but we don't need this fact, right?
 
 
 
 
+====== REMAINING TO DO LIST ==================================================
 
 
+* Fig. 4 is never referred to in text! Please fix.
 
-====== GENERAL TO DOS
+* figure 2 balls: could you move the rho label to look like the radius -
+currently it's confusing since the label on the Im axis should be -rho.
 
-* explain diff btw us and Bremer:
-Bremer converts globally to phase func, then solves adaptively on panels over global region, vs we discretize adaptively on panels before converting to phase func.  We patch together solutions at panel level.
-Thus no windowing needed.
+* fig 2 flowchart: t_i is used in text, so change t_j to t_i to match.
+
+* Consider splitting Fig. 1 R panel to go with much later Airy results.
+It's weird to have to go back so far in paper to find this figure.
+
+* remove 1/2pi factor from kappa estimate in code.
+(since radians phase is better estimate than # periods.) Text is done.
 
 * Future work:
  - analyse discretized iteration (matvec plus pointwise square).
   (no reason why high-order derivs on p=16 cheby grid should remain accurate!)
 
-* update struct of paper after later edits
+* update struct of paper paragraph after later edits
+
+* cite URL for code repo.
+
+* Table 1 {bremer237tab} needs method labels.
+  Add Bremer timings on your machine, maybe add # func evals in the Table.
+  OR, just quotes some timings in the text, to get the timing ratio on the
+  same machine. Decide how much of a deal you're making about the 10x speedup,
+  if it persists on the same machine.
+  
+* Table 2 uses Ricc, Cheb but Table 1 and text
+uses osc, slo. Please be consistent.
+
+* address issues in 4.3: IC, why avoid [0,0.1] and [0.9,1),
+speed of new t evals.
+
+* consider using block 2x2 notation for {discreteodeic} to save vertical space
+
+* push the boundaries of understanding the k=5 kink in the demo - is it
+do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
+Consider adding 2nd plot in fig.1 of the R iteration for different interval
+or omega(t) func.
+
+* You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
+The symbols others used are not sacred, for test problems; more important to have coherency.
+
+* check Riccati n=40 in Sec 4.2 - seems awfully large.
+
+
+
+
+
+======== DONE
+
+* correct that we solve for derivative of phase function.
+Not PF itself.  Correct alpha usage in Bremer review.
+
+* explain diff btw us and Bremer:
+Bremer converts globally to phase func, then solves adaptively on panels over global region, vs we discretize adaptively on panels before converting to phase func.  We patch together solutions at panel level.
+Thus no windowing needed.
+
+* add timings and CPU/Py specs to Sec 4, 4.1.
+
+* fixed om to om^2 in diag term in {discreteode}
+
+* Abs claims n is adapted in the Cheby scheme, but it's not, right? Just h?
+Please check.
+
+-> n is actually adapted between nmin and nmax, with these being chosen by the
+used but having default values of nmin = 16 and nmax = 64. In each iteration,
+the number of nodes is doubled. Can we change this back to how it was?
+
+
+* apostrophes are too casual ( "method's" etc)
+
+* I am not using the sec 6 list of changes - suggest cut so the
+paper looks as it should.
+
+* oscode & related: local vs global h-order (and power of om_0 ?)
+needed clarified
+
+* QLM is Newton iter not series, clarified.
+
+* note don't mix \dot{x} and x'
+
+* suggest Bremer's method is not called "the phase function method".
+
+-> Just to explain the choice: this is what Bremer's code repo is called (Phase-functions).
+
+* I corrected prefactor of al''/al in {kummer} to 1/2.
+
+* Check "smoothness" of Fourier xform of log Omega.
+
+* Is our method an "expansion", an "iteration", a "series", a "defect correction" ? It is best to stick to one. I think "iteration" and "defect correction" are clearest.  Hence edits.
+
+* the "structure of this paper" para: note I highlighted *rigorous* analysis.
+
+* I disagree with the Im [log (u(t1)/|u(t1)|) - log (u(t0)/|u(t0)|)]
+definition since the dividing by the magnitude *inside* the log
+messes up the phase. You'd want
+Im [ log u(t1) - log u(t0) ], right?
+
+* Also: tricky thing about kappa defn is that relies on continuity of log
+(correct branch cut, needed for Im to count the windings), but this
+isn't entirely apparent from (48).
+
+* burst demo: your choice of test interval [0,2] is very wide, with omega dropping by factor 5 over the interval, and having a nearby singularity at +-i.
+Yet it still works. But we have to comment about this.
+
+* burst eqn you state as m^2-1 upstairs but then state om_max = sqrt(m^2+1) ...
+which is it? (inconsistent)
+
+* remove nmax = 64 everywhere, simplify explanation of 16,32 h-adapt rule.
