@@ -1,0 +1,9 @@
+# method, l, eps, relerr, tsolve, n_s_osc_att, n_s_osc_suc, n_s_slo_att, n_s_slo_suc, n_s_tot_att, n_s_tot_suc, n_f, n_LS, n_LU, n_sub, errlessref, params
+kummer, 10.0, 1e-12, 6.48e-15, 0.00664, , , , , , , 75921, , , , True, ()
+kummer, 100.0, 1e-12, 1.26e-13, 0.00373, , , , , , , 44054, , , , True, ()
+kummer, 1000.0, 1e-12, 5.64e-13, 0.00291, , , , , , , 24740, , , , False, ()
+kummer, 10000.0, 1e-12, 1.18e-11, 0.00273, , , , , , , 20521, , , , False, ()
+kummer, 100000.0, 1e-12, 3.58e-11, 0.00317, , , , , , , 21808, , , , True, ()
+kummer, 1000000.0, 1e-12, 2.3e-16, 0.00373, , , , , , , 23525, , , , False, ()
+kummer, 10000000.0, 1e-12, 0.0, 0.00318, , , , , , , 22468, , , , False, ()
+kummer, 10.0, 1e-12, 6.48e-15, 0.00663, , , , , , , 75921, , , , True, ()
