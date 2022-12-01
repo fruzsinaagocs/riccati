@@ -7,7 +7,7 @@ except ImportError:
 
 docs = ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
 tests = ['pytest', 'scipy', 'mpmath']
-plots = ['pandas', 'num2tex', 'matplotlib']
+plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots
 
 setup(name='riccati',
@@ -21,7 +21,8 @@ setup(name='riccati',
       install_requires=['numpy', 'scipy'],
       setup_requires=['pytest-runner'],
       extras_require={
-          'docs': all,
+          'all': all,
+          'docs': docs,
           'tests': tests,
           'plots': plots
           },
