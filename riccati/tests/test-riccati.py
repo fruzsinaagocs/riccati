@@ -5,6 +5,17 @@ import scipy.special as sp
 import math
 import mpmath
 
+def test_quadwts():
+    a = 3.0
+    f = lambda x: np.sin(a*x + 1.0)
+    df = lambda x: a*np.cos(a*x + 1.0)
+    for i in [16, 32]:
+        D, x = riccati.cheb(i)
+        w = riccati.quadwts(i)
+        maxerr = w.dot(df(x)) - (f(1) - f(-1)) 
+        assert  maxerr < 1e-8
+
+
 def test_cheb():
     a = 3.0
     f = lambda x: np.sin(a*x + 1.0)
@@ -49,14 +60,14 @@ def test_nonosc_step():
     assert y_err < 1e-8 and dy_err < 1e-8
 
 
-#def test_choose_stepsize():
-#    w = lambda x: np.sqrt(x)
-#    g = lambda x: 0.0
-#    x0 = 1e8
-#    h = 1e10
-#    hnew = riccati.choose_stepsize(w, g, x0, h, p = 16)
-#    print(hnew)
-#    # TODO: Not quite sure how to test this...
+##def test_choose_stepsize():
+##    w = lambda x: np.sqrt(x)
+##    g = lambda x: 0.0
+##    x0 = 1e8
+##    h = 1e10
+##    hnew = riccati.choose_stepsize(w, g, x0, h, p = 16)
+##    print(hnew)
+##    # TODO: Not quite sure how to test this...
 
 def test_solve_airy():
     w = lambda x: np.sqrt(x)
@@ -163,4 +174,4 @@ def test_nonosc_evolve():
     yerr = np.abs((ytrue - ys)/ytrue)
     maxerr = max(yerr)
     assert maxerr < 1e-10
- 
+

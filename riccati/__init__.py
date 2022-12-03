@@ -1,6 +1,30 @@
 import numpy as np
 import math
+import scipy
 import scipy.linalg
+
+def quadwts(n):
+
+    if n == 0:
+        w = 0
+    else:
+        a = np.linspace(0.0, np.pi, n+1)
+        w = np.zeros(n+1)
+        v = np.ones(n-1)
+        if n % 2 == 0:
+            w[0] = 1.0/(n**2 - 1)
+            w[n] = w[0]
+            for k in range(1, n//2):
+                v = v - 2*np.cos(2*k*a[1:-1])/(4*k**2 - 1)
+            v -= np.cos(n*a[1:-1])/(n**2 - 1)
+        else:
+            w[0] = 1.0/n**2
+            w[n] = w[0]
+            for k in range(1,(n+1)//2):
+                v -= 2*np.cos(2*k*a[1:-1])/(4*k**2 - 1)
+        w[1:-1] = 2*v/n
+    return w
+
 
 def cheb(n):
     """
@@ -26,6 +50,7 @@ def cheb(n):
     if n == 0:
         x = 1
         D = 0
+        w = 0
     else:
         a = np.linspace(0.0, np.pi, n+1)
         x = np.cos(a)
@@ -379,7 +404,7 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     R = lambda d: 2/h*Dn.dot(d) + d**2
     Ry = 1j*2*(1/h*Dn.dot(ws) + gs*ws)
     maxerr = max(np.abs(Ry))
-    #print("Initial res: {}".format(maxerr))
+#    print("Initial res: {}".format(maxerr))
     prev_err = np.inf
     if plotting == False:
         while maxerr > epsres:
@@ -387,7 +412,7 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
             y = y + deltay
             Ry = R(deltay)       
             maxerr = max(np.abs(Ry))
-            #print("max residual is {}".format(maxerr))
+#            print("max residual is {}".format(maxerr))
             if maxerr >= prev_err:
                 success = 0
                 break
@@ -403,8 +428,9 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     du1 = y
     du2 = np.conj(du1)
     # LU
-    u1 = h/2*scipy.linalg.lu_solve((info.DnLU, info.Dnpiv), du1, check_finite = False)
-    u1 -= u1[-1]
+#    u1 = h/2*scipy.linalg.lu_solve((info.DnLU, info.Dnpiv), du1, check_finite = False)
+#    u1 -= u1[-1]
+    u1 = h/2*info.quadwts.dot(du1)
     u2 = np.conj(u1)
     f1 = np.exp(u1)
     f2 = np.conj(f1)
@@ -412,12 +438,13 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     am = (dy0 - y0*du1[-1])/(du2[-1] - du1[-1])
     y1 = ap*f1 + am*f2
     dy1 = ap*du1*f1 + am*du2*f2
-    phase = np.imag(u1[0])
+    phase = np.imag(u1)
     info.increase(sub = 1, riccstep = 1)
     if plotting:
         return maxerr
     else:
-        return y1[0], dy1[0], maxerr, success, phase
+#        print(y1, dy1, maxerr, phase)
+        return y1, dy1[0], maxerr, success, phase
 
 def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
     """
@@ -565,7 +592,8 @@ class Solverinfo:
         self.xpinterp = np.cos(np.linspace(np.pi/(2*self.p), np.pi*(1 - 1/(2*self.p)), self.p))
         self.L = interp(self.xp, self.xpinterp)
         self.increase(LS = 1)
-        self.DnLU, self.Dnpiv = scipy.linalg.lu_factor(self.Dn, check_finite = False)
+        self.quadwts = quadwts(n)
+        #self.DnLU, self.Dnpiv = scipy.linalg.lu_factor(self.Dn, check_finite = False)
         self.increase(LU = 1)
 
     def increase(self, chebnodes = 0, chebstep = 0, chebits = 0, LS2x2 = 0, LS = 0, riccstep = 0, sub = 0, LU = 0):
@@ -672,6 +700,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     n = info.n
     p = info.p
     hi = info.h0 # Initial stepsize for calculating derivatives
+#    print(vars(info))
     
     # TODO: backwards integration
     xs = [xi]
