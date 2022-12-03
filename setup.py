@@ -11,7 +11,7 @@ plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots
 
 setup(name='riccati',
-      version='0.0.5',
+      version='0.0.6',
       description='adaptive Riccati defect correction solver',
       long_description='adaptive Riccati defect correction solver',
       author='Fruzsina J Agocs and Alex H Barnett',
