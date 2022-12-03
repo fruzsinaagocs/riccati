@@ -498,7 +498,7 @@ def Bremer237(l, n, eps, epsh, outdir, rdc = True, wkbmarching = False,\
     refarray = np.genfromtxt(reftable, delimiter=',')
     ls = refarray[:,0]
     ytrue = refarray[abs(ls -l) < 1e-8, 1]
-    errref = refarray[abs(ls -l) < 1e-8, 1]
+    errref = refarray[abs(ls -l) < 1e-8, 2]
 
     if rdc:
         N = 1000 # Number of repetitions for timing
@@ -521,6 +521,7 @@ def Bremer237(l, n, eps, epsh, outdir, rdc = True, wkbmarching = False,\
         info.n_riccstep /= N
         info.n_LU = (info.n_LU - 1)/N + 1
         info.n_sub /= N
+        info.n_LS = (info.n_LS - 1)/N + 1
     
         statdict = info.output(stypes)
 
@@ -561,12 +562,15 @@ def Bremer237(l, n, eps, epsh, outdir, rdc = True, wkbmarching = False,\
         w_count = 0
         g_count = 0
     
-        N = 100
+        if eps < 1e-8 and l < 1e4:
+            N = 10
+        else:
+            N = 100
     
         # Time this process
         start = time.time_ns()
         for i in range(N):
-            solution = pyoscode.solve_fn(w, g, xi, xf, yi, dyi, rtol = 1e-12)
+            solution = pyoscode.solve_fn(w, g, xi, xf, yi, dyi, rtol = eps)
         end = time.time_ns()
         xs = solution['t']
         ys = solution['sol']
@@ -617,6 +621,7 @@ def Bremer237(l, n, eps, epsh, outdir, rdc = True, wkbmarching = False,\
         kummerstdout = kummeroutput.stdout.decode('utf-8')
         y, runtime, n_fevals = [float(i) for i in kummerstdout.split()]
         yerr = np.abs((ytrue - y)/ytrue)
+        print(yerr, ytrue, y)
 
         # Write to txt file
         # Create dir
@@ -640,6 +645,15 @@ def Bremer237(l, n, eps, epsh, outdir, rdc = True, wkbmarching = False,\
  
     
     if wkbmarching:
+        if eps < 1e-8 and l < 1e2:
+            N = 1000
+        elif eps < 1e-8 and l < 1e4:
+            N = 100
+        elif l < 1e2:
+            N = 100
+        else:
+            N = 100000
+        print("N:", N)
         # Write to txt file
         # Create dir
         matlabscript = "bremer237"
@@ -648,7 +662,7 @@ def Bremer237(l, n, eps, epsh, outdir, rdc = True, wkbmarching = False,\
         outputpath = Path(outputf)
         os.chdir("/mnt/home/fagocs/riccati-paper/code/arnoldwkb")
         # Run matlab script (will write file)
-        os.system("matlab -batch \"global aeval; {}({}, {}, {}); exit\" ".format(matlabscript, l, eps, outputf))
+        os.system("matlab -batch \"global aeval; {}({}, {}, {}, {}); exit\" ".format(matlabscript, l, eps, N, outputf))
 
     if rk:
         # We're only running this once because it's slow
@@ -688,6 +702,8 @@ def Bremer237(l, n, eps, epsh, outdir, rdc = True, wkbmarching = False,\
         
 
 def bremer237_timing_fig(outdir):
+    # Helper function
+    round_to_n = lambda n, x: x if x == 0 else round(x, - int(math.floor(math.log10(abs(x)))) + (n-1))
 
     # Read in little tables and combine into one pandas dataframe
     outputfs = [outdir + "/{0}/bremer237-{0}.txt".format(method) for method in ["rk", "rdc", "kummer", "oscode", "wkbmarching"]] 
@@ -715,16 +731,19 @@ def bremer237_timing_fig(outdir):
     lrk = allrk['l'] 
     lricc = allricc['l'] 
     larn = allarn['l'] 
+    lkum = allkummer['l']
     tosc = allosc['tsolve']
     trk = allrk['tsolve']
     tricc = allricc['tsolve']
+    tkum = allkummer['tsolve']
     tarn = allarn['tsolve']
     eosc = allosc['relerr']
     erk = allrk['relerr']
     ericc = allricc['relerr']
     earn = allarn['relerr']
+    ekum = allkummer['relerr']
 
-    allosc2 = oscodes.loc[oscodes['eps'] == 1e-12]
+    allosc2 = oscodes.loc[oscodes['eps'] == 1e-6]
     allrk2 = rks.loc[rks['eps'] == 1e-6] 
     allricc2 = rdcs.loc[rdcs['eps'] == 1e-6]
     allarn2 = wkbs.loc[wkbs['eps'] == 1e-6]
@@ -734,76 +753,140 @@ def bremer237_timing_fig(outdir):
     lrk2 = allrk2['l'] 
     lricc2 = allricc2['l'] 
     larn2 = allarn2['l'] 
+    lkum2 = allkummer2['l']
     tosc2 = allosc2['tsolve']
     trk2 = allrk2['tsolve']
     tricc2 = allricc2['tsolve']
     tarn2 = allarn2['tsolve']
+    tkum2 = allkummer2['tsolve']
     eosc2 = allosc2['relerr']
     erk2 = allrk2['relerr']
     ericc2 = allricc2['relerr']
     earn2 = allarn2['relerr']
+    ekum2 = allkummer2['relerr']
 
     # Bremer 'exclusion zone'
     ebrem = np.array([7e-14, 5e-13, 3e-12, 5e-11, 3e-10, 5e-9, 4e-8])
 
     # Colourmap
     tab20c = matplotlib.cm.get_cmap('tab20c').colors
+    tab20b = matplotlib.cm.get_cmap('tab20b').colors
 
-#    plt.style.use('riccatipaper')
+
+    plt.style.use('riccatipaper')
     fig, (ax0, ax1) = plt.subplots(1, 2, figsize = (6, 3))
     l1, = ax0.loglog(lrk, trk, '.-', c = tab20c[0*4 + 0])
     l2, = ax0.loglog(losc, tosc, 'o-', c = tab20c[1*4 + 0])
     l3, = ax0.loglog(larn, tarn, '^-', c = tab20c[2*4 + 0])
-    l4, = ax0.loglog(lricc, tricc, 'x-', c = tab20c[3*4 + 0])
-    l5, = ax0.loglog(lrk2, trk2, marker = '.', ls = '--',  c = tab20c[0*4 + 1])
-    l6, = ax0.loglog(losc2, tosc2, marker = 'o', ls = '--', c = tab20c[1*4 + 1])
-    l7, = ax0.loglog(larn2, tarn2, marker = '^', ls = '--', c = tab20c[2*4 + 1])
-    l8, = ax0.loglog(lricc2, tricc2, marker = 'x', ls = '--', c = tab20c[3*4 + 1])
-    # Invisible lines
-    l9, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[0*4 + 0])
-    l10, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[1*4 + 0])
-    l11, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[2*4 + 0])
-    l12, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[3*4 + 0])
-    l13, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[0*4 + 1])
-    l14, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[1*4 + 1])
-    l15, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[2*4 + 1])
-    l16, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[3*4 + 1])
-    l = ax0.legend([(l1, l5), (l2, l6), (l3, l7), (l4, l8), (l9, l10, l11, l12), (l13, l14, l15, l16)], ['RK78', '\\texttt{oscode}', 'WKB marching', 'RDC', '$\\varepsilon = 10^{-12}$', '$\\varepsilon = 10^{-6}$'], handler_map = {tuple: HandlerTupleVertical()})
+    l4, = ax0.loglog(lkum, tkum, 'x-', c = tab20c[3*4 + 0])
+    l5, = ax0.loglog(lricc, tricc, 'v-', c = tab20b[2*4 + 0])
 
-#    ax1.fill_between(losc, np.ones_like(losc)*1e-14, ebrem, color = 'grey', alpha = 0.4, linewidth=0.0)
+    l6, = ax0.loglog(lrk2, trk2, marker = '.', ls = '--',  c = tab20c[0*4 + 1])
+    l7, = ax0.loglog(losc2, tosc2, marker = 'o', ls = '--', c = tab20c[1*4 + 1])
+    l8, = ax0.loglog(larn2, tarn2, marker = '^', ls = '--', c = tab20c[2*4 + 1])
+    l9, = ax0.loglog(lkum2, tkum2, marker = 'x', ls = '--', c = tab20c[3*4 + 1])
+    l10, = ax0.loglog(lricc2, tricc2, marker = 'v', ls = '--', c = tab20b[2*4 + 1])
+
+    # Invisible lines
+    l11, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[0*4 + 0])
+    l12, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[1*4 + 0])
+    l13, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[2*4 + 0])
+    l14, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[3*4 + 0])
+    l15, = ax0.loglog(lricc, tricc*1e-5, c = tab20b[2*4 + 0])
+    l16, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[0*4 + 1])
+    l17, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[1*4 + 1])
+    l18, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[2*4 + 1])
+    l19, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[3*4 + 1])
+    l20, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20b[2*4 + 1])
+
+    l = ax0.legend([(l1, l6), (l2, l7), (l3, l8), (l4, l9), (l5, l10), (l11, l12, l13, l14, l15), (l16, l17, l18, l19, l20)], ['RK78', '\\texttt{oscode}', 'WKB marching', "Kummer's phase function", 'ARDC', '$\\varepsilon = 10^{-12}$', '$\\varepsilon = 10^{-6}$'], handler_map = {tuple: HandlerTupleVertical()})
+
+    ax1.fill_between(losc, np.ones_like(losc)*1e-14, ebrem, color = 'grey', alpha = 0.4, linewidth=0.0)
     ax1.loglog(losc, np.ones_like(losc)*1e-6, ls = 'dotted', c = 'grey')
     ax1.loglog(losc, np.ones_like(losc)*1e-12, ls = 'dotted', c = 'black')
     l1, = ax1.loglog(lrk, erk, '.-', c = tab20c[0*4 + 0])
     l2, = ax1.loglog(losc, eosc, 'o-', c = tab20c[1*4 + 0])
     l3, = ax1.loglog(larn, earn, '^-', c = tab20c[2*4 + 0])
-    l4, = ax1.loglog(lricc, ericc, 'x-', c = tab20c[3*4 + 0])
-    l5, = ax1.loglog(lrk2, erk2, marker = '.', ls = '--',  c = tab20c[0*4 + 1])
-    l6, = ax1.loglog(losc2, eosc2, marker = 'o', ls = '--', c = tab20c[1*4 + 1])
-    l7, = ax1.loglog(larn2, earn2, marker = '^', ls = '--', c = tab20c[2*4 + 1])
-    l8, = ax1.loglog(lricc2, ericc2, marker = 'x', ls = '--', c = tab20c[3*4 + 1])
+    l4, = ax1.loglog(lkum, ekum, 'x-', c = tab20c[3*4 + 0])
+    l5, = ax1.loglog(lricc, ericc, 'v-', c = tab20b[2*4 + 0])
+
+    l6, = ax1.loglog(lrk2, erk2, marker = '.', ls = '--',  c = tab20c[0*4 + 1])
+    l7, = ax1.loglog(losc2, eosc2, marker = 'o', ls = '--', c = tab20c[1*4 + 1])
+    l8, = ax1.loglog(larn2, earn2, marker = '^', ls = '--', c = tab20c[2*4 + 1])
+    l9, = ax1.loglog(lkum2, ekum2, marker = 'x', ls = '--', c = tab20c[3*4 + 1])
+    l10, = ax1.loglog(lricc2, ericc2, marker = 'v', ls = '--', c = tab20b[2*4 + 1])
     # Invisible lines
-    l9, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[0*4 + 0])
-    l10, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[1*4 + 0])
-    l11, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[2*4 + 0])
-    l12, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[3*4 + 0])
-    l13, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[0*4 + 1])
-    l14, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[1*4 + 1])
-    l15, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[2*4 + 1])
-    l16, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[3*4 + 1])
-    l = ax1.legend([(l1, l5), (l2, l6), (l3, l7), (l4, l8), (l9, l10, l11, l12), (l13, l14, l15, l16)], ['RK78', '\\texttt{oscode}', 'WKB marching', 'RDC', '$\\varepsilon = 10^{-12}$', '$\\varepsilon = 10^{-6}$'], handler_map = {tuple: HandlerTupleVertical()}, loc = 'upper left')
+    
+    l11, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[0*4 + 0])
+    l12, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[1*4 + 0])
+    l13, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[2*4 + 0])
+    l14, = ax0.loglog(lricc, tricc*1e-5, c = tab20c[3*4 + 0])
+    l15, = ax0.loglog(lricc, tricc*1e-5, c = tab20b[2*4 + 0])
+    l16, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[0*4 + 1])
+    l17, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[1*4 + 1])
+    l18, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[2*4 + 1])
+    l19, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20c[3*4 + 1])
+    l20, = ax0.loglog(lricc, tricc*1e-5, '--', c = tab20b[2*4 + 1])
+
+    l = ax1.legend([(l1, l6), (l2, l7), (l3, l8), (l4, l9), (l5, l10), (l11, l12, l13, l14, l15), (l16, l17, l18, l19, l20)], ['RK78', '\\texttt{oscode}', 'WKB marching', "Kummer's phase function", 'ARDC', '$\\varepsilon = 10^{-12}$', '$\\varepsilon = 10^{-6}$'], handler_map = {tuple: HandlerTupleVertical()}, loc = 'upper left')
 
     ax1.set_ylabel('relative error, $|\Delta u/u|$')
     ax0.set_ylabel('runtime/s, $t_{\mathrm{solve}}$')
     ax1.set_xlabel('$\lambda$')
     ax0.set_xlim((1e1, 1e7))
-    ax0.set_ylim((5e-4, 5e4))
+    ax0.set_ylim((2e-4, 2e5))
     ax1.set_xlim((1e1, 1e7))
-    ax1.set_ylim((7e-14, 2e1))
-#    ax1.set_ylim((7e-14, 1e0))
+    ax1.set_ylim((7e-14, 2e2))
     ax0.set_xlabel('$\lambda$')
 
-    plt.show()
-#    plt.savefig('riccati-paper/plots/bremer237-timing.pdf')
+#    plt.show()
+    plt.savefig('/mnt/home/fagocs/riccati-paper/plots/bremer237-timing-1thread.pdf')
+
+
+    # Now make LaTeX table from the eps = 1e-12 runs
+    outputf = outdir + "/all/bremer237-all-1e-12.tex"
+    outputpath = Path(outputf)
+    outputpath.touch(exist_ok = True)
+    mnames = ['ARDC', "Kummer's phase function", "WKB marching", "\\texttt{oscode}"]
+    snames = ["rdc", "kummer", "wkbmarching", "oscode"]
+    with open(outputf, 'w') as f:
+
+        # Header
+        f.write("\\begin{tabular}{l c l c c c c c c}\n")
+        f.write("\hline \hline \n method &  $\lambda$  &  $\max|\Delta u/u|$  &  $t_{\mathrm{solve}}$/\si{\s} &  $n_{\mathrm{s,osc}}$  &  $n_{\mathrm{s,slo}}$  &  $n_{\mathrm{s,tot}}$  &  $n_{\mathrm{f}}$  &  $n_{\mathrm{LS}}$  \\\\ \hline\n")
+        
+        for mname, sname in zip(mnames, snames):
+            alldata = data.loc[solvernames == sname]
+            dataeps = alldata.loc[alldata['eps'] == 1e-12] 
+            logls = [int(logl) for logl in np.log10(dataeps['l'])]
+            relerrs = [num2tex(round_to_n(3, relerr)) if errlessref == False else "\leq {}".format(num2tex(uppererr)) for relerr, errlessref, uppererr in zip(dataeps['relerr'], dataeps['errlessref'], ebrem)]
+            tsolves = [num2tex("{:.2e}".format(tsolve)) for tsolve in dataeps['tsolve']]
+            if sname == "rdc":
+                nosc = ["({}, {})".format(int(nosca), int(noscs)) for noscs, nosca in zip(dataeps['n_s_osc_suc'], dataeps['n_s_osc_att'])]
+                nslo = ["({}, {})".format(int(nsloa), int(nslos)) for nslos, nsloa in zip(dataeps['n_s_slo_suc'], dataeps['n_s_slo_att'])]
+                nsteps = ["({}, {})".format(int(ntota), int(ntots)) for ntots, ntota in zip(dataeps['n_s_tot_suc'], dataeps['n_s_tot_att'])]
+                nls = [int(nl) for nl in dataeps['n_LS']] 
+            elif sname != "kummer":
+                nosc = [int(nos) for nos in dataeps['n_s_osc_suc']]
+                nslo = [int(nsl) for nsl in dataeps['n_s_slo_suc']]
+                nsteps = [int(nst) for nst in dataeps['n_s_tot_suc']]
+                nls = ["" for nl in dataeps['n_LS']] 
+            else:
+                nosc = ["" for nos in dataeps['n_s_osc_suc']]
+                nslo = ["" for nsl in dataeps['n_s_slo_suc']]
+                nsteps = ["" for nst in dataeps['n_s_tot_suc']]
+                nls = ["" for nl in dataeps['n_LS']]
+            nfeval = [int(fev) for fev in dataeps['n_f']]
+            for i, col1, col2, col3, col4, col5, col6, col7, col8 in zip(range(len(logls)), logls, relerrs, tsolves, nosc, nslo, nsteps, nfeval, nls):
+                if i == 0:
+                    # Only first row of each method has method name
+                    f.write("{} & $10^{}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$ \\\\ \n".format(mname, col1, col2, col3, col4, col5, col6, col7, col8))
+                else:
+                     f.write(" & $10^{}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$  &  ${}$\\\\ \n".format(col1, col2, col3, col4, col5, col6, col7, col8))
+            # Separator between methods
+            f.write("\hline \hline\n")
+        # Footer
+        f.write("\end{tabular}\n")
 
 
 def oscode237(l):
@@ -1049,21 +1132,21 @@ def cosmology():
 #    legendre(m)
 #residual()
 
-for m in np.logspace(1, 7, num = 7):
-    print("Testing solver on Bremer 2018 Eq. (237) with lambda = {}".format(m))
-    print("Low tolerance")
-    # Low tolerance
-    eps = 1e-12
-    epsh = 1e-13
-    n = 40
-    outdir = "/mnt/home/fagocs/riccati-paper/tables/new/"
-    if m < 1e7:
-#        Bremer237(m, n, eps, epsh, outdir, rk = False, rdc = False, oscode = False, wkbmarching = True, kummer = False)
-        Bremer237(m, n, eps, epsh, outdir, rk = True, rdc = True, oscode = True, wkbmarching = True, kummer = True)
-    else:
-#        Bremer237(m, n, eps, epsh, outdir, rk = False, rdc = False, oscode = False, wkbmarching = True, kummer = False)
-        Bremer237(m, n, eps, epsh, outdir, rk = False, rdc = True, oscode = True, wkbmarching = True, kummer = True)
-
+#for m in np.logspace(1, 7, num = 7):
+#    print("Testing solver on Bremer 2018 Eq. (237) with lambda = {}".format(m))
+#    print("Low tolerance")
+#    # Low tolerance
+#    eps = 1e-12
+#    epsh = 1e-13
+#    n = 20
+#    outdir = "/mnt/home/fagocs/riccati-paper/tables/new/"
+#    if m < 1e7:
+##        Bremer237(m, n, eps, epsh, outdir, rk = False, rdc = False, oscode = False, wkbmarching = True, kummer = False)
+#        Bremer237(m, n, eps, epsh, outdir, rk = False, rdc = False, oscode = False, wkbmarching = False, kummer = True)
+#    else:
+##        Bremer237(m, n, eps, epsh, outdir, rk = False, rdc = False, oscode = False, wkbmarching = True, kummer = False)
+#        Bremer237(m, n, eps, epsh, outdir, rk = False, rdc = False, oscode = False, wkbmarching = False, kummer = True)
+#
 #airy()
 #for m in np.logspace(1, 7, num = 4):
 #    print("starting ", m)
@@ -1071,6 +1154,6 @@ for m in np.logspace(1, 7, num = 7):
 #    print("done ", m)
 #cosmology()
 #convergence()
-#bremer237_timing_fig("/mnt/home/fagocs/riccati-paper/tables/new")
+bremer237_timing_fig("/mnt/home/fagocs/riccati-paper/tables/new")
 #Bremer237(1e1)
 

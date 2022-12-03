@@ -95,43 +95,28 @@ interval used for testing in the text.
 
 * Fig. 4 is never referred to in text! Please fix.
 
-* figure 2 balls: could you move the rho label to look like the radius -
-currently it's confusing since the label on the Im axis should be -rho.
-
-* fig 2 flowchart: t_i is used in text, so change t_j to t_i to match.
-
 * Consider splitting Fig. 1 R panel to go with much later Airy results.
 It's weird to have to go back so far in paper to find this figure.
-
-* remove 1/2pi factor from kappa estimate in code.
-(since radians phase is better estimate than # periods.) Text is done.
 
 * Future work:
  - analyse discretized iteration (matvec plus pointwise square).
   (no reason why high-order derivs on p=16 cheby grid should remain accurate!)
 
+* push the boundaries of understanding the k=5 kink in the demo - is it
+do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
+Consider adding 2nd plot in fig.1 of the R iteration for different interval
+or omega(t) func.
+
 * update struct of paper paragraph after later edits
 
 * cite URL for code repo.
 
-* Table 1 {bremer237tab} needs method labels.
-  Add Bremer timings on your machine, maybe add # func evals in the Table.
-  OR, just quotes some timings in the text, to get the timing ratio on the
-  same machine. Decide how much of a deal you're making about the 10x speedup,
-  if it persists on the same machine.
-  
 * Table 2 uses Ricc, Cheb but Table 1 and text
 uses osc, slo. Please be consistent.
 
 * address issues in 4.3: IC, why avoid [0,0.1] and [0.9,1),
 speed of new t evals.
-
-* consider using block 2x2 notation for {discreteodeic} to save vertical space
-
-* push the boundaries of understanding the k=5 kink in the demo - is it
-do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
-Consider adding 2nd plot in fig.1 of the R iteration for different interval
-or omega(t) func.
+-> details of how to get initiial conditions, refer to DLMF.
 
 * You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
 The symbols others used are not sacred, for test problems; more important to have coherency.
@@ -141,8 +126,23 @@ The symbols others used are not sacred, for test problems; more important to hav
 
 
 
-
 ======== DONE
+
+* Table 1 {bremer237tab} needs method labels.
+  Add Bremer timings on your machine, maybe add # func evals in the Table.
+  OR, just quotes some timings in the text, to get the timing ratio on the
+  same machine. Decide how much of a deal you're making about the 10x speedup,
+  if it persists on the same machine.
+ 
+* consider using block 2x2 notation for {discreteodeic} to save vertical space
+
+* figure 2 balls: could you move the rho label to look like the radius -
+currently it's confusing since the label on the Im axis should be -rho.
+
+* fig 2 flowchart: t_i is used in text, so change t_j to t_i to match.
+
+* remove 1/2pi factor from kappa estimate in code.
+(since radians phase is better estimate than # periods.) Text is done.
 
 * correct that we solve for derivative of phase function.
 Not PF itself.  Correct alpha usage in Bremer review.

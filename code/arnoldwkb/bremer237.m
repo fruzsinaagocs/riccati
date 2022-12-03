@@ -7,7 +7,7 @@
 % equation in the highly oscillatory regime
 %
 % See also: doc adaptive_WKB_marching_method
-function bremer237(l, eps, outputf)
+function bremer237(l, eps, N, outputf)
 
 % Either give the exact phase as input or compute it numerically. Just
 % comment or uncomment.
@@ -58,7 +58,6 @@ switch phase
         phase_info = n_int;
 end
 
-N = 10000;
 tic;
 for i = 1:N
     [PhiSol, xGrid, scheme_flag_vec] = ...

@@ -999,23 +999,35 @@ Stacking these conditions as rows gives the overdetermined $(n+3) \times (n+1)$ 
 \be\label{discreteodeic}
 \renewcommand*{\arraystretch}{1.25}
 \begin{bmatrix}
-    (F_n)_{00} & \ldots & (F_n)_{0n} \\
-    \vdots & \ddots & \vdots \\
-    (F_n)_{n0} & \ldots & (F_n)_{nn} \\
-    (D_n)_{00} & \ldots & (D_n)_{0n} \\
-    0 & \ldots & 1
-    % AB: note last row is ambiguous. A 2x2 block notation may be easier and
-    % shorter
-    % FA: Noticed that last row of this system was inconsistent with our Cheby node ordering, so corrected it.
+    F_n \\
+    (D_n)_{n,:} \\
+    (\mathbb{I}_n)_{n,:}
 \end{bmatrix}
-\mbf{u} =  
+\mbf{u}
+= 
 \begin{bmatrix}
-0 \\
-\vdots \\
-0 \\
-u'(t_i) \\
-u(t_i)
+\mbf{0}_n \\
+    u'(t_i) \\
+    u(t_i)
 \end{bmatrix},
+%\begin{bmatrix}
+%    (F_n)_{00} & \ldots & (F_n)_{0n} \\
+%    \vdots & \ddots & \vdots \\
+%    (F_n)_{n0} & \ldots & (F_n)_{nn} \\
+%    (D_n)_{00} & \ldots & (D_n)_{0n} \\
+%    0 & \ldots & 1
+%    % AB: note last row is ambiguous. A 2x2 block notation may be easier and
+%    % shorter
+%    % FA: Noticed that last row of this system was inconsistent with our Cheby node ordering, so corrected it.
+%\end{bmatrix}
+%\mbf{u} =  
+%\begin{bmatrix}
+%0 \\
+%\vdots \\
+%0 \\
+%u'(t_i) \\
+%u(t_i)
+%\end{bmatrix},
 \ee
 which is solved in the least-squares sense via SVD with $\bigO(n^3)$ cost.
 % AB *** please check - we need to say how.
@@ -1886,13 +1898,13 @@ We now describe the quantities tabulated in \cref{bremer237tab}:
 
 \begin{table*}[tb]
     \renewcommand{\arraystretch}{1.2}
-    \resizebox{\textwidth}{!}{\input{tables/old/all/bremer237_oscmethods_masked}}
+    \resizebox{\textwidth}{!}{\input{tables/new/all/bremer237-all-1e-12}}
     \caption{\label{bremer237tab} Accuracy, runtime and evaluation statistics of the algorithms
       considered (the present method,
       %the Kummer's phase function method,
       \texttt{oscode},
       and the WKB marching method) when applied to \cref{bremer237eq}.
-      See Section~\ref{solvercomp} for an expanation of column headers
+      See Section~\ref{solvercomp} for an explanation of column headers
       and solver settings.}
 \end{table*}
 
@@ -1940,7 +1952,7 @@ $\mathcal{O}(10^{-6})$ \si{\s} per new target time.
 
 \begin{figure}[tb]
     \centering
-    \includegraphics{plots/bremer237-timing.pdf}
+    \includegraphics{plots/bremer237-timing-1thread.pdf}
     \caption{\label{bremer237-timing} Performance comparison of the proposed ARDC method against
     other state-of-the-art methods for \cref{bremer237eq}. The left panel
     shows the total runtime of the solvers listed in \cref{solvercomp} as the
