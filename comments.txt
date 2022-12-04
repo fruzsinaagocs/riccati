@@ -111,22 +111,21 @@ or omega(t) func.
 
 * cite URL for code repo.
 
-* Table 2 uses Ricc, Cheb but Table 1 and text
-uses osc, slo. Please be consistent.
-
 * address issues in 4.3: IC, why avoid [0,0.1] and [0.9,1),
 speed of new t evals.
 -> details of how to get initiial conditions, refer to DLMF.
+-> UPDATE: now solving on [0.0, 0.9]. No fundamental reason not to start from 0.0, was just a coding issue (w/w'=inf and g/g'= 0 at t=0 caused issues in stepsize-selection).
 
 * You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
 The symbols others used are not sacred, for test problems; more important to have coherency.
 
 * check Riccati n=40 in Sec 4.2 - seems awfully large.
 
-
-
-
 ======== DONE
+
+
+* Table 2 uses Ricc, Cheb but Table 1 and text
+uses osc, slo. Please be consistent.
 
 * Table 1 {bremer237tab} needs method labels.
   Add Bremer timings on your machine, maybe add # func evals in the Table.
