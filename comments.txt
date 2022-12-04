@@ -92,7 +92,6 @@ interval used for testing in the text.
 
 ====== REMAINING TO DO LIST ==================================================
 
-
 * Fig. 4 is never referred to in text! Please fix.
 
 * Consider splitting Fig. 1 R panel to go with much later Airy results.
@@ -119,10 +118,16 @@ speed of new t evals.
 * You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
 The symbols others used are not sacred, for test problems; more important to have coherency.
 
-* check Riccati n=40 in Sec 4.2 - seems awfully large.
+
+
 
 ======== DONE
 
+* check Riccati n=40 in Sec 4.2 - seems awfully large.
+-> Yep, that's correct. This is a super oscillatory eq well approximated by an
+asymptotic expansion at large \lambda, so the solver is taking huge timesteps
+(only 2 timesteps during the entire interval). A large n is required for that
+many digits of accuracy! I can decrease n, but we will lose digits.
 
 * Table 2 uses Ricc, Cheb but Table 1 and text
 uses osc, slo. Please be consistent.
