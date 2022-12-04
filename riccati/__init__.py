@@ -391,10 +391,6 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     manually.
     """
     #print("Taking oscillatory step of size {} from {} to {}".format(h, x0, x0+h))
-    #print("Checking cached data:")
-    #print("info.wn: ", info.wn)
-    #print("wn: ", info.w(x0 + h/2 + h/2*info.xn))
-    #print("info.xn scaled: ", x0 + h/2 + h/2*info.xn)
     success = 1
     ws = info.wn
     gs = info.gn
@@ -404,7 +400,7 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     R = lambda d: 2/h*Dn.dot(d) + d**2
     Ry = 1j*2*(1/h*Dn.dot(ws) + gs*ws)
     maxerr = max(np.abs(Ry))
-#    print("Initial res: {}".format(maxerr))
+    #print("Initial res: {}".format(maxerr))
     prev_err = np.inf
     if plotting == False:
         while maxerr > epsres:
@@ -412,9 +408,10 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
             y = y + deltay
             Ry = R(deltay)       
             maxerr = max(np.abs(Ry))
-#            print("max residual is {}".format(maxerr))
+            #print("max residual is {}".format(maxerr))
             if maxerr >= prev_err:
                 success = 0
+                #print("Unsuccessful osc step")
                 break
             prev_err = maxerr
     else:
@@ -489,7 +486,7 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
         Takes the value `1` if the asymptotic series has reached `epsres`
         residual, `0` otherwise.
     """
-    #print("Taking nonosc step")
+    #print("Taking nonosc step from x0 = {} of size h = {}".format(x0, h))
     success = 1
     maxerr = 10*epsres
     N = info.nini
@@ -499,15 +496,18 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
         N *= 2
         if N > Nmax:
             success = 0
+            #print("Unsuccessful nonosc step")
             return 0, 0, maxerr, success
         y, dy, x = spectral_cheb(info, x0, h, y0, dy0, int(np.log2(N/info.nini))) 
         maxerr = np.abs((yprev[0] - y[0])/y[0])
+        #print("max err: ", maxerr)
         if np.isnan(maxerr):
             maxerr = np.inf
         yprev = y
         dyprev = dy
         xprev = x
     info.increase(chebstep = 1)
+    #print("Successful nonosc step")
     return y[0], dy[0], maxerr, success
 
 def spectral_cheb(info, x0, h, y0, dy0, niter):
@@ -700,7 +700,6 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     n = info.n
     p = info.p
     hi = info.h0 # Initial stepsize for calculating derivatives
-#    print(vars(info))
     
     # TODO: backwards integration
     xs = [xi]
@@ -715,13 +714,14 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     dyprev = dy
     wis = w(xi + hi/2 + hi/2*xn)
     gis = g(xi + hi/2 + hi/2*xn)
-    wi = wis[-1]
-    gi = gis[-1]
-    dwi = 2/hi*Dn.dot(wis)[-1] 
-    dgi = 2/hi*Dn.dot(gis)[-1] 
+    wi = np.mean(wis)
+    gi = np.mean(gis)
+    dwi = np.mean(2/hi*Dn.dot(wis))
+    dgi = np.mean(2/hi*Dn.dot(gis))
     # Choose initial stepsize
     hslo_ini = min(1e8, np.abs(1/wi))
     hosc_ini = min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
+    #print("hslo ini: {}, hosc ini: {}".format(hslo_ini, hosc_ini))
     hslo = choose_nonosc_stepsize(info, xi, hslo_ini)
     hosc = choose_osc_stepsize(info, xi, hosc_ini, epsh = epsh)  
     xcurrent = xi
@@ -733,7 +733,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
         #tw = np.abs(wnext/dwnext)
         #tw_ty = tw/ty
         success = 0
-        #print("hosc: {}, hslo: {}".format(hosc, hslo))
+        #print("hslo: {}, hosc: {}".format(hslo, hosc))
         if hosc > hslo*5 and hosc*wnext/(2*np.pi) > 1:
             if hard_stop:
                 if xcurrent + hosc > xf:
