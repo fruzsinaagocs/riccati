@@ -56,8 +56,13 @@ def airy():
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     info = riccati.setup(w, g, n = 32, p = 32)
-    xs, ys, dys, ss, ps, stypes = riccati.solve(info, xi, xf, yi, dyi, eps = eps, epsh = epsh)
+    startt = time.time_ns()
+    for i in range(1000):
+        xs, ys, dys, ss, ps, stypes = riccati.solve(info, xi, xf, yi, dyi, eps = eps, epsh = epsh)
+    endt = time.time_ns()
+    print("time: ", 1e-12*(endt - startt))
     print(xs, ys)
+    print(len(xs))
     xs = np.array(xs)
     ys = np.array(ys)
     ss = np.array(ss)
@@ -888,12 +893,12 @@ outdir = "/mnt/home/fagocs/riccati-paper/tables/new/"
 
 #bremer237_timing_fig(outdir)
 
-#airy()
+airy()
 
 #convergence()
 
-for m in np.logspace(1, 9, num = 9):
-    print(m)
-    legendre(outdir, m)
+#for m in np.logspace(1, 9, num = 9):
+#    print(m)
+#    legendre(outdir, m)
 
 
