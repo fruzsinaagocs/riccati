@@ -92,7 +92,6 @@ interval used for testing in the text.
 
 ====== REMAINING TO DO LIST ==================================================
 
-* Fig. 4 is never referred to in text! Please fix.
 
 * Consider splitting Fig. 1 R panel to go with much later Airy results.
 It's weird to have to go back so far in paper to find this figure.
@@ -110,18 +109,19 @@ or omega(t) func.
 
 * cite URL for code repo.
 
-* address issues in 4.3: IC, why avoid [0,0.1] and [0.9,1),
-speed of new t evals.
--> details of how to get initiial conditions, refer to DLMF.
--> UPDATE: now solving on [0.0, 0.9]. No fundamental reason not to start from 0.0, was just a coding issue (w/w'=inf and g/g'= 0 at t=0 caused issues in stepsize-selection).
-
 * You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
 The symbols others used are not sacred, for test problems; more important to have coherency.
 
-
-
-
 ======== DONE
+
+* address issues in 4.3: IC, why avoid [0,0.1] and [0.9,1),
+speed of new t evals.
+-> details of how to get initial conditions, refer to DLMF.
+-> UPDATE: now solving on [0.0, 0.9]. No fundamental reason not to start from
+0.0, was just a coding issue (w/w'=inf and g/g'= 0 at t=0 caused issues in
+stepsize-selection).
+
+* Fig. 4 is never referred to in text! Please fix.
 
 * check Riccati n=40 in Sec 4.2 - seems awfully large.
 -> Yep, that's correct. This is a super oscillatory eq well approximated by an

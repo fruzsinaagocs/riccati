@@ -196,10 +196,8 @@ def legendre(outdir, m):
             g_count += 1
         return -x/(1-x**2)
 
-    epsf = 0.05 # How far from the singularity we stop integrating
     xi = 0.0
-    xf = 0.9 #1 - epsf
-    xcts = np.linspace(xi, xf, 1000)
+    xf = 0.9
 
     if m == 100:
         eps = 2e-11
@@ -208,9 +206,13 @@ def legendre(outdir, m):
     epsh = 1e-13
     n = 16
     p = n
-    yi = sp.eval_legendre(m, xi)
-    Pmm1_xi = sp.eval_legendre(m-1, xi)
-    dyi = m/(xi**2 - 1)*(xi*yi - Pmm1_xi)
+    startic = time.time_ns() 
+    for i in range(20):
+        yi = sp.eval_legendre(m, xi)
+        Pmm1_xi = sp.eval_legendre(m-1, xi)
+        dyi = m/(xi**2 - 1)*(xi*yi - Pmm1_xi)
+    endic = time.time_ns()
+    print("Initial conditions setupp time: ", 1e-9*(endic - startic)/20)
     N = 1000 # Number of repetitions for timing
 
     start = time.time_ns()
@@ -223,7 +225,11 @@ def legendre(outdir, m):
     ss = np.array(ss)
     ps = np.array(ps)
     stypes = np.array(stypes)
+    print("Starting err eval for {} test points".format(xs.shape))
+    starterr = time.time_ns()
     ytrue = sp.eval_legendre(m, xs)
+    enderr = time.time_ns()
+    print("Error evaluation time: ", 1e-9*(enderr - starterr))
     # Counted some statistics N times, correct for that:
     info.n_chebstep /= N
     info.n_riccstep /= N
@@ -232,7 +238,7 @@ def legendre(outdir, m):
     info.n_LS = (info.n_LS - 1)/N + 1
 
     statdict = info.output(stypes)
-
+    
     # Compute statistics
     steps = (statdict["cheb steps"][0] + statdict["ricc steps"][0], statdict["cheb steps"][1] + statdict["ricc steps"][1])
     steps_ricc = statdict['ricc steps']
@@ -889,4 +895,5 @@ outdir = "/mnt/home/fagocs/riccati-paper/tables/new/"
 for m in np.logspace(1, 9, num = 9):
     print(m)
     legendre(outdir, m)
+
 
