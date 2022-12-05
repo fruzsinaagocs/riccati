@@ -380,14 +380,14 @@ via $u(t) = \sin(\alpha(t) + c)/\sqrt{\alpha'(t)}$.
 %The nonoscillatory phase function $\alpha$ can be used to compute an approximation
 %of the solution of \cref{riccwkb} accurate to within
 %$\bigO((\mu\om_0)^{-1}\exp(-\mu\om_0))$ as $\om_0 \to \infty$, where $\mu$ is a constant that depends on $\Omega(t)$ but not $\om_0$.
-% AB ***: I found that confusing - I thought Bremer did not use Riccati form?
+% AB: I found that confusing - I thought Bremer did not use Riccati form?
 % FA: My bad, instead of riccwkb, it should have pointed to the original ODE.
 % I decided to cut error detail
 %
 %The proposed algorithm itself generates $\tilde{\alpha}$, an approximation
 %of $\alpha$, such that the so-called logarithm form of Kummer's
 %equation is satisfied to within $\bigO(-\tfrac{1}{2}\mu\om_0)$.
-% AB: *** somethign wrong there _^  what do you mean?  Also too much detail, so I cut.
+% AB: somethign wrong there _^  what do you mean?  Also too much detail, so I cut.
 % FA: I mean that the error in the prev paragraph would be the global error if
 % $\alpha$ were computed exactly. But it is not. Bremer says that "we describe
 % a methdod for constructing a solution of the logarithm form of Kummer’s
@@ -402,7 +402,7 @@ The results of \cite{heitman2015,bremer2016}
 prove the existence of such nonoscillatory phase functions when
 $\Omega(t)$ is
 nonoscillatory in the sense that $\log \Omega$ is smooth and its Fourier transform rapidly decaying.
-% *** AB check do you really mean smooth? since it has to be smooth in Fourier
+% AB check do you really mean smooth? since it has to be smooth in Fourier
 % due to compactness of interval. Please check.
 % FA: I checked and corrected: log \Omega has to be smooth and its Fourier transform rapidly decaying.
 Finding initial conditions on the phase function leading to
@@ -572,7 +572,7 @@ $\beta'' - (\alpha')^2 + (\beta')^2 + \om(t)^2 = 0$, and these last two equation
 are the real and imaginary parts of \cref{ricc}
 with $x = i\alpha' + \beta'$.
 
-% AB *** what did this mean?: When $\om\gg 1, \g$,
+% AB what did this mean?: When $\om\gg 1, \g$,
 % AB: the approx forms fit better above; are a distraction to the proposal here
 Given any trial solution $x$ to \cref{ricc}, we define its \emph{residual}
 as the left-hand-side of \cref{ricc}, namely
@@ -617,7 +617,7 @@ $x_{j+1} = x_j + \delta_j$ then gives our proposed \cref{iter}.
 This is a type of defect correction scheme \cite{bohmer1984}.
 % AB: you already said that but with Bellman as the ref!
 % FA: not quite, here I was citing Bohmer for defect correction, following your suggestion.
-% FA: *** So far, we have never actually said that this procedure is a type of defect correction apart
+% FA: So far, we have never actually said that this procedure is a type of defect correction apart
 % from in the title of this section and in passing in the intro! And yet in figure captions and section
 % titles we always refer to it as such, so I would like to spell it out here
 % and cite a source to say what defect correction is.
@@ -706,7 +706,7 @@ numerical quadrature (since $u(t) = \exp \int^t x(\sigma) \mathrm{d}\sigma$).
 
 Recall that on the standard interval $[-1, 1]$ the $n+1$ Chebyshev nodes are
 $\tilde\tau_l = \cos\left( l\pi/n\right)$, $l = 0, 1, \dots, n$.
-% AB *** ummm, notation clashes here: \tilde{t}_n = just the last cheby node.
+% AB ummm, notation clashes here: \tilde{t}_n = just the last cheby node.
 % I think you are using subscripts in a physics way where the *name* of the
 % subscript changes the meaning of the overall symbol... this is not used in
 % math (much).
@@ -743,7 +743,7 @@ R^{(j)}_l = \sum_{m=0}^n (D_n)_{lm}x^{(j)}_m  + [x^{(j)}_l]^2 + 2\g_lx^{(j)}_l +
 $$
 % AB: note how I needed to introduce new notation to explain the actual formula
 We postpone choice of the stopping point $k$ to \cref{steptype}.
-% AB *** please point to where this is discussed.
+% AB please point to where this is discussed.
 
 Finally, we must discretize the antiderivative operation giving
 $z(t)$ on the interval such that $z' = x$, to then recover a solution $u = e^z$.
@@ -761,9 +761,9 @@ In practice, to avoid an $\bigO(n^3)$ cost per timestep,
 the LU decomposition of $\tilde D_n = P L U$ is computed once and for all.
 At each timestep \cref{antider} is then solved
 by forward and backsubstitution at $\bigO(n^2)$ cost, followed by a rescaling by $h/2$.
-% AB *** please check the SVD aspect since I made it up based on what is sensible. I don't seem to have your code.
+% AB please check the SVD aspect since I made it up based on what is sensible. I don't seem to have your code.
 
-% AB *** discuss the two lin indep solns here? Otherwise how can matching
+% AB discuss the two lin indep solns here? Otherwise how can matching
 % of IC in demo be understood? Ah, I see matching is not needed there.
 % FA: I'm actually doing LU decomposition! Corrected accordingly. Nothing needs
 % to be done about your second comment, right?
@@ -778,7 +778,7 @@ In the left panel of \cref{convergence-plot}, we apply
 the above numerically-discretized iteration to the
 %``burst''
 equation
-% *** cite it
+% cite it
 % FA: Nothing to cite here, this is just a name we made up.
 \begin{equation}\label{bursteq}
   u'' + \om^2(t) u = 0, \quad  \om(t)=\frac{\sqrt{m^2 - 1}}{1+t^2},
@@ -798,24 +798,24 @@ having poles at $\pm i$.
 %
 % AB: You wrote:
 % starting with initial conditions $u(0) = 1/m$ and $u'(0) = i$.
-% *** AB confused since the iter does not reference nor control the ICs!
+% AB confused since the iter does not reference nor control the ICs!
 % Thus cut.
 % FA: Good point. The code needs it (since it's performing an entire Riccati
 % step), but otherwise unnecessary. I'm just used to always specifying the ODE
 % solution in full :).
 For various fixed choices of $m$, which controls
 the maximum frequency according to $\om_{\text{max}} = \sqrt{m^2-1}$,
-% *** please check the formula for max was wrong, not sure why inconsistent with above?
+% please check the formula for max was wrong, not sure why inconsistent with above?
 % FA: was typo from my end.
 we plot the maximum magnitude residual vector $\max_{0\le l \le n} |R_l^{(j)}|$
 at the nodes, as a function of iteration number $j$.
-% *** prefer j
+% prefer j
 % FA: Corrected in plot and text.
 %
 % AB: You wrote:
 %maximum residual over the length of
 %the step, $\max_{t \in [t_j, t_{j+1}]}R[x_k]$,
-% AB *** but we don't; we plot the max value at a node, right? (unless you
+% AB but we don't; we plot the max value at a node, right? (unless you
 % interpolate off the nodes... would need to state and explain that then).
 % FA: Indeed, your correction is fair.
 We observe that the residual
@@ -838,7 +838,7 @@ the true derivative after repeated applications.
 %approximation of the high-order derivatives of $\om(t)$, which has nearby
 %poles at $t=\pm i$.
 %
-% *** AB this suggests rerunning for an ODE that doesn't have such nearby
+% AB this suggests rerunning for an ODE that doesn't have such nearby
 % singularities in om. Or smaller interval. Or larger n. But you need
 % to push the boundaries of exploration here.
 % FA: Shall we do this now or in a v2?
@@ -915,10 +915,10 @@ give two linearly independent approximate solutions of the desired ODE
 \be
 u_{\pm}(t) = e^{\int_{t_i}^t x_{\pm}(\sigma)\d\sigma}.
 \label{upm}
-% *** AB fixed typo here
+% AB fixed typo here
 \ee
 Since $\om$ and $\gamma$ are real, $u_{+}$ and $u_{-}$ are complex conjugates.
-% AB *** please check this!
+% AB please check this!
 % FA: Checked, this statement is correct. Also clarified what 'they' was referring to.
 They may be linearly combined to match any set of complex-valued
 initial conditions,
@@ -989,7 +989,7 @@ diag indicates the diagonal matrix constructed from a vector.
 One must also enforce initial conditions via
 \be\label{discreteic}
 u_n
-% AB *** why was (u_n)_n here? did you mean (u_n)_0 in your notation?
+% AB why was (u_n)_n here? did you mean (u_n)_0 in your notation?
 % FA: No, that was deliberate because the Cheby nodes are ordered backwards
 % from 1 to -1 in our notation! Changed it back to how it was.
 = u(t_i), \qquad \left(D_n\mbf{u}\right)_n = u'(t_i).
@@ -1030,7 +1030,7 @@ Stacking these conditions as rows gives the overdetermined $(n+3) \times (n+1)$ 
 %\end{bmatrix},
 \ee
 which is solved in the least-squares sense via SVD with $\bigO(n^3)$ cost.
-% AB *** please check - we need to say how.
+% AB please check - we need to say how.
 % FA: Used numpy.linalg.lstsq. After some digging, this calls LAPACK's dgelsd or zgelsd depending on real or complex, which in turn use SVD.
 $u(t)$ at the interval's upped end can be read off as the first element of the
 solution vector $\mbf{u}$, and its derivative as the first element of
@@ -1038,7 +1038,7 @@ $D_n\mbf{u}$.
 % FA: For same reason as above, last -> first
 These then serve as the initial conditions for the subsequent time-step.
 (Note that square systems may also be created by removing rows \cite{tref}.)
-% *** AB is that true? in the narrative you have to state what we did,
+% AB is that true? in the narrative you have to state what we did,
 % not leave it ambiguous what we did.
 % FA: I'm not sure if that's true. If more Cheby steps are required, it may
 % become a limiting factor, but for the highly oscillatory problems I profiled,
@@ -1053,12 +1053,9 @@ These then serve as the initial conditions for the subsequent time-step.
 We estimate the error induced over this timestep $[t_i,t_i+h]$
 by comparing to the solution at the interval endpoint using a doubled value
 of $n$.
-If the
-absolute
-% *** AB? relative or abs?
-difference falls below the user-specified
-threshold $\varepsilon$, the step is accepted ($t_i$ is advanced by $h$).
-% *** AB which value is used, the original n or the doubled n one?
+If the relative difference falls below the user-specified
+threshold $\varepsilon$, the step with doubled $n$ is accepted ($t_i$ is advanced by $h$).
+% AB which value is used, the original n or the doubled n one?
 Otherwise the timestep is rejected ($t_i$ is unchanged), and the algorithm
 repeats with $h$ halved.
 Computation time spent in failed steps is lost, making
@@ -1115,7 +1112,7 @@ These initial stepsize estimates are too crude to use directly, since
 $\om$, $\om'$, or $\g$ may change significantly over such an interval.
 Nonetheless they provide a useful starting point for the algorithm that computes
 finer estimates.
-% AB *** why doesn't eps enter into either of these h estimates?
+% AB why doesn't eps enter into either of these h estimates?
 % FA: eps enters in the stepsize refinement phase -- for the initial estimate I
 % just needed a quick and dirty way of estimating the relevant timescales
 % without querying \om, \g too many times.
@@ -1127,7 +1124,7 @@ finer estimates.
 %The local error of of the asymptotic solution described in \cref{phasefun} is not
 %inherently dependent on the stepsize $h$ in the same way a \eg Runge--Kutta
 %method's is.
-% AB *** note RK would also have prefactors infront of O(h^4) that depend on
+% AB note RK would also have prefactors infront of O(h^4) that depend on
 % the coeffs, their derivs, etc. So it is no different. Also try reading your
 % sentence :)
 %
@@ -1533,7 +1530,7 @@ when $\om$ is large.
 For large $\rho\om$ one may approximately invert this to predict the iteration number $k$ sufficient for $|R_k| \approx \varepsilon$, to get
 $ k_\varepsilon \approx \frac{\log \varepsilon^{-1}}{\log \rho\om}$,
 a refinement of \cref{fewer}.
-%*** compare to numerics.
+% compare to numerics.
 
 % AB here
 Finally we show that the stopping criterion for $k$ based on the absolute
@@ -1658,16 +1655,18 @@ or by a convergence reference solver,
 and $\tilde u$ is the solution given by the method under test.
 
 All computations were performed on an Intel Xeon Gold 6244,
-16-core, 3.6 GHz workstation with 264 GB of RAM.
+16-core, 3.6 GHz workstation with 264 GB of RAM. No attempt has been made to
+parallelize our code, and for the sake of fair comparison the experiments were
+run with the \texttt{OMP_NUM_THREADS=1} flag.
 % FA: Seriously, that much RAM?! I got this from cat /proc/meminfo, by looking at the MemTotal field. Yes, nice, right?
 The open-source software implementing the proposed method and the above
 experiments in \texttt{Python} is available on GitHub\footnote{*** URL HERE}.
 The code relies on the \texttt{numpy} \cite{numpy2020} and \texttt{scipy} \cite{scipy2020}
 packages to perform linear algebra. For the numerical experiments, the
 following versions of software were used: \texttt{Python} 3.8.12,
-\texttt{numpy} 1.23.4, \texttt{scipy} 1.9.2.
-% FA: *** Python, numpy versions verify  TODO once experiments ran again. 
-% AB *** maybe add comment about nothing was paralellized, bascially single-core
+\texttt{numpy} 1.23.1, \texttt{scipy} 1.9.3.
+% FA: Python, numpy versions verified  once experiments ran again. 
+% AB maybe add comment about nothing was paralellized, bascially single-core
 % implementations.
 
 
@@ -1726,8 +1725,9 @@ within a digit. The number of oscillations traversed per step can be derived
 from $h(t)$: $n_{\text{osc}} \propto \om h \propto t^{3/2}$,
 a result clearly supported by the bottom-right figure panel.
 % AB don't forget the the summary brag sentence:
-Our solver covers around $10^{11}$ periods using ABOUT $10^3$ timesteps ***,
-taking *** milliseconds of CPU time,
+Our solver covers around $10^{11}$ periods using $\approx 30$ timesteps,
+taking $\approx 10$ milliseconds of CPU time,
+% FA: It's only 30 timesteps, not 10^3 :)
 while achieving an error around $10^{-11}$ (or, when larger, the theoretical
 minimum \cref{mineps}).
 
@@ -1769,7 +1769,7 @@ following recent specialised methods for oscillatory ODEs:
 \item[Kummer's phase function method:]{ an arbitrarily high-order solver
         described by Bremer \cite{bremer2018}, specifically created for highly
         oscillatory problems with neither a friction term nor
-        transitions to nonoscillatory behaviour.
+        transitions to nonoscillatory behaviour. The user provides $\om$ as a callable.
         %operating near machine precision. <- not sure what this means.
         % AB: note criticizing the method before testing is not good here
         % - save it for the Intro, or discussion.
@@ -1780,7 +1780,8 @@ following recent specialised methods for oscillatory ODEs:
         We use the \texttt{Fortran 90} implementation provided by its author
         at
         \url{https://github.com/JamesCBremerJr/Phase-functions}
-        % AB *** how is \om input, since you describe that for oscode below?
+        % AB how is \om input, since you describe that for oscode below?
+        % FA: one
         }
 \item[oscode:]   % AB sorry gives tex errs for me, will work on
   %\texttt{\textbf{oscode}}
@@ -1800,6 +1801,7 @@ following recent specialised methods for oscillatory ODEs:
         include a $\g$ term. It requires the user to provide
         the derivative functions of $\om$ up to $\om^{(5)}$.
 %        This recently developed  ... well, all are :)
+        % FA: You told me to emphasize this in a previous comment.
         It is implemented in \texttt{MATLAB}.
     }
 \end{description}
@@ -1856,10 +1858,11 @@ We now describe the quantities tabulated in \cref{bremer237tab}:
         ODE solve, averaged over between $10^3$ and $10^5$ runs. This is equivalent to the
         ``phase function construction time'' of
         \cite[Table~1]{bremer2018}.
-        However, due to different implementations and programming languages,
-        this has limited meaning comparing across methods.}
-      % AB *** tricky since are you claiming speedups over Bremer, or not?
+      %  However, due to different implementations and programming languages,
+      %  this has limited meaning comparing across methods.}
+      % AB tricky since are you claiming speedups over Bremer, or not?
       % This implies you're not.
+      % FA: Removed -- the user can decide whether it's important or not.
       
     \item[$\bm{n_{\mathrm{s,osc}}}$:]{Number of time steps of oscillatory type.
         When this
@@ -1937,8 +1940,9 @@ asks the user to provide high-order derivatives of the frequency $\om(t)$,
 therefore it need not use further evaluations of $\om$ to compute said
 derivatives numerically.
 
-% AB *** this paragraph seems not like a "results" discussion, more
+% AB this paragraph seems not like a "results" discussion, more
 % a "priior properties of the methods". Could it be moved earlier?
+% FA: Does this comment still stand? Hopefully it reads more like a discussion of results now.
 \begin{rmk}
 Three solvers (ARDC, the
 Kummer's phase function method, and \texttt{oscode}) offer a dense output option, \ie
@@ -1983,7 +1987,7 @@ We test a range of integer $\nu$ values from $10$ to $10^9$,
 and check accuracy against an independent
 evaluation of the Legendre polynomial $P_\nu(t)$
 at the internal steps of ARDC as test points $t \in [0.0, 0.9]$.
-% AB *** some comment about why [0,0.1] and [0.9,1] are problematic.
+% AB some comment about why [0,0.1] and [0.9,1] are problematic.
 % FA: Update, [0.0, 0.1] no longer problematic -- was programming issue, not fundamental.
 Since both $\om(t) = \sqrt{\nu(\nu+1)/(1-t^2)}$ and $\gamma(t) = -t/(1-t^2)$ have singularities at $t = \pm 1$, 
 we avoid the proximity of $t = 1$.  
@@ -1998,9 +2002,9 @@ function evaluation, two (slow) evaluations of $P_\nu$ by standard means are
 unavoidable to fully specify the initial conditions, but further evaluations,
 as we will demonstrate, are computationally cheap.
 
-%*** Initial conditions at $t_0=0.1$ are chosen to match the value
+% Initial conditions at $t_0=0.1$ are chosen to match the value
 %and derivative of $P_\nu$.
-% ? AB *** I'm guessing. please correct this, but it has to be explained.
+% ? AB I'm guessing. please correct this, but it has to be explained.
 %
 %The problem need not be phrased as an initial value problem: due to the
 %linearity of the ODE, two arbitrary linearly independent solutions can be
@@ -2033,7 +2037,8 @@ then be performed in around $10^{-6}$ \si{s} per target point.
       applied to Legendre functions via their ODE \cref{legendreode}.
       The degree is $\nu$; other column
       headers are identical to those in \cref{bremer237tab}
-      % AB *** they are not identical : osc, slo -> Ricc, Cheb. Which pair is it going to be?
+      % AB they are not identical : osc, slo -> Ricc, Cheb. Which pair is it going to be?
+      % FA: I made them identical.
       and are explained in the text. \label{legendre-results}}
 \end{table*}
 
