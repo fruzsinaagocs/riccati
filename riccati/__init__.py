@@ -3,8 +3,70 @@ import math
 import scipy
 import scipy.linalg
 
-def quadwts(n):
 
+def coeffs2vals(coeffs):
+    """
+    Convert Chebyshev coefficients to values at Chebyshev nodes of the second
+    kind, ordered from -1 to +1. Taken from 
+    https://github.com/chebfun/chebfun/blob/master/%40chebtech2/coeffs2vals.m
+    """
+    n = coeffs.shape[0]
+    if n <= 1:
+        values = coeffs
+    else:
+        coeffs[1:n-1,:] /= 2.0
+        tmp = np.vstack((coeffs, coeffs[n-2:0:-1,:])) 
+        values = np.real(np.fft.fft(tmp, axis = 0))
+        values = values[n-1::-1,:] 
+    return values
+
+def vals2coeffs(values):
+    """
+    Convert values at Chebyshev nodes of the second kind, ordered from -1 to
+    +1, to Chebyshev coefficients. Taken from 
+    https://github.com/chebfun/chebfun/blob/master/%40chebtech2/vals2coeffs.m
+    """
+    n = values.shape[0]
+    if n <= 1:
+        coeffs = values
+    else:
+        tmp = np.vstack((values[n-1:0:-1,:], values[:n-1,:]))
+        coeffs = np.real(np.fft.ifft(tmp, axis = 0))
+        coeffs = coeffs[0:n,:]
+        coeffs[1:n-1,:] *= 2
+    return coeffs
+
+def integrationm(n):
+    """
+    Chebyshev integration matrix. It maps function values at n Chebyshev nodes
+    of the second kind, ordered from +1 to -1, to values of the integral of the
+    interpolating polynomial at those points, with the last value (start of the
+    interval) being zero. Taken from the `cumsummat` function in
+    https://github.com/chebfun/chebfun/blob/master/%40chebcolloc2/chebcolloc2.m
+    """
+    n -= 1
+    T = coeffs2vals(np.identity(n+1))
+    Tinv = vals2coeffs(np.identity(n+1))
+    k = np.linspace(1.0, n, n)
+    k2 = 2*(k-1)
+    k2[0] = 1
+    B = np.diag(1/(2*k), -1) - np.diag(1/k2, 1)
+    v = np.ones(n)
+    v[1::2] = -1
+    B[0,:] = sum(np.diag(v) @ B[1:n+1,:], 0)
+    B[:,0] *= 2
+    Q = T @ B @ Tinv
+    Q = Q[::-1,::-1]
+    Q[-1,:] = 0
+    return Q
+
+def quadwts(n):
+    """
+    Clenshaw-Curtis quadrature weights mapping function evaluations at
+    Chebyshev nodes of the second kind, ordered from +1 to -1, to value of the
+    definite integral of the interpolating function on the same interval. Taken
+    from Trefethen: Spectral methods in MATLAB, Ch 12, `clencurt.m`
+    """
     if n == 0:
         w = 0
     else:
@@ -183,9 +245,9 @@ def choose_osc_stepsize(info, x0, h, epsh = 1e-12):
         ws = w(s)
         gs = g(s)
     wana = w(t)
-    west = L.dot(ws)
+    west = L @ ws
     gana = g(t)
-    gest = L.dot(gs)
+    gest = L @ gs
     maxwerr = max(np.abs((west - wana)/wana))
     maxgerr = max(np.abs((gest - gana)/gana))
     maxerr = max(maxwerr, maxgerr)
@@ -262,8 +324,8 @@ def osc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 1e-12):
         # Determine new stepsize
         wnext = info.wn[0]
         gnext = info.gn[0]
-        dwnext = 2/h*info.Dn.dot(info.wn)[0]
-        dgnext = 2/h*info.Dn.dot(info.gn)[0]
+        dwnext = 2/h*(info.Dn @ info.wn)[0]
+        dgnext = 2/h*(info.Dn @ info.gn)[0]
         hosc_ini = min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
         info.h = choose_osc_stepsize(info, info.x, hosc_ini, epsh = epsh)  
     return success
@@ -397,8 +459,8 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     Dn = info.Dn
     y = 1j*ws
     delta = lambda r, y: -r/(2*(y + gs))
-    R = lambda d: 2/h*Dn.dot(d) + d**2
-    Ry = 1j*2*(1/h*Dn.dot(ws) + gs*ws)
+    R = lambda d: 2/h*(Dn @ d) + d**2
+    Ry = 1j*2*(1/h*(Dn @ ws) + gs*ws)
     maxerr = max(np.abs(Ry))
     #print("Initial res: {}".format(maxerr))
     prev_err = np.inf
@@ -427,7 +489,10 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     # LU
 #    u1 = h/2*scipy.linalg.lu_solve((info.DnLU, info.Dnpiv), du1, check_finite = False)
 #    u1 -= u1[-1]
-    u1 = h/2*info.quadwts.dot(du1)
+    if info.denseout:
+        u1 = h/2*(info.intmat @ du1)
+    else:
+        u1 = h/2*(info.quadwts @ du1)
     u2 = np.conj(u1)
     f1 = np.exp(u1)
     f2 = np.conj(f1)
@@ -437,6 +502,10 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     dy1 = ap*du1*f1 + am*du2*f2
     phase = np.imag(u1)
     info.increase(sub = 1, riccstep = 1)
+    if info.denseout:
+        info.un = u1
+        info.a = (ap, am)
+        y1 = y1[0]
     if plotting:
         return maxerr
     else:
@@ -507,6 +576,10 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
         dyprev = dy
         xprev = x
     info.increase(chebstep = 1)
+    if info.denseout:
+        # Store interp points
+        info.yn = y
+        info.dyn = dy
     #print("Successful nonosc step")
     return y[0], dy[0], maxerr, success
 
@@ -521,7 +594,7 @@ def spectral_cheb(info, x0, h, y0, dy0, niter):
     ws = info.w(xscaled)
     gs = info.g(xscaled)
     w2 = ws**2
-    D2 = 4/h**2*D.dot(D) + 4/h*np.diag(gs).dot(D) + np.diag(w2)
+    D2 = 4/h**2*(D @ D) + 4/h*(np.diag(gs) @ D) + np.diag(w2)
     n = round(info.ns[niter])
     ic = np.zeros(n+1, dtype=complex)
     ic[-1] = 1 # Because nodes are ordered backwards, [1, -1]
@@ -533,7 +606,7 @@ def spectral_cheb(info, x0, h, y0, dy0, niter):
     rhs[-2] = dy0
     rhs[-1] = y0
     y1, res, rank, sing = np.linalg.lstsq(D2ic, rhs) # NumPy solve only works for square matrices
-    dy1 = 2/h*D.dot(y1)
+    dy1 = 2/h*(D @ y1)
     info.increase(LS = 1)
     return y1, dy1, xscaled
 
@@ -553,6 +626,7 @@ class Solverinfo:
         self.nmax = nmax
         self.n = n
         self.p = p
+        self.denseout = False
 
         # Run statistics
         self.n_chebnodes = 0
@@ -700,6 +774,14 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     n = info.n
     p = info.p
     hi = info.h0 # Initial stepsize for calculating derivatives
+    # Is there dense output?
+    denselen = len(xeval)
+    if denselen > 0:
+        info.denseout = True
+        info.intmat = integrationm(n+1)
+        yeval = np.zeros(denselen, dtype = complex)
+    # Position of where to start looking when sorting targets points for dense
+    # output 
     
     # TODO: backwards integration
     xs = [xi]
@@ -716,8 +798,8 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     gis = g(xi + hi/2 + hi/2*xn)
     wi = np.mean(wis)
     gi = np.mean(gis)
-    dwi = np.mean(2/hi*Dn.dot(wis))
-    dgi = np.mean(2/hi*Dn.dot(gis))
+    dwi = np.mean(2/hi*(Dn @ wis))
+    dgi = np.mean(2/hi*(Dn @ gis))
     # Choose initial stepsize
     hslo_ini = min(1e8, np.abs(1/wi))
     hosc_ini = min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
@@ -769,6 +851,26 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
             h = hosc
         else:
             h = hslo
+        # If there were dense output points, check where:
+        if info.denseout:
+            positions = np.logical_and(xeval >= xcurrent, xeval < xcurrent+h)
+            xdense = xeval[positions] 
+            if steptype == 1:
+                xscaled = xcurrent + h/2 + h/2*info.xn
+                Linterp = interp(xscaled, xdense)
+#                print("shapes: ")
+#                print(Linterp.shape, info.un.shape)
+                udense = Linterp @ info.un
+                fdense = np.exp(udense)
+                yeval[positions] = info.a[0]*fdense + info.a[1]*np.conj(fdense)
+            else:
+                xscaled = xcurrent + h/2 + h/2*info.nodes[1]
+                Linterp = interp(xscaled, xdense)
+                yeval[positions] = Linterp @ info.yn
+#            print("(x_i, x_{i+1}): ", xcurrent, xcurrent+h)
+#            print(xdense)
+#            print(yeval[positions])
+
         ys.append(y)
         dys.append(dy)
         xs.append(xcurrent + h)
@@ -779,13 +881,13 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
         if steptype == 1:
             wnext = info.wn[0]
             gnext = info.gn[0]
-            dwnext = 2/h*Dn.dot(info.wn)[0]
-            dgnext = 2/h*Dn.dot(info.gn)[0]
+            dwnext = 2/h*(Dn @ info.wn)[0]
+            dgnext = 2/h*(Dn @ info.gn)[0]
         else:
             wnext = w(xcurrent + h)
             gnext = g(xcurrent + h)
-            dwnext = 2/h*Dn.dot(w(xcurrent + h/2 + h/2*xn))[0]
-            dgnext = 2/h*Dn.dot(g(xcurrent + h/2 + h/2*xn))[0]
+            dwnext = 2/h*(Dn @ w(xcurrent + h/2 + h/2*xn))[0]
+            dgnext = 2/h*(Dn @ g(xcurrent + h/2 + h/2*xn))[0]
         xcurrent += h
         if xcurrent < xf:
             hslo_ini = min(1e8, np.abs(1/wnext))
@@ -795,5 +897,8 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
             dyprev = dy
-    return xs, ys, dys, successes, phases, steptypes
+    if info.denseout:
+        return xs, ys, dys, successes, phases, steptypes, yeval
+    else:
+        return xs, ys, dys, successes, phases, steptypes
 

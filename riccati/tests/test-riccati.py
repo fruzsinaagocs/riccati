@@ -4,6 +4,53 @@ import riccati
 import scipy.special as sp
 import math
 import mpmath
+import time
+import matplotlib.pyplot as plt
+
+
+def test_denseoutput():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = riccati.setup(w, g, n = 32, p = 32)
+    xi = 1e0
+    xf = 5e1
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    xeval = np.linspace(xi, xf, 100) 
+    startd = time.time_ns()
+    for i in range(100):
+        xs, ys, dys, ss, ps, stypes, yeval = riccati.solve(info, xi, xf, yi, dyi, xeval = xeval, eps = eps, epsh = epsh)
+    endd = time.time_ns()
+    print((endd - startd)*1e-11)
+    start = time.time_ns() 
+#    info.denseout = False
+#    for i in range(1000):
+#        xs, ys, dys, ss, ps, stypes = riccati.solve(info, xi, xf, yi, dyi, eps = eps, epsh = epsh)
+#    end = time.time_ns()
+#    print((end - start)*1e-12)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
+    yerr = np.abs((ytrue - yeval)/ytrue)
+#    maxpos = np.argmax(yerr)
+#    print(xeval[maxpos], ytrue[maxpos], yeval[maxpos], yerr[maxpos])
+#    print(xs)
+    maxerr = max(yerr)
+    assert maxerr < 3e-6
+
+def test_integration():
+    n = 16
+    a = 3.0
+    f = lambda x: np.sin(a*x + 1.0)
+    df = lambda x: a*np.cos(a*x + 1.0)
+    D, x = riccati.cheb(n)
+    dfs = df(x)
+    fs = f(x)
+    fs -= fs[-1]
+    Im = riccati.integrationm(n+1)
+    fs_est = Im @ dfs
+    maxerr = max(np.abs((fs_est - fs)/fs))
+    assert maxerr < 1e-8
 
 def test_quadwts():
     a = 3.0
@@ -14,7 +61,6 @@ def test_quadwts():
         w = riccati.quadwts(i)
         maxerr = w.dot(df(x)) - (f(1) - f(-1)) 
         assert  maxerr < 1e-8
-
 
 def test_cheb():
     a = 3.0
