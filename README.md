@@ -1,4 +1,4 @@
-# ARDC: adaptive Riccati defect correction solver
+# `riccati': a package implementing the adaptive Riccati defect correction (ARDC) method
 
 ## About
 
@@ -15,7 +15,7 @@ on some solution interval $t \in [t_0, t_1]$, and with initial conditions $u(t_0
 To install:
 
 ```bash
-git clone github.com/fruzsinaagocs/better-phase-fun
+git clone github.com/fruzsinaagocs/riccati
 cd better-phase-fun
 pip install .[all]
 ```
