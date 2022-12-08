@@ -1,4 +1,4 @@
-# `riccati': a package implementing the adaptive Riccati defect correction (ARDC) method
+# `riccati`: a package implementing the adaptive Riccati defect correction (ARDC) method
 
 ## About
 
