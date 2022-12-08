@@ -114,8 +114,8 @@ def airy():
     ax[1,1].loglog(np.logspace(0,8,10), np.logspace(0,8*3/2,10), '--', color=blue2)
     ax[1,1].annotate('$\propto t^{\\frac{3}{2}}$', (5e3, 3e6), rotation=30, c=blue1)
     ax[1,1].set_xlim((1e0, 1e8))
-    plt.show()
-#    plt.savefig("../plots/airy-numsol-fixncheb-16-epsrel.pdf")
+#    plt.show()
+    plt.savefig("/mnt/home/fagocs/riccati-paper/plots/airy-numsol-newK.pdf")
 
 def convergence():
     w = lambda x: np.sqrt(x)
@@ -143,7 +143,7 @@ def convergence():
     
     tab20c = matplotlib.cm.get_cmap('tab20c')
     plt.style.use('riccatipaper') 
-    fig, ax1 = plt.subplots(1, 1, figsize=(3, 3))
+    fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
 
     cond0 = np.ones_like(epss)*np.finfo(float).eps*wiggles[0]
     lower0 = np.where(cond0 > epss, cond0, None)
@@ -172,8 +172,8 @@ def convergence():
 #    plt.show()
     ax1.set_xlim((1e-12,1e-4))
     ax1.set_ylim((1e-12,1.5e-4))
-#    plt.savefig("../plots/convergence-fixn.pdf")
-    plt.show()
+    plt.savefig("/mnt/home/fagocs/riccati-paper/plots/convergence-newK.pdf")
+#    plt.show()
 
 def legendre(outdir, m):
 
@@ -316,7 +316,7 @@ def residual():
     w = lambda x: np.sqrt(x)
     g = lambda x: np.zeros_like(x)
     x0 = 1.8
-    h = 14.0
+    h = 0.5
     eps = 1e-12
     ks = [0, 1, 3, 9]
     y0 = sp.airy(-x0)[0] + 1j*sp.airy(-x0)[2]
@@ -334,23 +334,30 @@ def residual():
 
     N = 10 # max number of iters
     ks = np.linspace(0, N, N+1, dtype=int)
-    ms = [int(1e1), int(1e2), int(1e3), int(1e4)]
+    ns = [16, 16, 16, 16] # interp points
+    ms = [10, 100, 1000, 10000] # frequency normalisation
+    hs = np.array([5e-1, 5e-1, 5e-1, 5e-1]) # stepsize
+    ds = [1e0, 1e0, 1e0, 1e0] # Distance to nearest pole
     g = lambda x: np.zeros_like(x)
     x0 = 0
-    h = 0.5
-    n = 16
-    p = 16
     eps = 1e-12
     epsh = 1e-13
     errs = np.zeros(N+1)
-    info = riccati.setup(w, g, n = n, p = p)
+    erres = np.zeros(N+1)
 
     fig, ax1 = plt.subplots(1, 1, figsize = (3, 3))
     ax1.set_xlabel("iteration number, $j$")
     ax1.set_ylabel("maximum residual, $\max\limits_{t \in [0, " + "{}".format(h) + "]}R\left[x_j\\right]$")
 
     m = ms[0]
-    w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    n = ns[0]
+    p = n 
+    h = hs[0]
+    d = ds[0]
+    w = lambda x: d**2*np.sqrt(m**2 - 1)/(d**2 + x**2)
+    wconst = lambda x: np.ones_like(x)*d**2*np.sqrt(m**2 - 1)/(d**2 + h**2)
+    info = riccati.setup(w, g, n = n, p = p)
+    infoe = riccati.setup(wconst, g, n = n, p = p)
     for i, k in enumerate(ks):
         bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
         burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
@@ -360,14 +367,26 @@ def residual():
         xscaled = x0 + h/2 + h/2*info.xn
         info.wn = w(xscaled)
         info.gn = g(xscaled)
+        infoe.wn = wconst(xscaled)
+        infoe.gn = g(xscaled)
         err = riccati.osc_step(info, x0, h, y0, dy0, epsres = eps, plotting = True, k = k)
+        erre = riccati.osc_step(infoe, x0, h, y0, dy0, epsres = eps, plotting = True, k = k)
         errs[i] = err
+        erres[i] = erre
 
     l1, = ax1.semilogy(ks, errs, '.-', color=tab20c.colors[0*4])
     l2, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[0*4+1])
-    
+    le1, = ax1.semilogy(ks, erres, ls='dotted', color=tab20c.colors[0*4+1])
+
     m = ms[1]
-    w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    n = ns[1]
+    p = n
+    h = hs[1]
+    d = ds[1]
+    w = lambda x: d**2*np.sqrt(m**2 - 1)/(d**2 + x**2)
+    wconst = lambda x: np.ones_like(x)*d**2*np.sqrt(m**2 - 1)/(d**2 + h**2)
+    info = riccati.setup(w, g, n = n, p = p)
+    infoe = riccati.setup(wconst, g, n = n, p = p)
     for i, k in enumerate(ks):
         bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
         burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
@@ -377,14 +396,27 @@ def residual():
         xscaled = x0 + h/2 + h/2*info.xn
         info.wn = w(xscaled)
         info.gn = g(xscaled)
+        infoe.wn = wconst(xscaled)
+        infoe.gn = g(xscaled)
         err = riccati.osc_step(info, x0, h, y0, dy0, epsres = eps, plotting = True, k = k)
         errs[i] = err
+        erre = riccati.osc_step(infoe, x0, h, y0, dy0, epsres = eps, plotting = True, k = k)
+        erres[i] = erre
+
 
     l3, = ax1.semilogy(ks, errs, 'o-', color=tab20c.colors[1*4])
     l4, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[1*4+1])
- 
+    le2, = ax1.semilogy(ks, erres, ls='dotted', color=tab20c.colors[1*4+1])
+
+    n = ns[2]
     m = ms[2]
-    w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    p = n 
+    h = hs[2]
+    d = ds[2]
+    w = lambda x: d**2*np.sqrt(m**2 - 1)/(d**2 + x**2)
+    wconst = lambda x: np.ones_like(x)*d**2*np.sqrt(m**2 - 1)/(d**2 + h**2)
+    info = riccati.setup(w, g, n = n, p = p)
+    infoe = riccati.setup(wconst, g, n = n, p = p)
     for i, k in enumerate(ks):
         bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
         burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
@@ -394,14 +426,26 @@ def residual():
         xscaled = x0 + h/2 + h/2*info.xn
         info.wn = w(xscaled)
         info.gn = g(xscaled)
+        infoe.wn = wconst(xscaled)
+        infoe.gn = g(xscaled)
         err = riccati.osc_step(info, x0, h, y0, dy0, epsres = eps, plotting = True, k = k)
         errs[i] = err
+        erre = riccati.osc_step(infoe, x0, h, y0, dy0, epsres = eps, plotting = True, k = k)
+        erres[i] = erre
 
     l5, = ax1.semilogy(ks, errs, '^-', color=tab20c.colors[2*4])
     l6, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[2*4+1])
- 
+    le3, = ax1.semilogy(ks, erres, ls='dotted', color=tab20c.colors[2*4+1])
+
+    n = ns[3]
     m = ms[3]
-    w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
+    p = n 
+    h = hs[3]
+    d = ds[3]
+    w = lambda x: d**2*np.sqrt(m**2 - 1)/(d**2 + x**2)
+    wconst = lambda x: np.ones_like(x)*d**2*np.sqrt(m**2 - 1)/(d**2 + h**2)
+    info = riccati.setup(w, g, n = n, p = p)
+    infoe = riccati.setup(wconst, g, n = n, p = p)
     for i, k in enumerate(ks):
         bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
         burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
@@ -411,23 +455,34 @@ def residual():
         xscaled = x0 + h/2 + h/2*info.xn
         info.wn = w(xscaled)
         info.gn = g(xscaled)
+        infoe.wn = wconst(xscaled)
+        infoe.gn = g(xscaled)
         err = riccati.osc_step(info, x0, h, y0, dy0, epsres = eps, plotting = True, k = k)
         errs[i] = err
+        erre = riccati.osc_step(infoe, x0, h, y0, dy0, epsres = eps, plotting = True, k = k)
+        erres[i] = erre
+
 
     l7, = ax1.semilogy(ks, errs, 'x-', color=tab20c.colors[3*4])
     l8, = ax1.semilogy(ks, 10.0**(np.log10(m)*(1.0-ks)), '--', color=tab20c.colors[3*4+1])
- 
+    le4, = ax1.semilogy(ks, erres, ls='dotted', color=tab20c.colors[3*4+1])
+
 #, label='$\omega(t_i) = 10^{}$'.format(int(np.log10(m)))
     ax1.set_xlim((0,N))
-    ax1.set_ylim((1e-16, 1e6))
-    l = ax1.legend([l1, l3, l5, l7, (l2, l4, l6, l8)], [
+#    ax1.set_ylim((1e-16, 1e6))
+    l = ax1.legend([l1, l3, l5, l7, (l2, l4, l6, l8), (le1, le2, le3, le4)], [
+#        '$d = {}$'.format(ds[0]),
+#        '$d = {}$'.format(ds[1]),
+#        '$d = {}$'.format(ds[2]),
+#        '$d = {}$'.format(ds[3]),
         '$\omega_{\mathrm{max}} = $'+'$\sqrt{' + '10^{}'.format(2*int(np.log10(ms[0]))) + '- 1}$',
         '$\omega_{\mathrm{max}} = $'+'$\sqrt{' + '10^{}'.format(2*int(np.log10(ms[1]))) + '- 1}$',
         '$\omega_{\mathrm{max}} = $'+'$\sqrt{' + '10^{}'.format(2*int(np.log10(ms[2]))) + '- 1}$',
         '$\omega_{\mathrm{max}} = $'+'$\sqrt{' + '10^{}'.format(2*int(np.log10(ms[3]))) + '- 1}$',
-        '$\propto \omega_{\mathrm{max}}^{-j}$'], 
+        '$\propto \omega_{\mathrm{max}}^{-j}$', 
+        '$\omega(t) = \mathrm{const.} = \omega_{\mathrm{min}}$'],
         handler_map = {tuple: HandlerTupleVertical()})
-#    plt.savefig("../plots/residual-k-n8-h025.pdf")
+    plt.savefig("/mnt/home/fagocs/riccati-paper/plots/residual-k-errormodel.pdf")
     plt.show()
 
 def Bremer237(l, n, eps, epsh, outdir, rdc = True, wkbmarching = False,\
@@ -874,6 +929,7 @@ def bremer237_timing_fig(outdir):
 
 outdir = "/mnt/home/fagocs/riccati-paper/tables/new/"
 
+#convergence()
 
 #residual()
 

@@ -88,31 +88,47 @@ interval used for testing in the text.
 * burst eqn has analytic soln, but we don't need this fact, right?
 
 
-
-
 ====== REMAINING TO DO LIST ==================================================
 
+* Address the fact that we are now doing better than the condition number of
+  the problem would imply.
 
-* Consider splitting Fig. 1 R panel to go with much later Airy results.
-It's weird to have to go back so far in paper to find this figure.
+* @Alex to look through how I addressed his comments/corrections, particularly:
+    * the new right-hand panel of Figure 2 and its description in the text,
+    * Figure 4's description in the text,
+    * the stepsize-update algorithm section (2.6.3),
+    * and the new numerical integration text.
+
+* @Fruzsina to run spellcheck on entire document after final Alex revisions.
+
+======== DONE
+
+* You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
+The symbols others used are not sacred, for test problems; more important to have coherency.
+-> I think this might be confusing to the reader: om_max is the maximum of \om
+on the interval of interest, but e..g \lambda is not; \om_0 isn't necessarily.
+
+* update struct of paper paragraph after later edits
+-> Was still correct; didn't change.
 
 * Future work:
  - analyse discretized iteration (matvec plus pointwise square).
   (no reason why high-order derivs on p=16 cheby grid should remain accurate!)
+-> Actually this was already mentioned in the conclusions, but added comment.
+
+* cite URL for code repo.
 
 * push the boundaries of understanding the k=5 kink in the demo - is it
 do to with n=16? or t=+-i nearby poles, with the long interval [0,2] ??
 Consider adding 2nd plot in fig.1 of the R iteration for different interval
 or omega(t) func.
+-> Done, right-hand-side of Fig 1 now has error model fitting the post-kink
+residual curve.
 
-* update struct of paper paragraph after later edits
-
-* cite URL for code repo.
-
-* You have 3 ways to say om_0 in this work: om_0, om_max (Sec 2.3), and lambda (Sec 4). It would be an improvement to rationalize to a single symbol, eg om_0.
-The symbols others used are not sacred, for test problems; more important to have coherency.
-
-======== DONE
+* Consider splitting Fig. 1 R panel to go with much later Airy results.
+It's weird to have to go back so far in paper to find this figure.
+-> Done, also updated definition of K -- issue is that now we seem to be doing
+better than the maximum possible accuracy! :)
 
 * address issues in 4.3: IC, why avoid [0,0.1] and [0.9,1),
 speed of new t evals.
@@ -207,3 +223,42 @@ Yet it still works. But we have to comment about this.
 which is it? (inconsistent)
 
 * remove nmax = 64 everywhere, simplify explanation of 16,32 h-adapt rule.
+
+====== OLD TO DO LIST FROM MAIN.TEX  ==================================================
+
+% Some things left to do:  (are this FA or AB ones? Are some obsolete?) These are for FA! Some may be obsolete.
+% AB comments with "-"
+
+% Figure for complex plane setup for proof of thm 3
+% - sure, get from your talk.
+
+% Numerically stable residual iterations!
+% - not sure what you mean
+
+% Final description of stepsize algorithm 
+% Flowchart?
+%  - imprt from talk
+
+% Cosmo stuff? (Paper is too long!)
+% - see once finer edit.
+
+% Bremer's basic iteration (worked it out on paper but paper is already too long)
+% - add footnote saying other iterations exist, give Bremer's. Note it
+% needs sqrt which bring branch issue.
+
+% Some comment that although theorem is pointwise convergence, uniform convergence over some interval is trivial by enclosing it in a larger ball.}
+%  - ok, put in Sec 3.
+
+% Relate the ball in the theorem to the interval size that can be well-approximated by $p$th order Cheby, using Bernstein ellipse of Tref
+% - too much for here.
+
+% From [residual of ODE and Riccati] to solution error bounds, maybe? This is similar to local discretization err in a more typical numerical solver. (check LeVeque, Tref, Hairer, etc).
+% - too hard, state in Discussion.
+
+% Numerical results to support deterioration of convergence rate r with total iteration number k in Thm (figure?)
+% - no you have this in Fig 1 right?
+
+% More references needed
+% - just in intro
+
+
