@@ -6,9 +6,25 @@ import scipy.linalg
 
 def coeffs2vals(coeffs):
     """
-    Convert Chebyshev coefficients to values at Chebyshev nodes of the second
-    kind, ordered from -1 to +1. Taken from 
-    https://github.com/chebfun/chebfun/blob/master/%40chebtech2/coeffs2vals.m
+    Convert the Chebyshev coefficient representation of a set of polynomials `P_j` to their 
+    values at Chebyshev nodes of the second kind (ordered from +1 to -1). This function returns a
+    matrix `V` such that for an input coefficient matrix `C`,
+
+    .. math:: V_{ij} = P_j(x_i) = \sum_{k=0}^{n} C_{jk}T_j(x_i).
+
+    Taken from the `chebfun`_ package.
+
+    .. _`chebfun`: https://github.com/chebfun/chebfun/blob/master/%40chebtech2/coeffs2vals.m
+
+    Parameters
+    ----------
+    coeffs: numpy.ndarray [float (real)]
+       An array of size (n+1, m), with the (i,j)th element representing the projection of the jth input polynomial 
+
+
+    Returns
+    -------
+
     """
     n = coeffs.shape[0]
     if n <= 1:
@@ -17,20 +33,28 @@ def coeffs2vals(coeffs):
         coeffs[1:n-1,:] /= 2.0
         tmp = np.vstack((coeffs, coeffs[n-2:0:-1,:])) 
         values = np.real(np.fft.fft(tmp, axis = 0))
-        values = values[n-1::-1,:] 
+        values = values[:n,:]
     return values
 
 def vals2coeffs(values):
     """
-    Convert values at Chebyshev nodes of the second kind, ordered from -1 to
-    +1, to Chebyshev coefficients. Taken from 
+    Convert values at Chebyshev nodes of the second kind, ordered from +1 to
+    -1, to Chebyshev coefficients. Taken from 
     https://github.com/chebfun/chebfun/blob/master/%40chebtech2/vals2coeffs.m
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+
     """
     n = values.shape[0]
     if n <= 1:
         coeffs = values
     else:
-        tmp = np.vstack((values[n-1:0:-1,:], values[:n-1,:]))
+        tmp = np.vstack((values[:n-1], values[n-1:0:-1]))
         coeffs = np.real(np.fft.ifft(tmp, axis = 0))
         coeffs = coeffs[0:n,:]
         coeffs[1:n-1,:] *= 2
@@ -43,6 +67,14 @@ def integrationm(n):
     interpolating polynomial at those points, with the last value (start of the
     interval) being zero. Taken from the `cumsummat` function in
     https://github.com/chebfun/chebfun/blob/master/%40chebcolloc2/chebcolloc2.m
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+
     """
     n -= 1
     T = coeffs2vals(np.identity(n+1))
@@ -56,7 +88,6 @@ def integrationm(n):
     B[0,:] = sum(np.diag(v) @ B[1:n+1,:], 0)
     B[:,0] *= 2
     Q = T @ B @ Tinv
-    Q = Q[::-1,::-1]
     Q[-1,:] = 0
     return Q
 
@@ -66,6 +97,14 @@ def quadwts(n):
     Chebyshev nodes of the second kind, ordered from +1 to -1, to value of the
     definite integral of the interpolating function on the same interval. Taken
     from Trefethen: Spectral methods in MATLAB, Ch 12, `clencurt.m`
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+
     """
     if n == 0:
         w = 0
@@ -452,7 +491,6 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     that is automatically taken care of, but otherwise needs to be done
     manually.
     """
-    #print("Taking oscillatory step of size {} from {} to {}".format(h, x0, x0+h))
     success = 1
     ws = info.wn
     gs = info.gn
@@ -462,7 +500,6 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     R = lambda d: 2/h*(Dn @ d) + d**2
     Ry = 1j*2*(1/h*(Dn @ ws) + gs*ws)
     maxerr = max(np.abs(Ry))
-    #print("Initial res: {}".format(maxerr))
     prev_err = np.inf
     if plotting == False:
         while maxerr > epsres:
@@ -470,10 +507,8 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
             y = y + deltay
             Ry = R(deltay)       
             maxerr = max(np.abs(Ry))
-            #print("max residual is {}".format(maxerr))
             if maxerr >= prev_err:
                 success = 0
-                #print("Unsuccessful osc step")
                 break
             prev_err = maxerr
     else:
@@ -486,7 +521,6 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
             maxerr = max(np.abs(Ry))
     du1 = y
     du2 = np.conj(du1)
-    # LU
 #    u1 = h/2*scipy.linalg.lu_solve((info.DnLU, info.Dnpiv), du1, check_finite = False)
 #    u1 -= u1[-1]
     if info.denseout:
@@ -509,7 +543,6 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     if plotting:
         return maxerr
     else:
-#        print(y1, dy1, maxerr, phase)
         return y1, dy1[0], maxerr, success, phase
 
 def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
@@ -555,7 +588,6 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
         Takes the value `1` if the asymptotic series has reached `epsres`
         residual, `0` otherwise.
     """
-    #print("Taking nonosc step from x0 = {} of size h = {}".format(x0, h))
     success = 1
     maxerr = 10*epsres
     N = info.nini
@@ -565,11 +597,9 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
         N *= 2
         if N > Nmax:
             success = 0
-            #print("Unsuccessful nonosc step")
             return 0, 0, maxerr, success
         y, dy, x = spectral_cheb(info, x0, h, y0, dy0, int(np.log2(N/info.nini))) 
         maxerr = np.abs((yprev[0] - y[0])/y[0])
-        #print("max err: ", maxerr)
         if np.isnan(maxerr):
             maxerr = np.inf
         yprev = y
@@ -580,7 +610,6 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
         # Store interp points
         info.yn = y
         info.dyn = dy
-    #print("Successful nonosc step")
     return y[0], dy[0], maxerr, success
 
 def spectral_cheb(info, x0, h, y0, dy0, niter):
@@ -780,8 +809,6 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
         info.denseout = True
         info.intmat = integrationm(n+1)
         yeval = np.zeros(denselen, dtype = complex)
-    # Position of where to start looking when sorting targets points for dense
-    # output 
     
     # TODO: backwards integration
     xs = [xi]
@@ -803,7 +830,6 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     # Choose initial stepsize
     hslo_ini = min(1e8, np.abs(1/wi))
     hosc_ini = min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
-    #print("hslo ini: {}, hosc ini: {}".format(hslo_ini, hosc_ini))
     hslo = choose_nonosc_stepsize(info, xi, hslo_ini)
     hosc = choose_osc_stepsize(info, xi, hosc_ini, epsh = epsh)  
     xcurrent = xi
@@ -815,7 +841,6 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
         #tw = np.abs(wnext/dwnext)
         #tw_ty = tw/ty
         success = 0
-        #print("hslo: {}, hosc: {}".format(hslo, hosc))
         if hosc > hslo*5 and hosc*wnext/(2*np.pi) > 1:
             if hard_stop:
                 if xcurrent + hosc > xf:
@@ -856,10 +881,9 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
             positions = np.logical_and(xeval >= xcurrent, xeval < xcurrent+h)
             xdense = xeval[positions] 
             if steptype == 1:
-                xscaled = xcurrent + h/2 + h/2*info.xn
-                Linterp = interp(xscaled, xdense)
-#                print("shapes: ")
-#                print(Linterp.shape, info.un.shape)
+                #xscaled = xcurrent + h/2 + h/2*info.xn
+                xscaled = 2/h*(xdense - xcurrent) - 1
+                Linterp = interp(info.xn, xscaled)
                 udense = Linterp @ info.un
                 fdense = np.exp(udense)
                 yeval[positions] = info.a[0]*fdense + info.a[1]*np.conj(fdense)
@@ -867,10 +891,6 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
                 xscaled = xcurrent + h/2 + h/2*info.nodes[1]
                 Linterp = interp(xscaled, xdense)
                 yeval[positions] = Linterp @ info.yn
-#            print("(x_i, x_{i+1}): ", xcurrent, xcurrent+h)
-#            print(xdense)
-#            print(yeval[positions])
-
         ys.append(y)
         dys.append(dy)
         xs.append(xcurrent + h)
@@ -892,7 +912,6 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
         if xcurrent < xf:
             hslo_ini = min(1e8, np.abs(1/wnext))
             hosc_ini = min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
-            #print("hslo ini: {}, hosc ini: {}".format(hslo_ini, hosc_ini))
             hosc = choose_osc_stepsize(info, xcurrent, hosc_ini, epsh = epsh)  
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
