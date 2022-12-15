@@ -4,7 +4,7 @@
 
 `riccati` is a `Python` package for solving ODEs of the form
 
-$$ u''(t) + 2\gamma(t)u'(t) + \omega(t)u(t) = 0,$$
+$$ u''(t) + 2\gamma(t)u'(t) + \omega^2(t)u(t) = 0,$$
 
 on some solution interval $t \in [t_0, t_1]$, and with initial conditions $u(t_0) = u_0$, $u'(t_0) = u'_0$.
 
