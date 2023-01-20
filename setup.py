@@ -11,14 +11,14 @@ plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots
 
 setup(name='riccati',
-      version='0.0.10',
+      version='0.1.0',
       description='adaptive Riccati defect correction solver',
       long_description='adaptive Riccati defect correction solver',
       author='Fruzsina J Agocs and Alex H Barnett',
       author_email='',
       url='',
       packages=['riccati'],
-      install_requires=['numpy', 'scipy'],
+      install_requires=['numpy'],
       setup_requires=['pytest-runner'],
       extras_require={
           'all': all,
