@@ -291,7 +291,6 @@ def choose_osc_stepsize(info, x0, h, epsh = 1e-12):
     maxwerr = max(np.abs((west - wana)/wana))
     maxgerr = max(np.abs((gest - gana)/gana))
     maxerr = max(maxwerr, maxgerr)
-    print("Choosing oscillatory stepsize. At x = ", x0, " initial h guess h =  ", h, ", errors: ", maxwerr, maxgerr, maxerr)
     if maxerr > epsh:
         return choose_osc_stepsize(info, x0, h*min(0.7, 0.9*(epsh/maxerr)**(1/(info.p-1))), epsh = epsh)
     else:
@@ -821,7 +820,11 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
 
     # Determine direction
     intdir = np.sign(hi)
-    print("Direction of integration: ", intdir)
+
+    # Warn if dense output points requested outside of interval
+    if info.denseout:
+        if intdir*xi < intdir*min(xeval) or intdir*xf > intdir*max(xeval):
+            warnings.warn("Some dense output points lie outside the integration range!")
 
     xs = [xi]
     ys = [yi]
@@ -839,19 +842,17 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     gi = np.mean(gis)
     dwi = np.mean(2/hi*(Dn @ wis))
     dgi = np.mean(2/hi*(Dn @ gis))
-    print("Initial w, dw, g, dg: ", wi, dwi, gi, dgi)
     # Choose initial stepsize
     hslo_ini = intdir*min(1e8, np.abs(1/wi))
     hosc_ini = intdir*min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
     # Check if we would be stepping over the integration range
-    if intdir*(xi + hosc_ini) > intdir*xf:
-        hosc_ini = xf - xi
-    if intdir*(xi + hslo_ini) > intdir*xf:
-        hslo_ini = xf - xi
+    if hard_stop:
+        if intdir*(xi + hosc_ini) > intdir*xf:
+            hosc_ini = xf - xi
+        if intdir*(xi + hslo_ini) > intdir*xf:
+            hslo_ini = xf - xi
     hslo = choose_nonosc_stepsize(info, xi, hslo_ini)
     hosc = choose_osc_stepsize(info, xi, hosc_ini, epsh = epsh)  
-    print("Initial stepsizes: ", hslo_ini, hosc_ini)
-    print("Refined initial stepsizes: ", hslo, hosc)
     xcurrent = xi
     wnext = wi
     dwnext = dwi
@@ -898,7 +899,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
             h = hslo
         # If there were dense output points, check where:
         if info.denseout:
-            positions = np.logical_and(xeval >= xcurrent, xeval < xcurrent+h)
+            positions = np.logical_or(np.logical_and(intdir*xeval >= intdir*xcurrent, intdir*xeval < intdir*(xcurrent+h)), xeval == xf)
             xdense = xeval[positions] 
             if steptype == 1:
                 #xscaled = xcurrent + h/2 + h/2*info.xn
@@ -932,6 +933,11 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
         if intdir*xcurrent < intdir*xf:
             hslo_ini = intdir*min(1e8, np.abs(1/wnext))
             hosc_ini = intdir*min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
+            if hard_stop:
+                if intdir*(xcurrent + hosc_ini) > intdir*xf:
+                    hosc_ini = xf - xcurrent
+                if intdir*(xcurrent + hslo_ini) > intdir*xf:
+                    hslo_ini = xf - xcurrent
             hosc = choose_osc_stepsize(info, xcurrent, hosc_ini, epsh = epsh)  
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
