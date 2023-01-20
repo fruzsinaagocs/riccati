@@ -2,10 +2,8 @@
 import numpy as np
 import riccati
 import scipy.special as sp
-import math
 import mpmath
-import time
-import matplotlib.pyplot as plt
+import warnings
 
 def test_integration():
     n = 16
@@ -31,15 +29,55 @@ def test_denseoutput():
     epsh = 1e-13
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
-    Neval = int(1e4)
+    Neval = int(1e2)
     xeval = np.linspace(xi, xf, Neval) 
-    startd = time.time_ns()
-    xs, ys, dys, ss, ps, stypes, yeval = riccati.solve(info, xi, xf, yi, dyi, xeval = xeval, eps = eps, epsh = epsh)
-    start = time.time_ns() 
-    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval]) # This is a little slow, but accurate
+    xs, ys, dys, ss, ps, stypes, yeval = riccati.solve(info, xi, xf, yi, dyi,\
+                                                       xeval = xeval,\
+                                                       eps = eps, epsh = epsh)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
     yerr = np.abs((ytrue - yeval)/ytrue)
     maxerr = max(yerr)
     assert maxerr < 1e-6
+
+def test_denseoutput_xbac():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = riccati.setup(w, g, n = 32, p = 32)
+    xi = 1e0
+    xf = 1e6
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    Neval = int(1e2)
+    xeval = np.linspace(xf, xi, Neval) 
+    xs, ys, dys, ss, ps, stypes, yeval = riccati.solve(info, xi, xf, yi, dyi,\
+                                                       xeval = xeval,\
+                                                       eps = eps, epsh = epsh)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
+    yerr = np.abs((ytrue - yeval)/ytrue)
+    maxerr = max(yerr)
+    assert maxerr < 1e-6
+
+def test_denseoutput_warn():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = riccati.setup(w, g, n = 32, p = 32)
+    xi = 1e0
+    xf = 1e6
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    Neval = int(1e2)
+    xeval = np.linspace(xi-10.0, xi, Neval) 
+    # Turn on warnings
+    warnings.simplefilter("always")
+    with warnings.catch_warnings(record = True) as w:
+        xs, ys, dys, ss, ps, stypes, yeval = riccati.solve(info, xi, xf, yi, dyi,\
+                                                           xeval = xeval,\
+                                                           eps = eps, epsh = epsh)
+        assert "outside the integration range" in str(w[0].message) 
 
 def test_quadwts():
     a = 3.0
@@ -94,16 +132,6 @@ def test_nonosc_step():
     dy_err = np.abs((dy - dy_ana)/dy_ana)
     assert y_err < 1e-8 and dy_err < 1e-8
 
-
-##def test_choose_stepsize():
-##    w = lambda x: np.sqrt(x)
-##    g = lambda x: 0.0
-##    x0 = 1e8
-##    h = 1e10
-##    hnew = riccati.choose_stepsize(w, g, x0, h, p = 16)
-##    print(hnew)
-##    # TODO: Not quite sure how to test this...
-
 def test_solve_airy():
     w = lambda x: np.sqrt(x)
     g = lambda x: np.zeros_like(x)
@@ -120,6 +148,72 @@ def test_solve_airy():
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
     yerr = np.abs((ytrue - ys)/ytrue)
     maxerr = max(yerr)
+    print(maxerr, stypes)
+    assert maxerr < 1e-6
+
+def test_solve_airy_backwards():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = riccati.setup(w, g, n = 32, p = 32)
+    xi = 1e6
+    xf = 1e0
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    xs, ys, dys, ss, ps, stypes = riccati.solve(info, xi, xf, yi, dyi,\
+                                                eps = eps, epsh = epsh,\
+                                                hard_stop = True)
+    xs = np.array(xs)
+    ys = np.array(ys)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
+    yerr = np.abs((ytrue - ys)/ytrue)
+    maxerr = max(yerr)
+    print(maxerr, stypes)
+    assert maxerr < 1e-6
+
+def test_denseoutput_backwards_xfor():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = riccati.setup(w, g, n = 32, p = 32)
+    xi = 1e6
+    xf = 1e0
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    Neval = int(1e2)
+    xeval = np.linspace(xi, xf, Neval) 
+    xs, ys, dys, ss, ps, stypes, yeval = riccati.solve(info, xi, xf, yi, dyi,\
+                                                       xeval = xeval,\
+                                                       eps = eps, epsh = epsh,\
+                                                       hard_stop = True)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
+    yerr = np.abs((ytrue - yeval)/ytrue)
+    maxerr = max(yerr)
+    print(yeval, yerr, maxerr)
+    assert maxerr < 1e-6
+
+def test_denseoutput_backwards_xback():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = riccati.setup(w, g, n = 32, p = 32)
+    xi = 1e6
+    xf = 1e0
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    Neval = int(1e2)
+    xeval = np.linspace(xf, xi, Neval) 
+    xs, ys, dys, ss, ps, stypes, yeval = riccati.solve(info, xi, xf, yi, dyi,\
+                                                       xeval = xeval,\
+                                                       eps = eps, epsh = epsh,\
+                                                       hard_stop = True)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
+    yerr = np.abs((ytrue - yeval)/ytrue)
+    maxerr = max(yerr)
+    print(yeval, yerr, maxerr)
     assert maxerr < 1e-6
 
 def test_solve_burst():
