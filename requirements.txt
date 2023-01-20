@@ -7,5 +7,4 @@ pytest
 mpmpath
 pandas
 num2tex
-matplotlib
 pyoscode
