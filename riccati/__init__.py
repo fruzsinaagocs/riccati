@@ -2,6 +2,7 @@ import numpy as np
 import math
 import scipy
 import scipy.linalg
+import warnings
 
 
 def coeffs2vals(coeffs):
@@ -227,7 +228,7 @@ def choose_nonosc_stepsize(info, x0, h, epsh = 0.2):
     """
     xscaled = x0 + h/2 + h/2*info.xp
     ws = info.w(xscaled)
-    if max(ws) > (1 + epsh)/h:
+    if max(ws) > (1 + epsh)/abs(h):
         return choose_nonosc_stepsize(info, x0, h/2, epsh = epsh)
     else:
         return h
@@ -290,8 +291,9 @@ def choose_osc_stepsize(info, x0, h, epsh = 1e-12):
     maxwerr = max(np.abs((west - wana)/wana))
     maxgerr = max(np.abs((gest - gana)/gana))
     maxerr = max(maxwerr, maxgerr)
+    print("Choosing oscillatory stepsize. At x = ", x0, " initial h guess h =  ", h, ", errors: ", maxwerr, maxgerr, maxerr)
     if maxerr > epsh:
-        return choose_osc_stepsize(info, x0, min(0.7*h, 0.9*h*(epsh/maxerr)**(1/(info.p-1))), epsh = epsh)
+        return choose_osc_stepsize(info, x0, h*min(0.7, 0.9*(epsh/maxerr)**(1/(info.p-1))), epsh = epsh)
     else:
         return h
     #TODO: what if h is too small to begin with?
@@ -803,6 +805,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     n = info.n
     p = info.p
     hi = info.h0 # Initial stepsize for calculating derivatives
+    
     # Is there dense output?
     denselen = len(xeval)
     if denselen > 0:
@@ -810,7 +813,16 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
         info.intmat = integrationm(n+1)
         yeval = np.zeros(denselen, dtype = complex)
     
-    # TODO: backwards integration
+    # Check if stepsize sign is consistent with direction of integration
+    if (xf - xi)*hi < 0:
+        warnings.warn("Direction of itegration does not match stepsize sign,\
+                adjusting it so that integration happens from xi to xf.")
+        hi *= -1
+
+    # Determine direction
+    intdir = np.sign(hi)
+    print("Direction of integration: ", intdir)
+
     xs = [xi]
     ys = [yi]
     dys = [dyi]
@@ -827,30 +839,38 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
     gi = np.mean(gis)
     dwi = np.mean(2/hi*(Dn @ wis))
     dgi = np.mean(2/hi*(Dn @ gis))
+    print("Initial w, dw, g, dg: ", wi, dwi, gi, dgi)
     # Choose initial stepsize
-    hslo_ini = min(1e8, np.abs(1/wi))
-    hosc_ini = min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
+    hslo_ini = intdir*min(1e8, np.abs(1/wi))
+    hosc_ini = intdir*min(1e8, np.abs(wi/dwi), np.abs(gi/dgi))
+    # Check if we would be stepping over the integration range
+    if intdir*(xi + hosc_ini) > intdir*xf:
+        hosc_ini = xf - xi
+    if intdir*(xi + hslo_ini) > intdir*xf:
+        hslo_ini = xf - xi
     hslo = choose_nonosc_stepsize(info, xi, hslo_ini)
     hosc = choose_osc_stepsize(info, xi, hosc_ini, epsh = epsh)  
+    print("Initial stepsizes: ", hslo_ini, hosc_ini)
+    print("Refined initial stepsizes: ", hslo, hosc)
     xcurrent = xi
     wnext = wi
     dwnext = dwi
-    while abs(xcurrent - xf) > 1e-8 and xcurrent < xf:
+    while abs(xcurrent - xf) > 1e-8 and intdir*xcurrent < intdir*xf:
         # Check how oscillatory the solution is
         #ty = np.abs(1/wnext)
         #tw = np.abs(wnext/dwnext)
         #tw_ty = tw/ty
         success = 0
-        if hosc > hslo*5 and hosc*wnext/(2*np.pi) > 1:
+        if intdir*hosc > intdir*hslo*5 and intdir*hosc*wnext/(2*np.pi) > 1:
             if hard_stop:
-                if xcurrent + hosc > xf:
+                if intdir*(xcurrent + hosc) > intdir*xf:
                     hosc = xf - xcurrent
                     xscaled = xcurrent + hosc/2 + hosc/2*info.xp 
                     wn = w(xscaled)
                     gn = g(xscaled)
                     info.wn = wn
                     info.gn = gn
-                if xcurrent + hslo > xf:
+                if intdir*(xcurrent + hslo) > intdir*xf:
                     hslo = xf - xcurrent
             # Solution is oscillatory
             # Attempt osc step of size hosc
@@ -869,7 +889,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
                 hslo *= 0.5
             else:
                 pass
-            if hslo < 1e-16:
+            if intdir*hslo < 1e-16:
                 raise RuntimeError("Solution didn't converge between h = 1e-16")
         # Log step
         if steptype == 1:
@@ -909,9 +929,9 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
             dwnext = 2/h*(Dn @ w(xcurrent + h/2 + h/2*xn))[0]
             dgnext = 2/h*(Dn @ g(xcurrent + h/2 + h/2*xn))[0]
         xcurrent += h
-        if xcurrent < xf:
-            hslo_ini = min(1e8, np.abs(1/wnext))
-            hosc_ini = min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
+        if intdir*xcurrent < intdir*xf:
+            hslo_ini = intdir*min(1e8, np.abs(1/wnext))
+            hosc_ini = intdir*min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
             hosc = choose_osc_stepsize(info, xcurrent, hosc_ini, epsh = epsh)  
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
