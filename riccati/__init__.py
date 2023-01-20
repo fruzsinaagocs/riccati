@@ -823,7 +823,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = [], hard_sto
 
     # Warn if dense output points requested outside of interval
     if info.denseout:
-        if intdir*xi < intdir*min(xeval) or intdir*xf > intdir*max(xeval):
+        if intdir*xi < min(intdir*xeval) or intdir*xf > max(intdir*xeval):
             warnings.warn("Some dense output points lie outside the integration range!")
 
     xs = [xi]
