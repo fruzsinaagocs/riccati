@@ -5,7 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup, Command
 
-docs = ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
+docs = ['sphinx', 'sphinx-book-theme', 'numpydoc']
 tests = ['pytest', 'scipy', 'mpmath']
 plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots

@@ -1,5 +1,7 @@
-riccati
-=======
+.. _api:
+
+API
+===
 
 .. automodule:: riccati
    :members:
