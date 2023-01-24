@@ -41,6 +41,16 @@ in the :ref:`api`.
 
    api
 
+To generate offline documentation, get the source code as described in the
+:ref:`installation` guide, and run
+
+.. code-block:: bash
+    
+   cd docs/
+   make html
+
+This will create a `docs/build/` directory in which the `html/` subdirectory
+contains these documentation pages in html format.
 
 License and attribution
 -----------------------
