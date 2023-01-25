@@ -68,7 +68,6 @@ Contributing
 We welcome bug reports, patches, feature requests, and other comments via
 `GitHub issues <https://github.com/fruzsinaagocs/riccati/issues>`_.
 
-Changelog
----------
 
-.. include:: ../CHANGELOG.rst
+
+
