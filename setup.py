@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 try:
-    from setuptools import setup, Command
+    from setuptools import setup, Command, find_packages
 except ImportError:
-    from distutils.core import setup, Command
+    from distutils.core import setup, Command, find_packages
 
 
 docs = ['sphinx', 'sphinx-book-theme', 'numpydoc']
-tests = ['scipy', 'mpmath', 'pytest', 'pytest[toml]', 'pytest-cov']
+tests = ['scipy', 'mpmath', 'pytest']
 plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots
 
@@ -18,11 +18,7 @@ setup(name='riccati',
       author='Fruzsina J Agocs and Alex H Barnett',
       author_email='',
       url='',
-      packages=[".", "tests"],
-      package_dir={
-          "": "riccati",
-#          "tests": "./riccati/tests/"
-          },
+      packages=find_packages(),
       install_requires=['numpy'],
       setup_requires=['setuptools>=40.6.0', 'setuptools_scm', 'wheel', 'pytest-runner'],
       extras_require={
