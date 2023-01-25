@@ -5,5 +5,4 @@ dependencies:
   - scipy
   - mpmath
   - matplotlib
-  - warnings
   - pip
