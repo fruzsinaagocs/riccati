@@ -1,4 +1,10 @@
-# `riccati`: a package implementing the adaptive Riccati defect correction (ARDC) method
+# riccati
+
+**A package implementing the adaptive Riccati defect correction (ARDC) method**
+
+
+[![Documentation Status](https://readthedocs.org/projects/riccati/badge/?version=latest)](https://riccati.readthedocs.io/en/latest/?badge=latest)
+
 
 ## About
 
@@ -8,28 +14,43 @@ $$ u''(t) + 2\gamma(t)u'(t) + \omega^2(t)u(t) = 0,$$
 
 on some solution interval $t \in [t_0, t_1]$, and with initial conditions $u(t_0) = u_0$, $u'(t_0) = u'_0$.
 
-`riccati` uses the adaptive Riccati defect correction method -- it switches between using nonoscillatory (spectral Chebyshev) and a specialised oscillatory solver (Riccati defect correction) to propagate the numerical solution based on its behaviour. More details here: ...
-
-## Installation
-
-To install:
-
-```bash
-git clone github.com/fruzsinaagocs/riccati
-cd better-phase-fun
-pip install .[all]
-```
-
-To run the unit tests:
-```bash 
-pytest riccati/tests/*
-```
+`riccati` uses the adaptive Riccati defect correction method -- it switches
+between using nonoscillatory (spectral Chebyshev) and a specialised oscillatory
+solver (Riccati defect correction) to propagate the numerical solution based on
+its behaviour. More details here: ...
 
 ## Documentation
 
-```bash
-cd docs/
-make html
-```
+Read the documentation at [riccati.readthedocs.io](http://riccati.readthedocs.io).
 
-Then open `docs/build/html/index.html` in your browser.
+## Attribution
+
+If you find this code useful in your research, please cite 
+[Agocs & Barnett (2022)](https://arxiv.org/abs/2212.06924). Its BibTeX entry is
+
+    @ARTICLE{ardc,
+           author = {{Agocs}, Fruzsina J. and {Barnett}, Alex H.},
+            title = "{An adaptive spectral method for oscillatory second-order
+            linear ODEs with frequency-independent cost}",
+          journal = {arXiv e-prints},
+         keywords = {Mathematics - Numerical Analysis},
+             year = 2022,
+            month = dec,
+              eid = {arXiv:2212.06924},
+            pages = {arXiv:2212.06924},
+              doi = {10.48550/arXiv.2212.06924},
+    archivePrefix = {arXiv},
+           eprint = {2212.06924},
+     primaryClass = {math.NA},
+           adsurl = {https://ui.adsabs.harvard.edu/abs/2022arXiv221206924A},
+          adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+    }
+
+## License 
+
+Copyright 2022-2023 The Simons Foundation, Inc.
+
+**riccati** is free software available under the Apache License 2.0, for
+details see the [LICENSE](https://github.com/fruzsinaagocs/riccati/LICENSE).
+
+

@@ -10,7 +10,7 @@
 
 import sys
 import os
-sys.path.append(os.path.abspath('../../'))
+sys.path.append(os.path.abspath('../'))
 
 #def get_version(short=False):
 #    with open('../../README.rst') as f:
@@ -55,7 +55,6 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.autodoc',
     'numpydoc',
     'myst_nb',
     'IPython.sphinxext.ipython_console_highlighting',
