@@ -18,7 +18,7 @@ setup(name='riccati',
       author='Fruzsina J Agocs and Alex H Barnett',
       author_email='',
       url='',
-      packages=["riccati", "tests"],
+      packages=[".", "tests"],
       package_dir={
           "": "riccati",
 #          "tests": "./riccati/tests/"
