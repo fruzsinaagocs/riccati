@@ -1,0 +1,9 @@
+name: riccati
+dependencies:
+  - python
+  - numpy
+  - scipy
+  - mpmath
+  - matplotlib
+  - warnings
+  - pip

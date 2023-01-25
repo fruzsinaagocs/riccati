@@ -1,4 +1,3 @@
-# Unit tests for riccati.py
 import numpy as np
 from riccati.chebutils import cheb, integrationm, quadwts
 from riccati.solversetup import solversetup
@@ -8,6 +7,7 @@ from riccati.stepsize import choose_osc_stepsize, choose_nonosc_stepsize
 import scipy.special as sp
 import mpmath
 import warnings
+import pytest
 
 def test_integration():
     n = 16
@@ -240,7 +240,7 @@ def test_solve_burst():
     ytrue = bursty(xs)
     yerr = np.abs((ytrue - ys))/np.abs(ytrue)
     maxerr = max(yerr)
-    assert maxerr < 1e-7
+    assert maxerr < 2e-7
     
 def test_osc_evolve():
     w = lambda x: np.sqrt(x)

@@ -26,7 +26,7 @@ sys.path.append(os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'riccati'
-copyright = '2022, Fruzsina Julia Agocs'
+copyright = '2022-2023, Simons Foundation, Inc.'
 author = 'Fruzsina Julia Agocs, Alex Barnett'
 
 
@@ -55,8 +55,12 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'numpydoc'
+    'numpydoc',
+    'myst_nb',
+    'IPython.sphinxext.ipython_console_highlighting',
 ]
+
+myst_enable_extensions = ['dollarmath', 'colon_fence']
 
 intersphinx_mapping = {
         'numpy': ('https://docs.scipy.org/doc/numpy/', None),
@@ -97,13 +101,36 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
+html_copy_source = True
+html_show_sourcelink = True
+html_sourcelink_suffix = ""
+html_title = "riccati"
+#html_favicon = "bla.png"
+
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+        "path_to_docs": "docs",
+        "repository_url": "https://github.com/fruzsinaagocs/riccati",
+        "repository_branch": "master",
+        "launch_buttons:": {
+            "binderhub_url": "https://mybinder.org",
+            "notebook_interface": "classic",
+        },
+        "use_edit_page_button": True,
+        "use_issues_button": True,
+        "use_repository_button": True,
+        "use_download_button": True,
+}
+
+# Notebook settings
+nb_execution_mode = "off"
+nb_execution_timeout = -1
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
