@@ -7,7 +7,7 @@ except ImportError:
 
 
 docs = ['sphinx', 'sphinx-book-theme', 'numpydoc']
-tests = ['scipy', 'mpmath', 'pytest']
+tests = ['numpy', 'scipy', 'mpmath', 'pytest']
 plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots
 
