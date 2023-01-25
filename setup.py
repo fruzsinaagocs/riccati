@@ -19,7 +19,7 @@ setup(name='riccati',
       author_email='',
       url='',
       packages=["riccati", "tests"],
-      packages_dir={
+      package_dir={
           "": ".",
           "tests": "./riccati/tests/"},
       install_requires=['numpy'],
