@@ -1,4 +1,5 @@
-sphinx-book-theme
+sphinx_book_theme
+numpydoc
 myst-nb
 matplotlib
 scipy
