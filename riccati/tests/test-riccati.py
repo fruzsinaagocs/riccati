@@ -8,6 +8,7 @@ from riccati.stepsize import choose_osc_stepsize, choose_nonosc_stepsize
 import scipy.special as sp
 import mpmath
 import warnings
+import pytest
 
 def test_integration():
     n = 16

@@ -6,7 +6,7 @@ except ImportError:
     from distutils.core import setup, Command
 
 docs = ['sphinx', 'sphinx-book-theme', 'numpydoc']
-tests = ['pytest', 'scipy', 'mpmath']
+tests = ['scipy', 'mpmath', 'pytest', 'pytest[toml]']
 plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots
 
@@ -19,7 +19,7 @@ setup(name='riccati',
       url='',
       packages=['riccati'],
       install_requires=['numpy'],
-      setup_requires=['pytest-runner'],
+      setup_requires=['setuptools>=40.6.0', 'setuptools_scm', 'wheel', 'pytest-runner'],
       extras_require={
           'all': all,
           'docs': docs,
@@ -27,6 +27,7 @@ setup(name='riccati',
           'plots': plots
           },
       include_package_data=True,
-      license='MIT',
+      license='Apache 2.0',
       classifiers=[],
+      options={'bdist_wheel': {'universal': '1'}},
 )

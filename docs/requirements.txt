@@ -1,0 +1,6 @@
+sphinx-book-theme
+myst-nb
+matplotlib
+scipy
+mpmath
+ipython
