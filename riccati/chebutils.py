@@ -20,6 +20,7 @@ def coeffs2vals(coeffs):
 
     Returns
     -------
+    values: np.ndarray [float (real)]
 
     """
     n = coeffs.shape[0]
@@ -40,10 +41,11 @@ def vals2coeffs(values):
 
     Parameters
     ----------
+    values: np.ndarray [float (real)]
 
     Returns
     -------
-
+    coeffs: np.ndarray [float (real)] 
 
     """
     n = values.shape[0]
@@ -66,10 +68,11 @@ def integrationm(n):
 
     Parameters
     ----------
+    n: int
 
     Returns
     -------
-
+    Q: np.ndarray [float (real)]
 
     """
     n -= 1
@@ -96,10 +99,11 @@ def quadwts(n):
 
     Parameters
     ----------
+    n: int
 
     Returns
     -------
-
+    w: np.ndarray [float (real)]
 
     """
     if n == 0:
