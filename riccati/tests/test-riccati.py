@@ -1,4 +1,3 @@
-# Unit tests for riccati.py
 import numpy as np
 from riccati.chebutils import cheb, integrationm, quadwts
 from riccati.solversetup import solversetup
