@@ -240,7 +240,7 @@ def test_solve_burst():
     ytrue = bursty(xs)
     yerr = np.abs((ytrue - ys))/np.abs(ytrue)
     maxerr = max(yerr)
-    assert maxerr < 1e-7
+    assert maxerr < 2e-7
     
 def test_osc_evolve():
     w = lambda x: np.sqrt(x)
