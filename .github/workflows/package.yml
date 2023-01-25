@@ -54,7 +54,7 @@ jobs:
           python -m pip install -U coveralls
           python -m coveralls --finish
         env:
-          GITHUB_TOKEN: ${{ secrects.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     runs-on: ubuntu-latest
