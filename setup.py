@@ -20,8 +20,9 @@ setup(name='riccati',
       url='',
       packages=["riccati", "tests"],
       package_dir={
-          "": ".",
-          "tests": "./riccati/tests/"},
+          "": "riccati",
+#          "tests": "./riccati/tests/"
+          },
       install_requires=['numpy'],
       setup_requires=['setuptools>=40.6.0', 'setuptools_scm', 'wheel', 'pytest-runner'],
       extras_require={
