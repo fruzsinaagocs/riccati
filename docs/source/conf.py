@@ -115,7 +115,7 @@ html_title = "riccati"
 # documentation.
 #
 html_theme_options = {
-        "path_to_docs": "docs",
+        "path_to_docs": "docs/source",
         "repository_url": "https://github.com/fruzsinaagocs/riccati",
         "repository_branch": "master",
         "launch_buttons": {

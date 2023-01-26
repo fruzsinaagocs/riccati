@@ -1,4 +1,6 @@
 name: riccati
+channels:
+  - conda-forge
 dependencies:
   - python
   - numpy
