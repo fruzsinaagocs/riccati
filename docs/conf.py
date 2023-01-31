@@ -119,7 +119,7 @@ html_theme_options = {
         "repository_url": "https://github.com/fruzsinaagocs/riccati",
         "repository_branch": "master",
         "launch_buttons": {
-            "binder_url": "https://mybinder.org",
+            "binderhub_url": "https://mybinder.org",
         },
         "use_edit_page_button": True,
         "use_issues_button": True,
