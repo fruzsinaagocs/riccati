@@ -32,6 +32,7 @@ jobs:
       - name: Run tests
         run: python -m pytest --cov=riccati --cov-report=xml
       - name: Combine and upload coverage
+        uses: actions/checkout@master
         uses: codecov/codecov-action@v3
   
   build:
