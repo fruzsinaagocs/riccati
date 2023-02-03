@@ -39,7 +39,7 @@ riccati.step module
 riccati.evolve module
 ---------------------
 
-.. automodule:: riccati.solve
+.. automodule:: riccati.evolve
    :members:
    :undoc-members:
    :show-inheritance:

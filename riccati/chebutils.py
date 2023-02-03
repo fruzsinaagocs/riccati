@@ -6,21 +6,25 @@ def coeffs2vals(coeffs):
     values at Chebyshev nodes of the second kind (ordered from +1 to -1). This function returns a
     matrix `V` such that for an input coefficient matrix `C`,
 
-    .. math:: V_{ij} = P_j(x_i) = \sum_{k=0}^{n} C_{jk}T_j(x_i).
+    .. math:: V_{ij} = P_j(x_i) = \sum_{k=0}^{n} C_{kj}T_k(x_i).
 
-    Taken from the `chebfun`_ package.
+    Taken from the `coeff2vals`_ function in the chebfun package.
 
-    .. _`chebfun`: https://github.com/chebfun/chebfun/blob/master/%40chebtech2/coeffs2vals.m
+    .. _`coeff2vals`: https://github.com/chebfun/chebfun/blob/master/%40chebtech2/coeffs2vals.m
 
     Parameters
     ----------
     coeffs: numpy.ndarray [float (real)]
-       An array of size (n+1, m), with the (i,j)th element representing the projection of the jth input polynomial 
+       An array of size (n+1, m), with the (i, j)th element representing the
+       projection of the jth input polynomial onto the ith Chebyshev
+       polynomial.
 
 
     Returns
     -------
     values: np.ndarray [float (real)]
+        An array of size (n+1, m), with the (i, j)th element representing the
+        jth input polynomial evaluated at the ith Chebyshev node.
 
     """
     n = coeffs.shape[0]
@@ -35,17 +39,31 @@ def coeffs2vals(coeffs):
 
 def vals2coeffs(values):
     """
-    Convert values at Chebyshev nodes of the second kind, ordered from +1 to
-    -1, to Chebyshev coefficients. Taken from 
-    https://github.com/chebfun/chebfun/blob/master/%40chebtech2/vals2coeffs.m
+    Convert a matrix of values of `m` polynomials evaluated at `n+1` Chebyshev
+    nodes of the second kind, ordered from +1 to -1, to their interpolating
+    Chebyshev coefficients. This function returns the coefficient matrix `C`
+    such that for an input matrix of values `V`,
+
+    .. math:: F_j(x) = \sum_{k=0}^{n} C_{kj}T_k(x) 
+
+    interpolates the values :math:`[V_{0j}, V_{1j}, \ldots, V_{nj}]` for :math:`j = 0..(m-1)`.
+
+    Taken from the `vals2coeffs`_ function in the chebfun package.
+
+    .. _`vals2coeffs`: https://github.com/chebfun/chebfun/blob/master/%40chebtech2/vals2coeffs.m
 
     Parameters
     ----------
     values: np.ndarray [float (real)]
+        An array of size (n+1, m), with the (i, j)th element being the jth
+        polynomial evaluated at the ith Chebyshev node. 
 
     Returns
     -------
     coeffs: np.ndarray [float (real)] 
+        An array of size (n+1, m) with the (i, j)th element being the
+        coefficient multiplying the ith Chebyshev polynomial for interpolating
+        the jth input polynomial.
 
     """
     n = values.shape[0]
@@ -63,16 +81,22 @@ def integrationm(n):
     Chebyshev integration matrix. It maps function values at n Chebyshev nodes
     of the second kind, ordered from +1 to -1, to values of the integral of the
     interpolating polynomial at those points, with the last value (start of the
-    interval) being zero. Taken from the `cumsummat` function in
-    https://github.com/chebfun/chebfun/blob/master/%40chebcolloc2/chebcolloc2.m
+    interval) being zero. Taken from the `cumsummat`_ function in the chebfun package.
+
+    .. _`cumsummat`: https://github.com/chebfun/chebfun/blob/master/%40chebcolloc2/chebcolloc2.m
 
     Parameters
     ----------
     n: int
+        Number of Chebyshev nodes the integrand is evaluated at. Note the nodes
+        are always ordered from +1 to -1.
 
     Returns
     -------
     Q: np.ndarray [float (real)]
+        Integration matrix of size (n, n) that maps values of the integrand at
+        the n Chebyshev nodes to values of the definite integral on the
+        interval, up to each of the Chebyshev nodes (the last value being zero by definition). 
 
     """
     n -= 1
@@ -93,17 +117,24 @@ def integrationm(n):
 def quadwts(n):
     """
     Clenshaw-Curtis quadrature weights mapping function evaluations at
-    Chebyshev nodes of the second kind, ordered from +1 to -1, to value of the
+    (n+1) Chebyshev nodes of the second kind, ordered from +1 to -1, to value of the
     definite integral of the interpolating function on the same interval. Taken
-    from Trefethen: Spectral methods in MATLAB, Ch 12, `clencurt.m`
+    from [1]_ Ch 12, `clencurt.m`
 
     Parameters
     ----------
     n: int
+        The (number of Chebyshev nodes - 1) for which the quadrature weights are to be computed. 
 
     Returns
     -------
     w: np.ndarray [float (real)]
+        Array of size (n+1,) containing the quadrature weights.
+
+    References
+    ----------
+    .. [1] Trefethen, Lloyd N. Spectral methods in MATLAB. Society for
+    industrial and applied mathematics, 2000.
 
     """
     if n == 0:
@@ -129,10 +160,11 @@ def quadwts(n):
 
 def cheb(n):
     """
-    Returns a differentiation matrix D of size (n+1, n+1) and (n+1) Chebyshev nodes
-    x for the standard 1D interval [-1, 1]. The matrix multiplies a vector of
-    function values at these nodes to give an approximation to the vector of
-    derivative values. Nodes are output in descending order from 1 to -1. The nodes are given by
+    Returns a differentiation matrix D of size (n+1, n+1) and (n+1) Chebyshev
+    nodes x for the standard 1D interval [-1, 1]. The matrix multiplies a
+    vector of function values at these nodes to give an approximation to the
+    vector of derivative values. Nodes are output in descending order from 1 to
+    -1. The nodes are given by
     
     .. math:: x_p = \cos \left( \\frac{\pi n}{p} \\right), \quad n = 0, 1, \ldots p.
 
@@ -202,9 +234,41 @@ def interp(s, t):
 
 def spectral_cheb(info, x0, h, y0, dy0, niter):
     """
-    Utility function to apply a spectral method based on n Chebyshev nodes from
+    Utility function to apply a spectral collocation method based on Chebyshev nodes from
     x = x0 to x = x0+h, starting from the initial conditions y(x0) = y0, y'(x0)
-    = dy0.
+    = dy0. In each spectral collocation/Chebyshev step, the solver iterates
+    over how many nodes to perform the step with, starting from `info.nini`,
+    doubling in every iteration until `info.nmax` is reached or the required
+    tolerance is satisfied, whichever comes sooner. The `niter` parameter keeps
+    track of how many iterations have been done and is used to retrieve the
+    relevant pre-computed differentiation matrix and vector of nodes from the
+    input `info` object.
+
+    Parameters
+    ----------
+    info: Solverinfo object
+
+    x0: float (real)
+        Value of the independent variable to take a spectral step from.
+
+    h: float (real)
+        Stepsize.
+
+    y0, dy0: complex
+        Initial conditions (value of the solution and its derivative) at x0.
+
+    niter: int
+        Integer to keep track of how many iterations of the spectral collocation step have been done.
+
+    Returns
+    -------
+    y1, dy1: complex
+        Numerical estimate of the solution and its derivative at the end of the step, at x0+h.
+
+    xscaled: numpy.ndarray [float]
+        Chebyshev nodes used for the current iteration of the spectral
+        collocation method scaled to lie between [x0, x0+h].
+
     """
     D, x = info.Ds[niter], info.nodes[niter]
     xscaled = h/2*x + x0 + h/2

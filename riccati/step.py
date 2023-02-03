@@ -158,7 +158,7 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     y1 = ap*f1 + am*f2
     dy1 = ap*du1*f1 + am*du2*f2
     phase = np.imag(u1)
-    info.increase(sub = 1, riccstep = 1)
+    info.increase(riccstep = 1)
     if info.denseout:
         info.un = u1
         info.a = (ap, am)

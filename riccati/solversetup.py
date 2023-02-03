@@ -3,7 +3,86 @@ from riccati.chebutils import cheb, interp, quadwts
 
 class Solverinfo:
     """
-    Class to store differentiation matrices, Chebyshev nodes, etc.
+    Class to store information of an ODE solve run. When initialized, it
+    computes Chebyshev nodes and differentiation matrices neede for the run
+    once and for all.
+
+    Attributes
+    ----------
+    w, g: callable
+        Frequency and friction function associated with the ODE, defined as :math:`\omega` and
+        :math:`\gamma` in :math:`u'' + 2\gamma u' + \omega^2 u = 0`.
+    h0: float
+        Initial interval length which will be used to estimate the initial derivatives of w, g.
+    nini, nmax: int
+        Minimum and maximum (number of Chebyshev nodes - 1) to use inside
+        Chebyshev collocation steps. The step will use `nmax` nodes or the
+        minimum number of nodes necessary to achieve the required local error,
+        whichever is smaller. If `nmax` > 2`nini`, collocation steps will be
+        attempted with :math:`2^i` `nini` nodes at the ith iteration. 
+    n: int
+        (Number of Chebyshev nodes - 1) to use for computing Riccati steps.
+    p: int
+        (Number of Chebyshev nodes - 1) to use for estimating Riccati stepsizes.
+    denseout: bool
+        Defines whether or not dense output is required for the current run.
+    h: float 
+        Current stepsize.
+    y: np.ndarray [complex]
+        Current state vector of size (2,), containing the numerical solution and its derivative.
+    wn, gn: np.ndarray [complex]
+        The frequency and friction function evaluated at `n` + 1 Chebyshev nodes
+        over the interval [x, x + `h` ], where x is the value of the independent
+        variable at the start of the current step and `h` is the current
+        stepsize.
+    Ds: list [np.ndarray [float]]
+       List containing differentiation matrices of sizes :math:`(2^i n_{\mathrm{ini}}
+       + 1,2^i n_{\mathrm{ini}} + 1)` for :math:`i = 0, 1, \ldots, \lfloor \log_2\\frac{n_{\mathrm{max}}}{n_{\mathrm{ini}}} \\rfloor.`
+    nodes: list [np.ndarray [float]]
+        List containing vectors of Chebyshev nodes over the standard interval, ordered from +1 to -1, of sizes
+        :math:`(2^i n_{\mathrm{ini}} + 1,)` for :math:`i = 0, 1, \ldots, \lfloor \log_2 \\frac{n_{\mathrm{max}}}{n_{\mathrm{ini}}} \\rfloor.`
+    ns: np.ndarray [int] 
+        Vector of lengths of node vectors stored in `nodes`, i.e. the integers
+        :math:`2^i n_{\mathrm{ini}} + 1` for :math:`i = 0, 1, \ldots, \lfloor \log_2 \\frac{n_{\mathrm{max}}}{n_{\mathrm{ini}}} \\rfloor.`
+    xn: np.ndarray [float] 
+        Values of the independent variable evaluated at (`n` + 1) Chebyshev
+        nodes over the interval [x, x + `h`], where x is the value of the
+        independent variable at the start of the current step and `h` is the
+        current stepsize.
+    xp: np.ndarray [float]
+        Values of the independent variable evaluated at (`p` + 1) Chebyshev
+        nodes over the interval [x, x + `h`], where x is the value of the
+        independent variable at the start of the current step and `h` is the
+        current stepsize.
+    xpinterp: np.ndarray [float]
+        Values of the independent variable evaluated at `p` points 
+        over the interval [x, x + `h`] lying in between Chebyshev nodes, where x is the value of the
+        independent variable at the start of the current step and `h` is the
+        current stepsize. The in-between points :math:`\\tilde{x}_p` are defined by
+        
+        .. math: \\tilde{x}_p = \cos\left( \\frac{(2k + 1)\pi}{2p} \\right), \quad k = 0, 1, \ldots p-1.
+
+    L: np.ndarray [float]    
+        Interpolation matrix of size (`p`+1, `p`), used for interpolating a
+        function between the nodes `xp` and `xpinterp` (for computing Riccati
+        stepsizes). 
+    quadwts: np.ndarray [float]
+        Vector of size (`n` + 1,) containing Clenshaw-Curtis quadrature weights.
+    n_chebnodes: int
+        Number of times Chebyhev nodes have been calculated, i.e.
+        `riccati.chebutils.cheb` has been called.
+    n_chebstep: int
+        Number of Chebyshev steps attempted.
+    n_chebits: int
+        Number of times an iteration of the Chebyshev-grid-based
+        collocation method has been performed (note that if `nmax` >=
+        4`nini` then a single Chebyshev step may include multiple
+        iterations!).
+    n_LS:  int
+        Number of times a linear system has been solved.
+    n_riccstep: int
+        Number of Riccati steps attempted.
+
     """
 
     def __init__(self, w, g, h, nini, nmax, n, p):
@@ -22,11 +101,8 @@ class Solverinfo:
         self.n_chebnodes = 0
         self.n_chebstep = 0
         self.n_chebits = 0
-        self.n_LS2x2 = 0
         self.n_LS = 0
         self.n_riccstep = 0
-        self.n_sub = 0
-        self.n_LU = 0
 
         self.h = self.h0
         self.y = np.zeros(2, dtype = complex)
@@ -59,41 +135,89 @@ class Solverinfo:
         self.quadwts = quadwts(n)
         self.increase(LU = 1)
 
-    def increase(self, chebnodes = 0, chebstep = 0, chebits = 0, LS2x2 = 0, LS = 0, riccstep = 0, sub = 0, LU = 0):
+    def increase(self, chebnodes = 0, chebstep = 0, chebits = 0,
+                 LS = 0, riccstep = 0):
+        """
+        Increases the relevant attribute of the class (a counter for a specific
+        arithmetic operation) by a given number. Used for generating performance statistics.
+
+        Parameters
+        ----------
+        chebnodes: int
+            Count by which to increase `riccati.solversetup.Solverinfo.n_chebnodes`.
+        chebstep: int
+            Count by which to increase `riccati.solversetup.Solverinfo.n_chebstep`.
+        chebits: int
+            Count by which to increase `riccati.solversetup.Solverinfo.n_chebits`.
+        LS: int
+            Count by which to increase `riccati.solversetup.Solverinfo.n_LS`.
+        riccstep: int
+            Count by which to increase `riccati.solversetup.Solverinfo.n_riccstep`.
+
+        Returns
+        -------
+        None
+        """
         self.n_chebnodes += chebnodes
         self.n_chebstep += chebstep
         self.n_chebits += chebits
-        self.n_LS2x2 += LS2x2
         self.n_LS += LS
         self.n_riccstep += riccstep
-        self.n_LU += LU
-        self.n_sub += sub
     
     def output(self, steptypes):
+        """
+        Creates a dictionary of the counter-like attributes of `Solverinfo`,
+        namely: the number of attempted Chebyshev steps `n_chebsteps`, the
+        number of Chebyshev iterations `n_chebits`, the number of attempted
+        Riccati steps `n_riccstep`, the number of linear solver `n_LS`, and the
+        number of times Chebyshev nodes have been computed, `n_chebnodes`. It
+        also logs the number of steps broken down by steptype: in the relevant
+        fields, (n, m) means there were n attempted steps out of which m were
+        successful.
+
+        Parameters
+        ----------
+        steptypes: list [int]
+            List of steptypes (of successful steps) produced by
+            `riccati.evolve.solve()`, each element being 0 (Chebyshev step) or
+            1 (Riccati step).
+
+        Returns
+        -------
+        statdict: dict
+            Dictionary with the following keywords:
+            
+            cheb steps: tuple [int] 
+                (n, m), where n is the total number of attempted Chebyshev steps out of which m were successful.
+            cheb iterations: int
+                Total number of iterations of the Chebyshev collocation method. 
+            ricc steps: tuple [int]
+                (n, m), where n is the total number of attempted Chebyshev steps out of which m were successful.
+            linear solves: int
+                Total number of times a linear solve has been performed.
+            cheb nodes: int
+                Total number of times a call to compute Chebyshev nodes has been made.
+        """
         statdict = {"cheb steps": (self.n_chebstep, sum(np.array(steptypes) == 0) - 1), 
                     "cheb iterations": self.n_chebits, 
                     "ricc steps": (self.n_riccstep, sum(np.array(steptypes) == 1)), 
                     "linear solves": self.n_LS, 
-                    "linear solves 2x2": self.n_LS2x2, 
-                    "cheb nodes": self.n_chebnodes,
-                    "LU decomp": self.n_LU, 
-                    "substitution": self.n_sub}
+                    "cheb nodes": self.n_chebnodes}
         return statdict
 
 
 def solversetup(w, g, h0 = 0.1, nini = 16, nmax = 32, n = 16, p = 16):
     """
     Sets up the solver by generating differentiation matrices based on an
-    increasing number of Chebyshev gridpoints: nini+1, 2*nini+1, ...,
-    2*nmax+1).  Needs to be called before the first time the solver is ran or
-    if nini or nmax are changed. 
+    increasing number of Chebyshev gridpoints (see `riccati.solversetup.Solverinfo`).  Needs to be called
+    before the first time the solver is ran or if nini or nmax are changed. 
 
     Parameters
     ----------
     w: callable(t)
-        Freqyency fynction in y'' + 2g(t)y' + w^2(t)y = 0.
+        Frequency function in y'' + 2g(t)y' + w^2(t)y = 0.
     g: callable(t)
-        Damping fynction in y'' + 2g(t)y' + w^2(t)y = 0.
+        Damping function in y'' + 2g(t)y' + w^2(t)y = 0.
     h0: float
         Initial stepsize.
     nini: int
