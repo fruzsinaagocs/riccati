@@ -133,7 +133,6 @@ class Solverinfo:
         self.L = interp(self.xp, self.xpinterp)
         self.increase(LS = 1)
         self.quadwts = quadwts(n)
-        self.increase(LU = 1)
 
     def increase(self, chebnodes = 0, chebstep = 0, chebits = 0,
                  LS = 0, riccstep = 0):
