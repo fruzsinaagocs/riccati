@@ -83,6 +83,13 @@ class Solverinfo:
     n_riccstep: int
         Number of Riccati steps attempted.
 
+    Methods
+    -------
+    increase:
+        Increase the various counters (attributes starting with `n_`) by given values.
+    output:
+        Return the state of the counters as a dictionary.
+
     """
 
     def __init__(self, w, g, h, nini, nmax, n, p):

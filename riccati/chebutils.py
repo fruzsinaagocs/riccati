@@ -134,7 +134,7 @@ def quadwts(n):
     References
     ----------
     .. [1] Trefethen, Lloyd N. Spectral methods in MATLAB. Society for
-    industrial and applied mathematics, 2000.
+      industrial and applied mathematics, 2000.
 
     """
     if n == 0:
