@@ -8,11 +8,9 @@ tags:
 authors:
   - name: Fruzsina Julia Agocs
     orcid: 0000-0002-1763-5884
-    affiliation: Center for Computational Mathematics, Flatiron Institute, 162
-    Fifth Avenue, New York, 10010 NY, USA 
+    affiliation: Center for Computational Mathematics, Flatiron Institute, 162 Fifth Avenue, New York, 10010 NY, USA 
   - name: Alex Barnett 
-    affiliation: Center for Computational Mathematics, Flatiron Institute, 162
-    Fifth Avenue, New York, 10010 NY, USA 
+    affiliation: Center for Computational Mathematics, Flatiron Institute, 162 Fifth Avenue, New York, 10010 NY, USA 
 date: 3 Febuary 2023
 bibliography: paper.bib
 
