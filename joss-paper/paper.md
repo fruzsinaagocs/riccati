@@ -1,5 +1,5 @@
 ---
-title: 'riccati: an adaptive, spectral solver for oscillatory ODEs'
+title: '`riccati`: an adaptive, spectral solver for oscillatory ODEs'
 tags:
   - Python
   - numerical methods
@@ -21,10 +21,11 @@ bibliography: paper.bib
 
 # Summary
 
-Highly oscillatory ordinary differential equations (ODE)s pose a computational
-challenge for standard solvers available in scientific computing libraries as
-these typically have runtimes scaling as $\mathcal{O}(\omega)$, with $\omega$
-being the oscillation frequency. 
+Highly oscillatory ordinary differential equations (ODEs) pose a computational
+challenge for standard solvers available in scientific computing libraries. 
+These conventional methods are typically based on a polynomial approximation
+resulting in runtimes scaling as $\mathcal{O}(\omega)$, with $\omega$ being the
+oscillation frequency, which can get prohibitively slow.
 
 The `riccati`
 (Python) package implements the efficient numerical method described in @ardc
@@ -44,12 +45,15 @@ arithmetic operations per $t$-point.
 
 # Statement of need
 
-Some specialised numerical methods exist to solve \autoref{eq:ode} in
+Specialised numerical methods exist to solve \autoref{eq:ode} in
 the high-frequency ($\omega >> 1$) regime, but out of those that have software implementations
-none are both (1) adaptive, meaning that they stay efficient if the solution of
-the ODE does not oscillate; and (2) high-order accurate, so that the user may
-request many digits of accuracy without loss of efficiency. `riccati` fills
-this gap as a high-order (spectral) adaptive solver.
+none are both (1) able to deal with both oscillatory and nonoscillatory
+behaviors occuring in the solution; and (2) high-order accurate, so that the
+user may request many digits of accuracy without loss of efficiency. `riccati` fills
+this gap as a high-order (spectral) adaptive solver. Being a spectral method
+means that its convergence rate is as quick as the smoothness of the
+coefficients $\omega(t)$, $\gamma(t)$ (in the oscillatory regime), and that of
+the solution $u(t)$ (in the nonoscillatory regime) allows.
 
 `oscode` [@oscode-joss; @oscode-theory] and the WKB-marching method[^1]
 @wkbmarching1; @wkbmarching2 are examples of low-order adaptive oscillatory
@@ -67,12 +71,12 @@ u'' + \omega^2(t) u = 0, \quad \text{where} \quad \omega^2(t) = \lambda^2(1 - t^
 on the interval $t \in [-1, 1]$, subject to the initial conditions $u(-1) = 0$,
 $u'(-1) = \lambda$. The runtimes were measured at two settings of the required
 relative tolerance $\varepsilon$, $10^{-6}$ and $10^{-12}$. The figure
-demonstrates the advantage `riccati`'s adaptiveorder provides at low tolerances
-as it avoids the runtime-increase `oscode' and the WKB marching methods exhibit
+demonstrates the advantage `riccati`'s adaptivity provides at low tolerances
+as it avoids the runtime-increase `oscode` and the WKB marching methods exhibit
 at low-to-intermediate frequencies, and confirms that its runtime is virtually
 independent of the oscillation frequency. 
 
-![Performance comparison of `riccati` (labelled ARDC) against state-of-the-art oscillatory solvers: `oscode', the WKB marching method, Kummer's phase function method, and a high-order Runge--Kutta method (RK78) [@dop853] on \autoref{eq:runtime-ode} with a varying frequency parameter $\lambda$. Solid and dashed lines denote runs with a relative tolerance settings of $\varepsilon = 10^{-12}$ and $10^{-6}$, respectively. \label{fig:solver-comparison}](solver-comparison-timing.pdf)
+![Performance comparison of `riccati` (labelled ARDC) against state-of-the-art oscillatory solvers: `oscode`, the WKB marching method, Kummer's phase function method, and a high-order Runge--Kutta method (RK78) [@dop853] on \autoref{eq:runtime-ode} with a varying frequency parameter $\lambda$. Solid and dashed lines denote runs with a relative tolerance settings of $\varepsilon = 10^{-12}$ and $10^{-6}$, respectively. \label{fig:solver-comparison}](solver-comparison-timing.pdf)
 
 
 [^1]: Available from https://github.com/JannisKoerner/adaptive-WKB-marching-method
