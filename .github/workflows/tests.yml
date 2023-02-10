@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - docs
+      - joss-paper
   workflow_dispatch:
 
 jobs:
