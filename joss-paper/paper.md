@@ -57,22 +57,22 @@ solvers, efficient when no more than about 6 digits of accuracy are required or 
 A high-order alternative is the Kummer's phase function-based method by
 @kummerphase; @phasefntp[^2], whose current implementation supports solving
 \autoref{eq:ode} in the highly oscillatory regime. Other existing numerical methods are
-reviewed in e.g. @petzoldrev. @autoref{fig:solver-comparison} compares the
+reviewed in e.g. @petzoldrev. \autoref{fig:solver-comparison} compares the
 performance of the above specialised solvers and one of Scipy's [@scipy] built-in methods [@dop853]
 by plotting their runtime against the frequency parameter $\lambda$ while
 solving
 \begin{equation}\label{eq:runtime-ode}
-u'' + \omega^2(t) u = 0, \text{ where } \omega^2(t) = \lambda^2(1 - t^2\cos 3t ),
+u'' + \omega^2(t) u = 0, \quad \text{where} \quad \omega^2(t) = \lambda^2(1 - t^2\cos 3t ),
 \end{equation}
 on the interval $t \in [-1, 1]$, subject to the initial conditions $u(-1) = 0$,
 $u'(-1) = \lambda$. The runtimes were measured at two settings of the required
-relative tolerance $\epsilon$, $10^{-6}$ and $10^{-12}$. The figure
-demonstrates the advantage `riccati''s adaptiveorder provides at low tolerances
+relative tolerance $\varepsilon$, $10^{-6}$ and $10^{-12}$. The figure
+demonstrates the advantage `riccati`'s adaptiveorder provides at low tolerances
 as it avoids the runtime-increase `oscode' and the WKB marching methods exhibit
 at low-to-intermediate frequencies, and confirms that its runtime is virtually
 independent of the oscillation frequency. 
 
-![Performance comparison of `riccati' (labelled ARDC) against state-of-the-art oscillatory solvers: `oscode', the WKB marching method, Kummer's phase function method, and a high-order Runge--Kutta method (RK78) [@dop853] on \autoref{eq:runtime-ode} with a varying frequency parameter $\lambda$. Solid and dashed lines denote runs with a relative tolerance settings of $\varepsilon = 10^{-12}$ and $10^{-6}$, respectively. \label{fig:solver-comparison}](solver-comparison-timing.pdf)
+![Performance comparison of `riccati` (labelled ARDC) against state-of-the-art oscillatory solvers: `oscode', the WKB marching method, Kummer's phase function method, and a high-order Runge--Kutta method (RK78) [@dop853] on \autoref{eq:runtime-ode} with a varying frequency parameter $\lambda$. Solid and dashed lines denote runs with a relative tolerance settings of $\varepsilon = 10^{-12}$ and $10^{-6}$, respectively. \label{fig:solver-comparison}](solver-comparison-timing.pdf)
 
 
 [^1]: Available from https://github.com/JannisKoerner/adaptive-WKB-marching-method
