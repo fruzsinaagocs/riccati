@@ -72,7 +72,7 @@ on the interval $t \in [-1, 1]$, subject to the initial conditions $u(-1) = 0$,
 $u'(-1) = \lambda$. The runtimes were measured at two settings of the required
 relative tolerance $\varepsilon$, $10^{-6}$ and $10^{-12}$. The figure
 demonstrates the advantage `riccati`'s adaptivity provides at low tolerances
-as it avoids the runtime-increase `oscode` and the WKB marching methods exhibit
+as it avoids the runtime-increase `oscode` and the WKB marching method exhibit
 at low-to-intermediate frequencies, and confirms that its runtime is virtually
 independent of the oscillation frequency. 
 
