@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
       - docs
   workflow_dispatch:
 
@@ -39,10 +39,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with: 
           fetch-depth: 0
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         name: Install Python
         with:
           python-version: "3.9"
@@ -51,7 +51,7 @@ jobs:
           python -m pip install -U pip
           python -m pip install -U build
           python -m build .
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with: 
           path: dist/*
 
@@ -60,12 +60,12 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v.1.4.2
+      - uses: pypa/gh-action-pypi-publish@v.1.6.4
         with:
           user: __token__
           password: $ {{ secrets.pypi_password }}

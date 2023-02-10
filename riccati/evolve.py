@@ -285,7 +285,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
             else:
                 pass
             if intdir*hslo < 1e-16:
-                raise RuntimeError("Solution didn't converge between h = 1e-16")
+                raise RuntimeError("Stepsize became too small, solution didn't converge with stepsize h > 1e-16")
         # Log step
         if steptype == 1:
             h = hosc

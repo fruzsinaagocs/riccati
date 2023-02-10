@@ -5,6 +5,9 @@ try:
 except ImportError:
     from distutils.core import setup, Command, find_packages
 
+def readme():
+    with open("README.md") as f:
+        return f.read()
 
 docs = ['sphinx', 'sphinx-book-theme', 'numpydoc']
 tests = ['numpy', 'scipy', 'mpmath', 'pytest']
@@ -12,9 +15,9 @@ plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots
 
 setup(name='riccati',
-      version='0.1.0',
+      version='1.0.0',
       description='adaptive Riccati defect correction solver',
-      long_description='adaptive Riccati defect correction solver',
+      long_description=readme(),
       author='Fruzsina J Agocs and Alex H Barnett',
       author_email='',
       url='',
