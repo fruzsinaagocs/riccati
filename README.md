@@ -51,6 +51,6 @@ If you find this code useful in your research, please cite
 Copyright 2022-2023 The Simons Foundation, Inc.
 
 **riccati** is free software available under the Apache License 2.0, for
-details see the [LICENSE](https://github.com/fruzsinaagocs/riccati/LICENSE).
+details see the [LICENSE](https://github.com/fruzsinaagocs/riccati/blob/master/LICENSE).
 
 
