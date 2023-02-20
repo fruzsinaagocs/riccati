@@ -1,3 +1,10 @@
 [build-system]
 requires = ["setuptools>=40.6.0", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "riccati/_version.py"
+versionfile_build = "riccati/_version.py"
+tag_prefix = "v"
