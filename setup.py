@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import versioneer
 
 try:
     from setuptools import setup, Command, find_packages
@@ -15,7 +16,8 @@ plots = ['pandas', 'num2tex', 'matplotlib', 'pyoscode']
 all = docs + tests + plots
 
 setup(name='riccati',
-      version='1.0.1',
+      version=versioneer.get_version(),
+      cmdclass=versioneer.get_cmdclass(),
       description='adaptive Riccati defect correction solver',
       long_description=readme(),
       long_description_content_type='text/markdown',
