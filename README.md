@@ -17,7 +17,7 @@ on some solution interval $t \in [t_0, t_1]$, and with initial conditions $u(t_0
 `riccati` uses the adaptive Riccati defect correction method -- it switches
 between using nonoscillatory (spectral Chebyshev) and a specialised oscillatory
 solver (Riccati defect correction) to propagate the numerical solution based on
-its behaviour. More details here: ...
+its behaviour. For more details on the algorithm, please see [Attribution](https://github.com/fruzsinaagocs/riccati/blob/master/README.md#Attribution).
 
 ## Documentation
 
