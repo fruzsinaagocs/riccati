@@ -56,8 +56,7 @@ jobs:
           path: dist/*
 
   upload_pypi:
-    needs.tests.result == 'success'
-    needs.build.result == 'success'
+    needs: [tests, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
