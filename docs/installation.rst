@@ -24,7 +24,8 @@ Optional dependencies can be installed by specifying one or more options in
 
     pip install -U riccati[docs,tests,all]`
 
-2. conda
+conda
+~~~~~
 
 You may also use `conda <https://conda.io>`_:
 
