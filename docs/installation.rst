@@ -19,7 +19,10 @@ You can install the package using the Python package manager `pip <http://www.pi
     pip install -U riccati
 
 Optional dependencies can be installed by specifying one or more options in
-`pip install -U riccati[docs,tests,all]`.
+
+.. code-block:: bash
+
+    pip install -U riccati[docs,tests,all]`
 
 2. conda
 
@@ -45,7 +48,10 @@ repository and install as follows
     python -m pip install -e .
 
 Optional dependencies are installed the same way as in the `pip` installation:
-`python -m pip install -e .[docs,tests,all]`.
+
+.. code-block:: bash
+
+    python -m pip install -e .[docs,tests,all]
 
 Testing the installation
 ------------------------
@@ -71,7 +77,12 @@ Once you're in the installation directory, execute the tests via
 If you used a package manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Change directory to the location of the installed package, then execute the tests:
+Change directory to the location of the installed package, which might be something like
+
+  - conda: `~/miniconda/envs/<env-name>/lib/python<3.n>/site-packages/riccati`, with `<env-name>` being the name of your conda environment, and `3.n` your Python version,
+  - virtualenv and pip: `<path-to-env>/lib/python<3.n>/site-packages/riccati` with `<path-to-env>` being the path to your virtual environment.
+
+Then execute the tests:
 
 .. code-block:: bash
 
