@@ -22,7 +22,7 @@ Optional dependencies can be installed by specifying one or more options in
 
 .. code-block:: bash
 
-    pip install -U riccati[docs,tests,all]`
+    pip install -U riccati[docs,tests,all]
 
 conda
 ~~~~~
