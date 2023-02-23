@@ -8,14 +8,22 @@ Before installation, all you'll need is Python and `numpy <https://numpy.org>`_.
 Via package managers
 --------------------
 
-We recommend using the Python package manager `pip <http://www.pip-installer.org/>`_:
+pip
+~~~
+
+You can install the package using the Python package manager `pip <http://www.pip-installer.org/>`_:
 
 .. code-block:: bash
 
     python -m pip install -U pip
     pip install -U riccati
 
-or `conda <https://conda.io>`_
+Optional dependencies can be installed by specifying one or more options in
+`pip install -U riccati[docs,tests,all]`.
+
+2. conda
+
+You may also use `conda <https://conda.io>`_:
 
 .. code-block:: bash
 
@@ -23,7 +31,7 @@ or `conda <https://conda.io>`_
     conda install -c conda-forge riccati
 
 From source
------------
+~~~~~~~~~~~
 
 Should you wish to use the development version, you can clone the source
 repository and install as follows
@@ -36,18 +44,38 @@ repository and install as follows
     cd riccati
     python -m pip install -e .
 
+Optional dependencies are installed the same way as in the `pip` installation:
+`python -m pip install -e .[docs,tests,all]`.
+
 Testing the installation
 ------------------------
 
 You can run the unit tests to make sure the installation went OK.
 
-To do that, install from source as above, and install `pytest
-<https://docs.pytest.org>`_. Then execute the tests via
+Make sure you have the tests' dependencies (`pytest`, `scipy`, and `mpmath`,
+see the optional dependencies under the pip install instructions or in `setup.py`).
+
+If during the tests' run you didn't get any errors (warnings are OK), then the package is ready for
+use.
+
+If you installed from source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once you're in the installation directory, execute the tests via
 
 .. code-block:: bash
     
-   python -m pip install -U pytest
-   python -m pytest -v riccati/tests
+   python -m pytest -v tests
 
-If you didn't get any errors (warnings are OK), then the package is ready for
-use.
+
+If you used a package manager
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Change directory to the location of the installed package, then execute the tests:
+
+.. code-block:: bash
+
+    cd <location-of-riccati>
+    python -m pytest -v tests
+
+
