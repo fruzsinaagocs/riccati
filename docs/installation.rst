@@ -80,8 +80,8 @@ If you used a package manager
 
 Change directory to the location of the installed package, which might be something like
 
-  - conda: `~/miniconda/envs/<env-name>/lib/python<3.n>/site-packages/riccati`, with `<env-name>` being the name of your conda environment, and `3.n` your Python version,
-  - virtualenv and pip: `<path-to-env>/lib/python<3.n>/site-packages/riccati` with `<path-to-env>` being the path to your virtual environment.
+- conda: `~/miniconda/envs/<env-name>/lib/python<3.n>/site-packages/riccati`, with `<env-name>` being the name of your conda environment, and `3.n` your Python version,
+- virtualenv and pip: `<path-to-env>/lib/python<3.n>/site-packages/riccati` with `<path-to-env>` being the path to your virtual environment.
 
 Then execute the tests:
 
