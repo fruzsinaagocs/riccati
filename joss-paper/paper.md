@@ -63,7 +63,7 @@ solution.
 Being a spectral solver
 means that its convergence rate is as quick as the smoothness of the
 coefficients $\omega(t)$, $\gamma(t)$ (in the oscillatory regime), and that of
-the solution $u(t)$ (in the nonoscillatory regime) allows[^3]. 
+the solution $u(t)$ (in the nonoscillatory regime) allows. 
 `oscode` [@oscode-joss; @oscode-theory] and the WKB-marching method[^1]
 [@wkbmarching1; @wkbmarching2] are examples of low-order adaptive oscillatory
 solvers, efficient when no more than about 6 digits of accuracy are required or $\omega(t)$ is near-constant.
