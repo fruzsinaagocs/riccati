@@ -37,8 +37,8 @@ u''(t) + 2\gamma(t)u'(t) + \omega^2(t) u(t) = 0, \quad t \in [t_0, t_1],
 \end{equation}
 subject to the initial conditions $u(t_0) = u_0$, $u'(t_0) = u'_0$. The frequency $\omega(t)$
 and friction $\gamma(t)$ terms are given smooth real-valued functions (passed in as callables). The
-solution $u(t)$ may vary between oscillatory and slowly-changing over the
-integration range since `riccati` will switch between using nonoscillatory
+solution $u(t)$ may vary between highly oscillatory and slowly-changing over the
+integration range, in which case `riccati` will switch between using nonoscillatory
 (spectral Chebyshev) and a specialised oscillatory solver (Riccati defect
 correction) to achieve an $\mathcal{O}(1)$
 (frequency-independent) runtime. It automatically adapts its stepsize to
@@ -50,11 +50,17 @@ arithmetic operations per $t$-point.
 # Statement of need
 
 Specialised numerical methods exist to solve \autoref{eq:ode} in
-the high-frequency ($\omega \gg 1$) regime, but out of those that have software implementations,
+the high-frequency ($\omega \gg 1$) regime, but of those that have software implementations,
 none are both (1) able to deal with both oscillatory and nonoscillatory
 behaviors occuring in the solution; and (2) high-order accurate, so that the
 user may request many digits of accuracy without loss of efficiency. `riccati` fills
-this gap as a spectral adaptive solver. Being a spectral solver
+this gap as a spectral adaptive solver. 
+By spectral, we mean that an arbitrarily high order $p$ may be chosen (e.g.
+$p=16$), allowing a high convergence rate that is limited only by the
+smoothness of the coefficients, and (in the nonoscillatory case) that of the
+solution.
+
+Being a spectral solver
 means that its convergence rate is as quick as the smoothness of the
 coefficients $\omega(t)$, $\gamma(t)$ (in the oscillatory regime), and that of
 the solution $u(t)$ (in the nonoscillatory regime) allows[^3]. 
@@ -62,7 +68,7 @@ the solution $u(t)$ (in the nonoscillatory regime) allows[^3].
 [@wkbmarching1; @wkbmarching2] are examples of low-order adaptive oscillatory
 solvers, efficient when no more than about 6 digits of accuracy are required or $\omega(t)$ is near-constant.
 A high-order alternative is the Kummer's phase function-based method 
-[@kummerphase; @phasefntp[^2]], whose current implementation supports solving
+[@kummerphase; @phasefntp], whose current implementation supports solving
 \autoref{eq:ode} in the highly oscillatory regime when $\gamma \equiv 0$. Other existing numerical methods are
 reviewed in e.g. @petzoldrev. \autoref{fig:solver-comparison} compares the
 performance of the above specialised solvers and one of SciPy's [@scipy] built-in methods [@dop853]
@@ -74,17 +80,16 @@ u'' + \omega^2(t) u = 0, \quad \text{where} \quad \omega^2(t) = \lambda^2(1 - t^
 on the interval $t \in [-1, 1]$, subject to the initial conditions $u(-1) = 0$,
 $u'(-1) = \lambda$. The runtimes were measured at two settings of the required
 relative tolerance $\varepsilon$, $10^{-6}$ and $10^{-12}$. The figure
-demonstrates the advantage `riccati`'s adaptivity provides at low tolerances;
-it avoids the runtime-increase `oscode` and the WKB marching method exhibit
-at low-to-intermediate frequencies, and confirms that its runtime is virtually
+demonstrates the advantage `riccati`'s adaptivity provides at low tolerances.
+`riccati` avoids the runtime-increase `oscode` and the WKB marching method exhibit
+at low-to-intermediate frequencies, and its runtime is virtually
 independent of the oscillation frequency. 
 
 ![Left: Numerical solution of \autoref{eq:runtime-ode} with $\lambda = 10^2$. Right: performance comparison of `riccati` (labelled ARDC) against state-of-the-art oscillatory solvers. `oscode`, the WKB marching method, Kummer's phase function method, and a high-order Runge--Kutta method (RK78) [@dop853] on \autoref{eq:runtime-ode} with a varying frequency parameter $\lambda$. Solid and dashed lines denote runs with a relative tolerance settings of $\varepsilon = 10^{-12}$ and $10^{-6}$, respectively. \label{fig:solver-comparison}](timing-fig.pdf)
 
 
-[^1]: Available from https://github.com/JannisKoerner/adaptive-WKB-marching-method
-[^2]: Available from https://github.com/JamesCBremerJr/Phase-functions
-[^3]: Spectral convergence in `riccati` is achieved by using high-order methods with their order fixed (e.g.  order $p = 16$, specified by the user), and treating the stepsize as the convergence parameter. Another approach, used in solving boundary value problems, would be to fix the stepsize and adapt the order.
+[^1]: Available from [https://github.com/JannisKoerner/adaptive-WKB-marching-method](https://github.com/JannisKoerner/adaptive-WKB-marching-method).
+[^2]: Available from [https://github.com/JamesCBremerJr/Phase-functions](https://github.com/JamesCBremerJr/Phase-functions).
 
 # Acknowledgements
  
