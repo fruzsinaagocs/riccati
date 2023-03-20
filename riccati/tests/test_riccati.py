@@ -152,7 +152,7 @@ def test_solve_airy():
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
     yerr = np.abs((ytrue - ys)/ytrue)
     maxerr = max(yerr)
-    print(maxerr, stypes)
+    print(maxerr)
     assert maxerr < 1e-6
 
 def test_solve_airy_backwards():
@@ -195,7 +195,7 @@ def test_denseoutput_backwards_xfor():
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
     yerr = np.abs((ytrue - yeval)/ytrue)
     maxerr = max(yerr)
-    print(yeval, yerr, maxerr)
+    print(maxerr)
     assert maxerr < 1e-6
 
 def test_denseoutput_backwards_xback():
@@ -217,7 +217,7 @@ def test_denseoutput_backwards_xback():
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
     yerr = np.abs((ytrue - yeval)/ytrue)
     maxerr = max(yerr)
-    print(yeval, yerr, maxerr)
+    print(maxerr)
     assert maxerr < 1e-6
 
 def test_solve_burst():
@@ -273,6 +273,7 @@ def test_osc_evolve():
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
     yerr = np.abs((ytrue - ys)/ytrue)
     maxerr = max(yerr)
+    print("Forward osc evolve max error:", maxerr)
     assert maxerr < 1e-6
    
 def test_nonosc_evolve():
@@ -306,5 +307,74 @@ def test_nonosc_evolve():
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
     yerr = np.abs((ytrue - ys)/ytrue)
     maxerr = max(yerr)
+    print("Forward nonosc evolve max error:", maxerr)
+    assert maxerr < 1e-10
+
+def test_osc_evolve_backwards():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = solversetup(w, g, n = 32, p = 32)
+    xi = 1e6
+    xf = 1e2
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    # Store things
+    xs, ys, dys = [], [], []
+    # Always necessary for setting info.y
+    info.y = np.array([yi, dyi])
+    # Always necessary for setting info.wn, info.gn, and for getting an initial stepsize
+    hi = -xi/10
+    hi = choose_osc_stepsize(info, xi, hi, epsh = epsh)
+    info.h = hi
+    # Not necessary here because info.x is already xi, but in general it might be:
+    info.x = xi
+    while info.x > xf:
+        status = osc_evolve(info, info.x, xf, info.h, info.y, epsres = eps, epsh = epsh)
+        if status != 1:
+            break
+        xs.append(info.x)
+        ys.append(info.y[0])
+    xs = np.array(xs)
+    ys = np.array(ys)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
+    yerr = np.abs((ytrue - ys)/ytrue)
+    maxerr = max(yerr)
+    print("Backwards osc evolve max error:", maxerr)
+    assert maxerr < 1e-6
+   
+def test_nonosc_evolve_backwards():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = solversetup(w, g, n = 32, p = 32)
+    xi = 4e1
+    xf = 1e0
+    eps = 1e-12
+    epsh = 2e-1 # Note different definition of epsh for Chebyshev steps!
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    # Store things
+    xs, ys, dys = [], [], []
+    # Always necessary for setting info.y
+    info.y = np.array([yi, dyi])
+    # Necessary for getting an initial stepsize
+    hi = -1/w(xi)
+    hi = choose_nonosc_stepsize(info, xi, hi, epsh = epsh)
+    info.h = hi
+    # Not necessary here because info.x is already xi, but in general it might be:
+    info.x = xi
+    while info.x > xf:
+        status = nonosc_evolve(info, info.x, xf, info.h, info.y, epsres = eps, epsh = epsh)
+        if status != 1:
+            break
+        xs.append(info.x)
+        ys.append(info.y[0])
+    xs = np.array(xs)
+    ys = np.array(ys)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
+    yerr = np.abs((ytrue - ys)/ytrue)
+    maxerr = max(yerr)
+    print("Backward nonosc evolve max error:", maxerr)
     assert maxerr < 1e-10
 
