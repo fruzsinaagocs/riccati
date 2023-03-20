@@ -72,7 +72,10 @@ def osc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 1e-12):
         gnext = info.gn[0]
         dwnext = 2/h*(info.Dn @ info.wn)[0]
         dgnext = 2/h*(info.Dn @ info.gn)[0]
-        hosc_ini = min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
+        hosc_ini = sign*min(1e8, np.abs(wnext/dwnext), np.abs(gnext/dgnext))
+        # Check if estimate for next stepsize would be out of range
+        if sign*(info.x + hosc_ini) > sign*x1:
+            hosc_ini = x1 - info.x
         info.h = choose_osc_stepsize(info, info.x, hosc_ini, epsh = epsh)  
     return success
 
@@ -146,8 +149,11 @@ def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
         info.x += h
         # Determine new stepsize
         wnext = info.w(info.x)
-        hosc_ini = min(1e8, np.abs(1/wnext))
-        info.h = choose_nonosc_stepsize(info, info.x, hosc_ini, epsh = epsh)  
+        hslo_ini = sign*min(1e8, np.abs(1/wnext))
+        # Check if estimate for next stepsize would be out of range
+        if sign*(info.x + hslo_ini) > sign*x1:
+            hslo_ini = x1 - info.x
+        info.h = choose_nonosc_stepsize(info, info.x, hslo_ini, epsh = epsh)  
     return success
 
 def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([]), hard_stop = False):
