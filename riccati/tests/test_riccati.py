@@ -80,7 +80,7 @@ def test_denseoutput_warn():
     with warnings.catch_warnings(record = True) as w:
         xs, ys, dys, ss, ps, stypes, yeval = solve(info, xi, xf, yi, dyi,\
                                                            xeval = xeval,\
-                                                           eps = eps, epsh = epsh)
+                                                           eps = eps, epsh = epsh, warn = True)
         assert "outside the integration range" in str(w[0].message) 
 
 def test_quadwts():
