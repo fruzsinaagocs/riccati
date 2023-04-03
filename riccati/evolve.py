@@ -3,6 +3,7 @@ import warnings
 from riccati.chebutils import integrationm, interp
 from riccati.stepsize import choose_osc_stepsize, choose_nonosc_stepsize
 from riccati.step import osc_step, nonosc_step
+import warnings
 
 def osc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 1e-12):
     """
@@ -156,7 +157,7 @@ def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
         info.h = choose_nonosc_stepsize(info, info.x, hslo_ini, epsh = epsh)  
     return success
 
-def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([]), hard_stop = False):
+def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([]), hard_stop = False, warn = False):
     """
     Solves y'' + 2gy' + w^2y = 0 on the interval (xi, xf), starting from the
     initial conditions y(xi) = yi, y'(xi) = dyi. Keeps the residual of the ODE
@@ -182,6 +183,13 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         stepsize, in order to stop exactly at `xf` (rather than allowing the
         solver to step over it and get the value of the solution by
         interpolation).
+    warn: bool
+        Whether to display warnings, e.g. RuntimeWarnings, during a run. Due to
+        the high level of adaptivity in this algorithm, it may throw several
+        RuntimeWarnings even in a standard setup as it chooses the type of
+        step, stepsize, and other parameters. For this reason, all warnings are
+        silenced by default (`warn = False`). Set to `True` if you wish to see
+        the warnings.
 
     Returns
     -------
@@ -196,6 +204,11 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
     steptypes: list [int]
         Types of successful steps taken: 1 for Riccati and 0 for Chebyshev. 
     """
+    if warn == False:
+        warnings.simplefilter("ignore")
+    else:
+        warnings.simplefilter("default")
+
     w = info.w
     g = info.g
     Dn = info.Dn
