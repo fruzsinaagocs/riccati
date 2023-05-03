@@ -72,7 +72,7 @@ Once you're in the installation directory, execute the tests via
 
 .. code-block:: bash
     
-   python -m pytest -v tests
+   python -m pytest -v
 
 
 If you used a package manager
@@ -88,6 +88,6 @@ Then execute the tests:
 .. code-block:: bash
 
     cd <location-of-riccati>
-    python -m pytest -v tests
+    python -m pytest -v
 
 
