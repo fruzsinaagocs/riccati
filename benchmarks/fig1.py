@@ -5,9 +5,7 @@ from scipy.integrate import solve_ivp
 import matplotlib
 from matplotlib import pyplot as plt
 import math
-import mpmath
 import os
-from num2tex import num2tex
 from pathlib import Path
 import time
 import pyoscode

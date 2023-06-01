@@ -1,6 +1,6 @@
 [submodule "joss-paper/ext-codes/adaptive-WKB-marching-method"]
-	path = joss-paper/ext-codes/adaptive-WKB-marching-method
+	path = benchmarks/ext-codes/adaptive-WKB-marching-method
 	url = https://github.com/fruzsinaagocs/adaptive-WKB-marching-method
 [submodule "joss-paper/ext-codes/Phase-functions"]
-	path = joss-paper/ext-codes/Phase-functions
+	path = benchmarks/ext-codes/Phase-functions
 	url = https://github.com/fruzsinaagocs/Phase-functions
