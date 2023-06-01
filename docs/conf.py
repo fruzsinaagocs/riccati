@@ -106,7 +106,7 @@ html_copy_source = True
 html_show_sourcelink = True
 html_sourcelink_suffix = ""
 html_title = "riccati"
-#html_favicon = "bla.png"
+html_favicon = "favicon.ico"
 
 
 
