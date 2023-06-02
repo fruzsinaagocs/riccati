@@ -1,3 +1,6 @@
+![Riccati logo](https://github.com/fruzsinaagocs/riccati/blob/master/logo.png?raw=true)
+
+
 # riccati
 
 **A package implementing the adaptive Riccati defect correction (ARDC) method**
