@@ -23,10 +23,10 @@ bibliography: paper.bib
 
 Highly oscillatory ordinary differential equations (ODEs) pose a computational
 challenge for standard solvers available in scientific computing libraries. 
-These conventional methods are typically based on a polynomial approximation
-resulting in several timesteps per oscillation period, and hence runtimes
+These conventional methods are typically based on a polynomial approximation,
+resulting in there being several timesteps per oscillation period, which leads to runtimes
 scaling as $\mathcal{O}(\omega)$, with $\omega$ being the oscillation
-frequency. This can get prohibitively slow.
+frequency. This can become prohibitively slow.
 
 The `riccati`
 (Python) package implements the efficient numerical method described in @ardc
@@ -43,7 +43,7 @@ integration range, in which case `riccati` will switch between using nonoscillat
 correction) to achieve an $\mathcal{O}(1)$
 (frequency-independent) runtime. It automatically adapts its stepsize to
 attempt to reach a user-requested relative error tolerance. The solver is
-capable of producing _dense output_, i.e. can return a numerical
+capable of producing _dense output_, i.e., it can return a numerical
 solution estimate at a user-selected set of $t$-values, at the cost of a few
 arithmetic operations per $t$-point.
 
@@ -69,8 +69,8 @@ the solution $u(t)$ (in the nonoscillatory regime) allows.
 solvers, efficient when no more than about 6 digits of accuracy are required or $\omega(t)$ is near-constant.
 A high-order alternative is the Kummer's phase function-based method 
 [@kummerphase; @phasefntp], whose current implementation supports solving
-\autoref{eq:ode} in the highly oscillatory regime when $\gamma \equiv 0$. Other existing numerical methods are
-reviewed in e.g. @petzoldrev. \autoref{fig:solver-comparison} compares the
+\autoref{eq:ode} in the highly oscillatory regime when $\gamma \equiv 0$. Other existing numerical methods have been
+reviewed, e.g., in @petzoldrev. \autoref{fig:solver-comparison} compares the
 performance of the above specialised solvers and one of SciPy's [@scipy] built-in methods [@dop853]
 by plotting their runtime against the frequency parameter $\lambda$ while
 solving
@@ -81,7 +81,7 @@ on the interval $t \in [-1, 1]$, subject to the initial conditions $u(-1) = 0$,
 $u'(-1) = \lambda$. The runtimes were measured at two settings of the required
 relative tolerance $\varepsilon$, $10^{-6}$ and $10^{-12}$. The figure
 demonstrates the advantage `riccati`'s adaptivity provides at low tolerances.
-`riccati` avoids the runtime-increase `oscode` and the WKB marching method exhibit
+`riccati` avoids the runtime increase `oscode` and the WKB marching method exhibit
 at low-to-intermediate frequencies, and its runtime is virtually
 independent of the oscillation frequency. 
 
