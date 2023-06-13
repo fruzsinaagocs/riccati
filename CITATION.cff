@@ -1,0 +1,30 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Agocs
+  given-names: Fruzsina J.
+  orcid: "https://orcid.org/0000-0002-1763-5884"
+- family-names: Barnett
+  given-names: Alex H.
+doi: 10.5281/zenodo.8015503
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Agocs
+    given-names: Fruzsina J.
+    orcid: "https://orcid.org/0000-0002-1763-5884"
+  - family-names: Barnett
+    given-names: Alex H.
+  date-published: 2023-06-13
+  doi: 10.21105/joss.05430
+  issn: 2475-9066
+  issue: 86
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 5430
+  title: "riccati: an adaptive, spectral solver for oscillatory ODEs"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.05430"
+  volume: 8
+title: "`riccati`: an adaptive, spectral solver for oscillatory ODEs"
