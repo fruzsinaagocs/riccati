@@ -5,7 +5,7 @@
 
 **A package implementing the adaptive Riccati defect correction (ARDC) method**
 
-
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.05430/status.svg)](https://doi.org/10.21105/joss.05430)
 [![Documentation Status](https://readthedocs.org/projects/riccati/badge/?version=latest)](https://riccati.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/fruzsinaagocs/riccati/branch/master/graph/badge.svg?token=XA47G7P1XM)](https://codecov.io/gh/fruzsinaagocs/riccati)
 
