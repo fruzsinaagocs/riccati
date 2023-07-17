@@ -269,13 +269,15 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
     xcurrent = xi
     wnext = wi
     dwnext = dwi
-    while abs(xcurrent - xf) > 1e-8 and intdir*xcurrent < intdir*xf:
+    # Legendre example: limit no. of successful steps to 10000
+    while abs(xcurrent - xf) > 1e-8 and intdir*xcurrent < intdir*xf and len(steptypes) < 10000:
         # Check how oscillatory the solution is
         #ty = np.abs(1/wnext)
         #tw = np.abs(wnext/dwnext)
         #tw_ty = tw/ty
         success = 0
-        if intdir*hosc > intdir*hslo*5 and intdir*hosc*wnext/(2*np.pi) > 1:
+        # Relax conditions for attempting Riccati step: just require larger stepsize
+        if intdir*hosc > intdir*hslo:
             if hard_stop:
                 if intdir*(xcurrent + hosc) > intdir*xf:
                     hosc = xf - xcurrent
