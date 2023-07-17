@@ -174,16 +174,16 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         Initial conditions, value of the dependent variable and its derivative at `xi`.
     eps: float
         Relative tolerance for the local error of both Riccati and Chebyshev type steps.
-    epsh: float
+    epsh: float 
         Relative tolerance for choosing the stepsize of Riccati steps.
-    xeval: list
+    xeval: list 
         List of x-values where the solution is to be interpolated (dense output) and returned.
-    hard_stop: bool
+    hard_stop: bool 
         Whether to force the solver to have a potentially smaller last
         stepsize, in order to stop exactly at `xf` (rather than allowing the
         solver to step over it and get the value of the solution by
         interpolation).
-    warn: bool
+    warn: bool 
         Whether to display warnings, e.g. RuntimeWarnings, during a run. Due to
         the high level of adaptivity in this algorithm, it may throw several
         RuntimeWarnings even in a standard setup as it chooses the type of
@@ -203,6 +203,10 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         Complex phase of the solution accumulated during each successful Riccati step.
     steptypes: list [int]
         Types of successful steps taken: 1 for Riccati and 0 for Chebyshev. 
+    yeval: numpy.array [complex]
+        Dense output, i.e. values of the solution at the requested
+        independent-variable values specified in `xeval`. If `xeval` was not
+        given, then it is an empty numpy array of shape (0,).
     """
     if warn == False:
         warnings.simplefilter("ignore")
@@ -224,6 +228,8 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         info.denseout = True
         info.intmat = integrationm(n+1)
         yeval = np.zeros(denselen, dtype = complex)
+    else:
+        yeval = np.empty(0)
     
     # Check if stepsize sign is consistent with direction of integration
     if (xf - xi)*hi < 0:
@@ -312,7 +318,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
             h = hslo
         # If there were dense output points, check where:
         if info.denseout:
-            positions = np.logical_or(np.logical_and(intdir*xeval >= intdir*xcurrent, intdir*xeval < intdir*(xcurrent+h)), xeval == xf)
+            positions = np.logical_or(np.logical_and(intdir*xeval >= intdir*xcurrent, intdir*xeval < intdir*(xcurrent+h)), np.logical_and(xeval == xf, xeval == xcurrent + h))
             xdense = xeval[positions] 
             if steptype == 1:
                 #xscaled = xcurrent + h/2 + h/2*info.xn
@@ -355,8 +361,5 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
             dyprev = dy
-    if info.denseout:
-        return xs, ys, dys, successes, phases, steptypes, yeval
-    else:
-        return xs, ys, dys, successes, phases, steptypes
+    return xs, ys, dys, successes, phases, steptypes, yeval
 
