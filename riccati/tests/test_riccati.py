@@ -378,3 +378,82 @@ def test_nonosc_evolve_backwards():
     print("Backward nonosc evolve max error:", maxerr)
     assert maxerr < 1e-10
 
+def test_bremer237():
+           
+    nruns = 1
+    # Integration range
+    ti = -1.0
+    tf =  1.0
+    for jj in range(0,21):
+       dnu = 2.0**jj
+       w = lambda t: np.sqrt( dnu**2*(1-t**2*np.cos(3*t)))
+       g = lambda t: 0*t
+       # Initial conditions
+       ui  = 1
+       dui = dnu
+       info   = riccati.solversetup(w, g)
+       for ii in range(nruns):
+         ts, ys, *misc = riccati.solve(info, ti, tf, ui, dui, hard_stop=True)
+    return 
+
+def test_legendre():
+
+    def legepol(n,x):
+      if n==0:
+        return 1.0
+      if n==1:
+        return x;
+      p1 = 1
+      p2 = x
+      p  = 0
+      for j in range(2,n+1):
+        p  = ((2.0*j-1.0)*x*p2-(j-1.0)*p1)/j
+        p1 = p2
+        p2 = p
+      return p
+    
+    # return the value and derivative of the Legendre polynomial of degree n at 0
+    def lege0(n):
+       dnu = n
+       if n % 2 == 0 :
+         x1    = scipy.special.gammaln(0.5+dnu/2.0)-scipy.special.gammaln(1.0+dnu/2.0)
+         val0  = np.exp(x1)/np.sqrt(np.pi)
+         if n % 4 == 2:
+           val0=-val0
+         
+         der0 = 0
+       else:
+         x1   = -scipy.special.gammaln(1.5+dnu/2) + scipy.special.gammaln(dnu/2)
+         val0 = 0
+         der0 = dnu*(dnu+1)*1/np.sqrt(np.pi)*1/2 * np.exp(x1)
+         if n % 4 == 3:
+           der0=-der0
+       return np.array([val0,der0])
+    
+    # Integration range
+    ti     = 0.0
+    tf     = 0.9
+    nruns  = 1
+    m      = 10000
+    eps    = 1.0e-12
+    for jj in range(0,21):
+       norder = 2**jj
+       dnu = norder
+       y0= lege0(norder)
+       w = lambda t: np.sqrt(dnu*(dnu+1)/(1.0-t**2) )
+       g = lambda t: -t/(1.0-t**2)
+        
+       # Initial conditions
+       ui  = y0[0]
+       dui = y0[1]
+       info   = riccati.solversetup(w, g)   
+       for ii in range(nruns):
+         ts, ys, *misc, y_eval  = riccati.solve(info, ti, tf, ui, dui, eps=eps, hard_stop=True)    
+       errmax  = 0
+       l = len(ys)
+       val0 = ys[l-1]
+       val = legepol(norder,tf)
+       errmax=abs(val-val0)
+       print(norder,errmax)
+    return
+
