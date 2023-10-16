@@ -8,6 +8,7 @@ import scipy.special as sp
 import mpmath
 import warnings
 import pytest
+import time
 
 def test_integration():
     n = 16
@@ -392,8 +393,12 @@ def test_bremer237():
        ui  = 1
        dui = dnu
        info   = solversetup(w, g)
+       t1 = time.time()
        for ii in range(nruns):
          ts, ys, *misc = solve(info, ti, tf, ui, dui, hard_stop=True)
+       t2 = time.time()
+       dtime = (t2-t1)/nruns
+       print(dnu,dtime)
     return 
 
 def test_legendre():
@@ -447,13 +452,16 @@ def test_legendre():
        ui  = y0[0]
        dui = y0[1]
        info   = solversetup(w, g)   
+       t1 = time.time()
        for ii in range(nruns):
          ts, ys, *misc, y_eval  = solve(info, ti, tf, ui, dui, eps=eps, hard_stop=True)    
+       t2 = time.time()
+       dtime = (t2-t1)/nruns
        errmax  = 0
        l = len(ys)
        val0 = ys[l-1]
        val = legepol(norder,tf)
        errmax=abs(val-val0)
-       print(norder,errmax)
+       print(norder,dtime,errmax)
     return
 
