@@ -391,9 +391,9 @@ def test_bremer237():
        # Initial conditions
        ui  = 1
        dui = dnu
-       info   = riccati.solversetup(w, g)
+       info   = solversetup(w, g)
        for ii in range(nruns):
-         ts, ys, *misc = riccati.solve(info, ti, tf, ui, dui, hard_stop=True)
+         ts, ys, *misc = solve(info, ti, tf, ui, dui, hard_stop=True)
     return 
 
 def test_legendre():
@@ -446,9 +446,9 @@ def test_legendre():
        # Initial conditions
        ui  = y0[0]
        dui = y0[1]
-       info   = riccati.solversetup(w, g)   
+       info   = solversetup(w, g)   
        for ii in range(nruns):
-         ts, ys, *misc, y_eval  = riccati.solve(info, ti, tf, ui, dui, eps=eps, hard_stop=True)    
+         ts, ys, *misc, y_eval  = solve(info, ti, tf, ui, dui, eps=eps, hard_stop=True)    
        errmax  = 0
        l = len(ys)
        val0 = ys[l-1]
