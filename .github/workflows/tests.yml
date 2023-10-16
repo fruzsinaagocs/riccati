@@ -32,7 +32,7 @@ jobs:
           python -m pip install -U pytest pytest-cov pytest-xdist codecov
           python -m pip install -U -r requirements.txt 
       - name: Run tests
-        run: python -m pytest --cov=riccati --cov-report=xml
+        run: python -m pytest -s --cov=riccati --cov-report=xml
       - name: Combine and upload coverage
         uses: codecov/codecov-action@v3
         with:
