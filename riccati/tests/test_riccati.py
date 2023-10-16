@@ -416,14 +416,14 @@ def test_legendre():
     def lege0(n):
        dnu = n
        if n % 2 == 0 :
-         x1    = scipy.special.gammaln(0.5+dnu/2.0)-scipy.special.gammaln(1.0+dnu/2.0)
+         x1    = sp.gammaln(0.5+dnu/2.0)-sp.gammaln(1.0+dnu/2.0)
          val0  = np.exp(x1)/np.sqrt(np.pi)
          if n % 4 == 2:
            val0=-val0
          
          der0 = 0
        else:
-         x1   = -scipy.special.gammaln(1.5+dnu/2) + scipy.special.gammaln(dnu/2)
+         x1   = -sp.gammaln(1.5+dnu/2) + sp.gammaln(dnu/2)
          val0 = 0
          der0 = dnu*(dnu+1)*1/np.sqrt(np.pi)*1/2 * np.exp(x1)
          if n % 4 == 3:
