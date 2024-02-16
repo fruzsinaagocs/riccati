@@ -54,7 +54,7 @@ def osc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 1e-12):
     if sign*(x0 + h) > sign*x1:
         # Step would be out of bounds, need to rescale and re-eval wn, gn
         h = x1 - x0
-        xscaled = h/2*info.xn + x0 + h/2
+        xscaled = x0 + h/2 * (1 + info.xn)
         info.wn = info.w(xscaled)
         info.gn = info.g(xscaled)
     info.h = h
@@ -136,7 +136,7 @@ def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
     if sign*(x0 + h) > sign*x1:
         # Step would be out of bounds, need to rescale and re-eval wn, gn
         h = x1 - x0
-        xscaled = h/2*info.xn + x0 + h/2
+        xscaled = x0 + h/2 * (1 + info.xn)
     info.h = h
     # Call nonoscillatory step
     y10, y11, maxerr, s = nonosc_step(info, x0, h, y0[0], y0[1], epsres = epsres)
@@ -328,7 +328,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
                 fdense = np.exp(udense)
                 yeval[positions] = info.a[0]*fdense + info.a[1]*np.conj(fdense)
             else:
-                xscaled = xcurrent + h/2 + h/2*info.nodes[1]
+                xscaled = xcurrent + h/2 * (1 + info.nodes[1])
                 Linterp = interp(xscaled, xdense)
                 yeval[positions] = Linterp @ info.yn
         ys.append(y)
@@ -346,8 +346,8 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         else:
             wnext = w(xcurrent + h)
             gnext = g(xcurrent + h)
-            dwnext = 2/h*(Dn @ w(xcurrent + h/2 + h/2*xn))[0]
-            dgnext = 2/h*(Dn @ g(xcurrent + h/2 + h/2*xn))[0]
+            dwnext = 2/h*(Dn @ w(xcurrent + h/2 * (1 + xn)))[0]
+            dgnext = 2/h*(Dn @ g(xcurrent + h/2 * (1 + xn)))[0]
         xcurrent += h
         if intdir*xcurrent < intdir*xf:
             hslo_ini = intdir*min(1e8, np.abs(1/wnext))
