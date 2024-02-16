@@ -25,7 +25,7 @@ def choose_nonosc_stepsize(info, x0, h, epsh = 0.2):
     h: float
         Refined stepsize over which 1/w(x) does not change by more than epsh/w(x).
     """
-    xscaled = x0 + h/2 + h/2*info.xp
+    xscaled = x0 + h/2 * (1 + info.xp)
     ws = info.w(xscaled)
     if max(ws) > (1 + epsh)/abs(h):
         return choose_nonosc_stepsize(info, x0, h/2, epsh = epsh)
@@ -71,16 +71,16 @@ def choose_osc_stepsize(info, x0, h, epsh = 1e-12):
         relative error no larger than epsh.
     """
     w, g, L = info.w, info.g, info.L
-    t = x0 + h/2 + h/2*info.xpinterp
-    s = x0 + h/2 + h/2*info.xp
+    t = x0 + h/2 * (1 + info.xpinterp)
+    s = x0 + h/2 * (1 + info.xp)
     if info.p == info.n:
         info.wn = w(s)
         info.gn = g(s)
         ws = info.wn
         gs = info.gn
     else:
-        info.wn = w(x0 + h/2 + h/2*info.xn)
-        info.gn = g(x0 + h/2 + h/2*info.xn)
+        info.wn = w(x0 + h/2 * (1 + info.xn))
+        info.gn = g(x0 + h/2 * (1 + info.xn))
         ws = w(s)
         gs = g(s)
     wana = w(t)
