@@ -275,16 +275,16 @@ def spectral_cheb(info, x0, h, y0, dy0, niter):
     ws = info.w(xscaled)
     gs = info.g(xscaled)
     w2 = ws**2
-    D2 = 4/h**2*(D @ D) + 4/h*(np.diag(gs) @ D) + np.diag(w2)
+    D2 = (D @ D) + h*(np.diag(gs) @ D) + h**2/4*np.diag(w2)
     n = round(info.ns[niter])
     ic = np.zeros(n+1, dtype=complex)
     ic[-1] = 1 # Because nodes are ordered backwards, [1, -1]
     D2ic = np.zeros((n+3, n+1), dtype=complex)
     D2ic[:n+1] = D2
-    D2ic[-2] = 2/h*D[-1] 
+    D2ic[-2] = D[-1] 
     D2ic[-1] = ic
     rhs = np.zeros(n+3, dtype=complex)
-    rhs[-2] = dy0
+    rhs[-2] = dy0*h/2
     rhs[-1] = y0
     y1, res, rank, sing = np.linalg.lstsq(D2ic, rhs) # NumPy solve only works for square matrices
     dy1 = 2/h*(D @ y1)

@@ -329,8 +329,8 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
                 yeval[positions] = info.a[0]*fdense + info.a[1]*np.conj(fdense)
             else:
                 xscaled = xcurrent + h/2 * (1 + info.nodes[1])
-                Linterp = interp(xscaled, xdense)
-                yeval[positions] = Linterp @ info.yn
+                Linterp = interp(xscaled[::-1], xdense)
+                yeval[positions] = Linterp @ info.yn[::-1]
         ys.append(y)
         dys.append(dy)
         xs.append(xcurrent + h)

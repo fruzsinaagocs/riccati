@@ -27,8 +27,8 @@ def choose_nonosc_stepsize(info, x0, h, epsh = 0.2):
     """
     xscaled = x0 + h/2 * (1 + info.xp)
     ws = info.w(xscaled)
-    if max(ws) > (1 + epsh)/abs(h):
-        return choose_nonosc_stepsize(info, x0, h/2, epsh = epsh)
+    if np.isnan(ws.sum()) == True or max(np.abs(ws)) > (1 + epsh)/abs(h):
+         return choose_nonosc_stepsize(info, x0, h/2, epsh = epsh)
     else:
         return h
 
