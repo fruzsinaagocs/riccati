@@ -39,10 +39,14 @@ def test_denseoutput():
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh)
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
+    dytrue = np.array([-mpmath.airyai(-x, derivative = 1) - 1j*mpmath.airybi(-x, derivative = 1) for x in xeval])
     yerr = np.abs((ytrue - yeval)/ytrue)
-    print(yeval, ytrue)
+    dyerr = np.abs((dytrue - dyeval)/dytrue)
+    print("Dense output", yeval, ytrue)
+    print("Dense output derivative", dyeval, dytrue)
     maxerr = max(yerr)
-    assert maxerr < 1e-6
+    maxderr = max(dyerr)
+    assert maxerr < 1e-6 and maxderr < 1e-6
 
 def test_denseoutput_xbac():
     w = lambda x: np.sqrt(x)
@@ -60,9 +64,12 @@ def test_denseoutput_xbac():
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh)
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
+    dytrue = np.array([-mpmath.airyai(-x, derivative = 1) - 1j*mpmath.airybi(-x, derivative = 1) for x in xeval])
     yerr = np.abs((ytrue - yeval)/ytrue)
+    dyerr = np.abs((dytrue - dyeval)/dytrue)
     maxerr = max(yerr)
-    assert maxerr < 1e-6
+    maxderr = max(dyerr)
+    assert maxerr < 1e-6 and maxderr < 1e-6
 
 def test_denseoutput_warn():
     w = lambda x: np.sqrt(x)
@@ -216,10 +223,12 @@ def test_denseoutput_backwards_xback():
                                                        eps = eps, epsh = epsh,\
                                                        hard_stop = True)
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
+    dytrue = np.array([-mpmath.airyai(-x, derivative = 1) - 1j*mpmath.airybi(-x, derivative = 1) for x in xeval])
     yerr = np.abs((ytrue - yeval)/ytrue)
+    dyerr = np.abs((dytrue - dyeval)/dytrue)
     maxerr = max(yerr)
-    print(maxerr)
-    assert maxerr < 1e-6
+    maxderr = max(dyerr)
+    assert maxerr < 1e-6 and maxderr < 1e-6
 
 def test_solve_burst():
     m = int(1e6) # Frequency parameter
