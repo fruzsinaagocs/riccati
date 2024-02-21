@@ -207,6 +207,11 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         Dense output, i.e. values of the solution at the requested
         independent-variable values specified in `xeval`. If `xeval` was not
         given, then it is an empty numpy array of shape (0,).
+    dyeval: numpy.array [complex]
+        Derivative dense output, i.e. values of the derivative of the solution at the requested
+        independent-variable values specified in `xeval`. If `xeval` was not
+        given, then it is an empty numpy array of shape (0,).
+
     """
     if warn == False:
         warnings.simplefilter("ignore")
@@ -228,9 +233,11 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         info.denseout = True
         info.intmat = integrationm(n+1)
         yeval = np.zeros(denselen, dtype = complex)
+        dyeval = np.zeros(denselen, dtype = complex)
     else:
         yeval = np.empty(0)
-    
+        dyeval = np.empty(0)
+   
     # Check if stepsize sign is consistent with direction of integration
     if (xf - xi)*hi < 0:
         warnings.warn("Direction of itegration does not match stepsize sign,\
@@ -325,12 +332,15 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
                 xscaled = 2/h*(xdense - xcurrent) - 1
                 Linterp = interp(info.xn, xscaled)
                 udense = Linterp @ info.un
+                dudense = Linterp @ info.dun
                 fdense = np.exp(udense)
                 yeval[positions] = info.a[0]*fdense + info.a[1]*np.conj(fdense)
+                dyeval[positions] = info.a[0]*dudense*fdense + info.a[1]*np.conj(dudense*fdense)
             else:
                 xscaled = xcurrent + h/2 * (1 + info.nodes[1])
                 Linterp = interp(xscaled[::-1], xdense)
                 yeval[positions] = Linterp @ info.yn[::-1]
+                dyeval[positions] = Linterp @ info.dyn[::-1]
         ys.append(y)
         dys.append(dy)
         xs.append(xcurrent + h)
@@ -361,5 +371,5 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
             dyprev = dy
-    return xs, ys, dys, successes, phases, steptypes, yeval
+    return xs, ys, dys, successes, phases, steptypes, yeval, dyeval
 

@@ -161,6 +161,7 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     info.increase(riccstep = 1)
     if info.denseout:
         info.un = u1
+        info.dun = du1
         info.a = (ap, am)
         y1 = y1[0]
     if plotting:
