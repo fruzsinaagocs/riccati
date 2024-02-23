@@ -288,7 +288,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         #tw = np.abs(wnext/dwnext)
         #tw_ty = tw/ty
         success = 0
-        if intdir*hosc > intdir*hslo*5 and intdir*hosc*wnext/(2*np.pi) > 1:
+        if intdir*hosc > intdir*hslo:
             if hard_stop:
                 if intdir*(xcurrent + hosc) > intdir*xf:
                     hosc = xf - xcurrent
