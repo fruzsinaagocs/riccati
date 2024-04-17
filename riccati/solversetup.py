@@ -103,6 +103,7 @@ class Solverinfo:
         self.n = n
         self.p = p
         self.denseout = False
+        self.densezout = False
 
         # Run statistics
         self.n_chebnodes = 0

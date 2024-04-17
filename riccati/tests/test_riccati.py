@@ -23,6 +23,58 @@ def test_integration():
     maxerr = max(np.abs((fs_est - fs)/fs))
     assert maxerr < 1e-8
 
+def test_complex_t():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = solversetup(w, g, n = 32, p = 32)
+    xi = 1e0
+    xf = 1e6
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    Neval = int(1e2)
+    xeval = np.linspace(xi, xf, Neval, dtype = complex) 
+    xeval += 0.1*1j
+    xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi,\
+                                                       xeval = xeval,\
+                                                       eps = eps, epsh = epsh)
+    ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
+    dytrue = np.array([-mpmath.airyai(-x, derivative = 1) - 1j*mpmath.airybi(-x, derivative = 1) for x in xeval])
+    yerr = np.abs((ytrue - yeval)/ytrue)
+    dyerr = np.abs((dytrue - dyeval)/dytrue)
+    print("Dense output", yeval)#, ytrue)
+    print("Dense output derivative", dyeval)#, dytrue)
+    maxerr = max(yerr)
+    maxderr = max(dyerr)
+#    assert maxerr < 1e-6 and maxderr < 1e-6
+
+def test_dense_z():
+    w = lambda x: np.sqrt(x)
+    g = lambda x: np.zeros_like(x)
+    info = solversetup(w, g, n = 32, p = 32)
+    xi = 1e0
+    xf = 1e6
+    eps = 1e-12
+    epsh = 1e-13
+    yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
+    dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
+    Neval = int(1e2)
+    zeval = np.linspace(1e4, 1e5, Neval, dtype = complex) 
+    zeval += 0.1*1j
+    xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi,\
+                                                       zeval = zeval, xeval = zeval,\
+                                                       eps = eps, epsh = epsh)
+    expz = np.exp(phaseeval[:,0])
+    ap = phaseeval[:,1]
+    am = phaseeval[:,2]
+    yfromz = ap*expz + am*np.conj(expz)
+    print("Dense output for x calculated from z", yfromz)
+    print("Dense output:", yeval)
+    print("Difference:", np.abs(yeval - yfromz)) 
+    assert max(np.abs(yeval - yfromz)) < 1e-10
+
+
 def test_denseoutput():
     w = lambda x: np.sqrt(x)
     g = lambda x: np.zeros_like(x)
@@ -35,7 +87,7 @@ def test_denseoutput():
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
     xeval = np.linspace(xi, xf, Neval) 
-    xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
+    xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi,\
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh)
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
@@ -60,7 +112,7 @@ def test_denseoutput_xbac():
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
     xeval = np.linspace(xf, xi, Neval) 
-    xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
+    xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi,\
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh)
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xeval])
@@ -86,7 +138,7 @@ def test_denseoutput_warn():
     # Turn on warnings
     warnings.simplefilter("always")
     with warnings.catch_warnings(record = True) as w:
-        xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
+        xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi,\
                                                            xeval = xeval,\
                                                            eps = eps, epsh = epsh, warn = True)
         assert "outside the integration range" in str(w[0].message) 
@@ -154,7 +206,7 @@ def test_solve_airy():
     epsh = 1e-13
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
-    xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi, eps = eps, epsh = epsh)
+    xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi, eps = eps, epsh = epsh)
     xs = np.array(xs)
     ys = np.array(ys)
     ytrue = np.array([mpmath.airyai(-x) + 1j*mpmath.airybi(-x) for x in xs])
@@ -173,7 +225,7 @@ def test_solve_airy_backwards():
     epsh = 1e-13
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
-    xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
+    xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi,\
                                                 eps = eps, epsh = epsh,\
                                                 hard_stop = True)
     xs = np.array(xs)
@@ -196,7 +248,7 @@ def test_denseoutput_backwards_xfor():
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
     xeval = np.linspace(xi, xf, Neval) 
-    xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
+    xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi,\
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh,\
                                                        hard_stop = True)
@@ -218,7 +270,7 @@ def test_denseoutput_backwards_xback():
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
     xeval = np.linspace(xf, xi, Neval) 
-    xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
+    xs, ys, dys, ss, ps, stypes, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi,\
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh,\
                                                        hard_stop = True)
@@ -241,10 +293,10 @@ def test_solve_burst():
     xf = m
     yi = bursty(xi)
     dyi = burstdy(xi)
-    eps = 1e-10
-    epsh = 1e-12
+    eps = 1e-12
+    epsh = 1e-13
     info = solversetup(w, g, n = 32, p = 32)
-    xs, ys, dys, ss, ps, types, yeval, dyeval = solve(info, xi, xf, yi, dyi, eps = eps, epsh = epsh)
+    xs, ys, dys, ss, ps, types, yeval, dyeval, phaseeval = solve(info, xi, xf, yi, dyi, eps = eps, epsh = epsh)
     xs = np.array(xs)
     ys = np.array(ys)
     ytrue = bursty(xs)

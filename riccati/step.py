@@ -62,7 +62,7 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
         dyprev = dy
         xprev = x
     info.increase(chebstep = 1)
-    if info.denseout:
+    if info.denseout or info.densezout:
         # Store interp points
         info.yn = y
         info.dyn = dy
@@ -146,7 +146,7 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
             maxerr = max(np.abs(Ry))
     du1 = y
     du2 = np.conj(du1)
-    if info.denseout:
+    if info.denseout or info.densezout:
         u1 = h/2*(info.intmat @ du1)
     else:
         u1 = h/2*(info.quadwts @ du1)
@@ -159,7 +159,7 @@ def osc_step(info, x0, h, y0, dy0, epsres = 1e-12, plotting = False, k = 0):
     dy1 = ap*du1*f1 + am*du2*f2
     phase = np.imag(u1)
     info.increase(riccstep = 1)
-    if info.denseout:
+    if info.denseout or info.densezout:
         info.un = u1
         info.dun = du1
         info.a = (ap, am)

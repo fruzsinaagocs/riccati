@@ -157,7 +157,7 @@ def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
         info.h = choose_nonosc_stepsize(info, info.x, hslo_ini, epsh = epsh)  
     return success
 
-def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([]), hard_stop = False, warn = False):
+def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([]), hard_stop = False, warn = False, zeval = np.array([])):
     """
     Solves y'' + 2gy' + w^2y = 0 on the interval (xi, xf), starting from the
     initial conditions y(xi) = yi, y'(xi) = dyi. Keeps the residual of the ODE
@@ -176,8 +176,10 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         Relative tolerance for the local error of both Riccati and Chebyshev type steps.
     epsh: float 
         Relative tolerance for choosing the stepsize of Riccati steps.
-    xeval: list 
+    xeval: np.ndarray
         List of x-values where the solution is to be interpolated (dense output) and returned.
+    zeval: np.ndarray
+        List of x-values where the "phase" z, defined as y = e^z, is interpolated and returned.
     hard_stop: bool 
         Whether to force the solver to have a potentially smaller last
         stepsize, in order to stop exactly at `xf` (rather than allowing the
@@ -211,6 +213,11 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         Derivative dense output, i.e. values of the derivative of the solution at the requested
         independent-variable values specified in `xeval`. If `xeval` was not
         given, then it is an empty numpy array of shape (0,).
+    phaseeval: numpy.array [complex]
+        Dense output, i.e. values of the solution at the requested
+        independent-variable values specified in `xeval`. If `xeval` was not
+        given, then it is an empty numpy array of shape (0,).
+
 
     """
     if warn == False:
@@ -228,15 +235,26 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
     
     # Is there dense output?
     info.denseout = False
+    info.densezout = False
     denselen = len(xeval)
-    if denselen > 0:
+    denselenz = len(zeval)
+    if denselen > 0: 
         info.denseout = True
         info.intmat = integrationm(n+1)
+    if denselenz > 0:
+        info.densezout = True
+        info.intmat = integrationm(n+1)
+    if denselen > 0:
         yeval = np.zeros(denselen, dtype = complex)
         dyeval = np.zeros(denselen, dtype = complex)
     else:
         yeval = np.empty(0)
         dyeval = np.empty(0)
+
+    if denselenz > 0:
+        phaseeval = np.zeros((denselenz, 3), dtype = complex)
+    else:
+        phaseeval = np.empty(0)
    
     # Check if stepsize sign is consistent with direction of integration
     if (xf - xi)*hi < 0:
@@ -251,6 +269,10 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
     if info.denseout:
         if intdir*xi < min(intdir*xeval) or intdir*xf > max(intdir*xeval):
             warnings.warn("Some dense output points lie outside the integration range!")
+    if info.densezout:
+        if intdir*xi < min(intdir*zeval) or intdir*xf > max(intdir*zeval):
+            warnings.warn("Some dense output points lie outside the integration range!")
+
 
     xs = [xi]
     ys = [yi]
@@ -325,22 +347,40 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
             h = hslo
         # If there were dense output points, check where:
         if info.denseout:
-            positions = np.logical_or(np.logical_and(intdir*xeval >= intdir*xcurrent, intdir*xeval < intdir*(xcurrent+h)), np.logical_and(xeval == xf, xeval == xcurrent + h))
+            positions = np.logical_or(np.logical_and(intdir*xeval.real >= intdir*xcurrent, intdir*xeval.real < intdir*(xcurrent+h)), np.logical_and(xeval.real == xf, xeval.real == xcurrent + h))
             xdense = xeval[positions] 
-            if steptype == 1:
-                #xscaled = xcurrent + h/2 + h/2*info.xn
-                xscaled = 2/h*(xdense - xcurrent) - 1
-                Linterp = interp(info.xn, xscaled)
-                udense = Linterp @ info.un
-                dudense = Linterp @ info.dun
-                fdense = np.exp(udense)
-                yeval[positions] = info.a[0]*fdense + info.a[1]*np.conj(fdense)
-                dyeval[positions] = info.a[0]*dudense*fdense + info.a[1]*np.conj(dudense*fdense)
-            else:
-                xscaled = xcurrent + h/2 * (1 + info.nodes[1])
-                Linterp = interp(xscaled[::-1], xdense)
-                yeval[positions] = Linterp @ info.yn[::-1]
-                dyeval[positions] = Linterp @ info.dyn[::-1]
+            if len(xdense) > 0:
+                if steptype == 1:
+                    xscaled = 2/h*(xdense - xcurrent) - 1
+                    Linterp = interp(info.xn, xscaled)
+                    udense = Linterp @ info.un
+                    dudense = Linterp @ info.dun
+                    fdense = np.exp(udense)
+                    yeval[positions] = info.a[0]*fdense + info.a[1]*np.conj(fdense)
+                    dyeval[positions] = info.a[0]*dudense*fdense + info.a[1]*np.conj(dudense*fdense)
+                else:
+                    xscaled = xcurrent + h/2 * (1 + info.nodes[1])
+                    Linterp = interp(xscaled[::-1], xdense)
+                    yeval[positions] = Linterp @ info.yn[::-1]
+                    dyeval[positions] = Linterp @ info.dyn[::-1]
+
+        if info.densezout:
+            zpositions = np.logical_or(np.logical_and(intdir*zeval.real >= intdir*xcurrent, intdir*zeval.real < intdir*(xcurrent+h)), np.logical_and(zeval.real == xf, zeval.real == xcurrent + h))
+            zdense = zeval[zpositions] 
+            if len(zdense) > 0:
+                if steptype == 1:
+                    zscaled = 2/h*(zdense - xcurrent) - 1
+                    Linterp = interp(info.xn, zscaled)
+                    udense = Linterp @ info.un
+                    phaseeval[zpositions,0] = udense 
+                    phaseeval[zpositions,1:] = info.a
+
+                else:
+                    xscaled = xcurrent + h/2 * (1 + info.nodes[1])
+                    Linterp = interp(xscaled[::-1], xdense)
+                    phaseeval[zpositions,0] = Linterp @ info.yn[::-1]
+                    phaseeval[positions,1:] = 0, 0
+
         ys.append(y)
         dys.append(dy)
         xs.append(xcurrent + h)
@@ -371,5 +411,5 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
             dyprev = dy
-    return xs, ys, dys, successes, phases, steptypes, yeval, dyeval
+    return xs, ys, dys, successes, phases, steptypes, yeval, dyeval, phaseeval
 
