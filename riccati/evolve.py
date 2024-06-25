@@ -256,11 +256,13 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
 #        phaseeval = np.zeros((denselenz, 3), dtype = complex)
 #    else:
 #        phaseeval = np.empty(0)
-    if phase_out:
-        info.phaseout = True
+
         phaseeval = np.zeros(n, dtype = complex)
         dphaseeval = np.zeros(n, dtype = complex)
         avals = np.zeros(2, dtype = complex)
+
+    if phase_out:
+        info.phaseout = True
    
     # Check if stepsize sign is consistent with direction of integration
     if (xf - xi)*hi < 0:
