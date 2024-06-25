@@ -257,9 +257,9 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
 #    else:
 #        phaseeval = np.empty(0)
 
-        phaseeval = np.zeros(n, dtype = complex)
-        dphaseeval = np.zeros(n, dtype = complex)
-        avals = np.zeros(2, dtype = complex)
+    phaseeval = np.zeros(n, dtype = complex)
+    dphaseeval = np.zeros(n, dtype = complex)
+    avals = np.zeros(2, dtype = complex)
 
     if phase_out:
         info.phaseout = True
