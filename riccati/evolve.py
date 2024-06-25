@@ -157,7 +157,7 @@ def nonosc_evolve(info, x0, x1, h, y0, epsres = 1e-12, epsh = 0.2):
         info.h = choose_nonosc_stepsize(info, info.x, hslo_ini, epsh = epsh)  
     return success
 
-def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([]), hard_stop = False, warn = False, zeval = np.array([])):
+def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([]), hard_stop = False, warn = False, zeval = np.array([]), phase_out = False):
     """
     Solves y'' + 2gy' + w^2y = 0 on the interval (xi, xf), starting from the
     initial conditions y(xi) = yi, y'(xi) = dyi. Keeps the residual of the ODE
@@ -236,6 +236,7 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
     # Is there dense output?
     info.denseout = False
     info.densezout = False
+    info.phaseout = False
     denselen = len(xeval)
     denselenz = len(zeval)
     if denselen > 0: 
@@ -251,10 +252,15 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
         yeval = np.empty(0)
         dyeval = np.empty(0)
 
-    if denselenz > 0:
-        phaseeval = np.zeros((denselenz, 3), dtype = complex)
-    else:
-        phaseeval = np.empty(0)
+#    if denselenz > 0:
+#        phaseeval = np.zeros((denselenz, 3), dtype = complex)
+#    else:
+#        phaseeval = np.empty(0)
+    if phase_out:
+        info.phaseout = True
+        phaseeval = np.zeros(n, dtype = complex)
+        dphaseeval = np.zeros(n, dtype = complex)
+        avals = np.zeros(2, dtype = complex)
    
     # Check if stepsize sign is consistent with direction of integration
     if (xf - xi)*hi < 0:
@@ -372,14 +378,14 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
                     zscaled = 2/h*(zdense - xcurrent) - 1
                     Linterp = interp(info.xn, zscaled)
                     udense = Linterp @ info.un
-                    phaseeval[zpositions,0] = udense 
-                    phaseeval[zpositions,1:] = info.a
+                    #phaseeval[zpositions,0] = udense 
+                    #phaseeval[zpositions,1:] = info.a
 
                 else:
                     xscaled = xcurrent + h/2 * (1 + info.nodes[1])
                     Linterp = interp(xscaled[::-1], xdense)
-                    phaseeval[zpositions,0] = Linterp @ info.yn[::-1]
-                    phaseeval[positions,1:] = 0, 0
+                    #phaseeval[zpositions,0] = Linterp @ info.yn[::-1]
+                    #phaseeval[positions,1:] = 0, 0
 
         ys.append(y)
         dys.append(dy)
@@ -393,6 +399,17 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
             gnext = info.gn[0]
             dwnext = 2/h*(Dn @ info.wn)[0]
             dgnext = 2/h*(Dn @ info.gn)[0]
+            if phase_out:
+                phaseeval = info.un
+                dphaseeval = info.dun
+                #print("bla")
+                avals = info.a
+#                if intdir*(xcurrent + h) > intdir*xf:
+#                    print("Solution calc'd from phase: ", info.a[0]*np.exp(info.un[0]) + info.a[1]*np.exp(np.conj(info.un[0])))
+#                    print("Actual solution:", y)
+#                    print("Nodes, u-s: ", xcurrent + h/2 * (1 + info.xn), info.un)
+#                    print("Phases: ", phases)
+
         else:
             wnext = w(xcurrent + h)
             gnext = g(xcurrent + h)
@@ -411,5 +428,5 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
             yprev = y
             dyprev = dy
-    return xs, ys, dys, successes, phases, steptypes, yeval, dyeval, phaseeval
+    return xs, ys, dys, successes, phases, steptypes, yeval, dyeval, phaseeval, dphaseeval, avals
 
