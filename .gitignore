@@ -1,0 +1,4 @@
+build/*
+riccati.egg-info/*
+riccati/__pycache__/*
+riccati/tests/__pycache__/*
