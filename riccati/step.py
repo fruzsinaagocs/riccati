@@ -47,8 +47,8 @@ def nonosc_step(info, x0, h, y0, dy0, epsres = 1e-12):
     success = 1
     N = info.nini
     Nmax = info.nmax
-    maxerr = 10*(epsres*np.abs(yprev[0]) + epsres)
     yprev, dyprev, xprev = spectral_cheb(info, x0, h, y0, dy0, 0)
+    maxerr = 10*(epsres*np.abs(yprev[0]) + epsres)
     while np.abs((epsres*np.abs(yprev[0]) + epsres)/maxerr) < 1:
         N *= 2
         if N > Nmax:
