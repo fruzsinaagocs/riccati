@@ -7,6 +7,7 @@ on:
       - master
       - docs
       - joss-paper
+      - legendre-improvements
   workflow_dispatch:
 
 jobs:
@@ -14,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.11.5"]
 
     steps:
       - name: Checkout
@@ -31,7 +32,7 @@ jobs:
           python -m pip install -U pytest pytest-cov pytest-xdist codecov
           python -m pip install -U -r requirements.txt 
       - name: Run tests
-        run: python -m pytest --cov=riccati --cov-report=xml
+        run: python -m pytest -s --cov=riccati --cov-report=xml
       - name: Combine and upload coverage
         uses: codecov/codecov-action@v3
         with:
@@ -56,19 +57,19 @@ jobs:
         with: 
           path: dist/*
 
-  upload_pypi:
-    needs: [tests, build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: artifact
-          path: dist
-
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
+          #  upload_pypi:
+          #    needs: [tests, build]
+          #    runs-on: ubuntu-latest
+          #    steps:
+          #      - uses: actions/download-artifact@v3
+          #        with:
+          #          name: artifact
+          #          path: dist
+          #
+          #      - uses: pypa/gh-action-pypi-publish@release/v1
+          #        with:
+          #          user: __token__
+          #          password: ${{ secrets.pypi_password }}
 
   paper:
     runs-on: ubuntu-latest
