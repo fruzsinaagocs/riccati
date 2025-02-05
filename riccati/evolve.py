@@ -269,6 +269,9 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
     xcurrent = xi
     wnext = wi
     dwnext = dwi
+    # Do not choose oscillatory step if w is imaginary
+    if wi.real < 1e-15:
+        hosc = 0
     # Legendre example: limit no. of successful steps to 10000
     while abs(xcurrent - xf) > 1e-8 and intdir*xcurrent < intdir*xf and len(steptypes) < 10000:
         # Check how oscillatory the solution is
@@ -355,6 +358,9 @@ def solve(info, xi, xf, yi, dyi, eps = 1e-12, epsh = 1e-12, xeval = np.array([])
                     hslo_ini = xf - xcurrent
             hosc = choose_osc_stepsize(info, xcurrent, hosc_ini, epsh = epsh)  
             hslo = choose_nonosc_stepsize(info, xcurrent, hslo_ini)
+            # Do not choose oscillatory step if w is imaginary
+            if wnext.real < 1e-15:
+                hosc = 0
             yprev = y
             dyprev = dy
     if info.denseout:
