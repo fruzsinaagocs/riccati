@@ -9,6 +9,49 @@ import mpmath
 import warnings
 import pytest
 
+
+def test_bremer():
+    bremer_refarray = np.array([
+    [1e1, 0.2913132934408612, 7e-14],
+    [1e2, 0.5294889561602804, 5e-13],
+    [1e3, -0.6028749132401260, 3e-12],
+    [1e4, -0.4813631690625038, 5e-11],
+    [1e5, 0.6558931145821987, 3e-10],
+    [1e6, -0.4829009413372087, 5e-9],
+    [1e7, -0.6634949630196019, 4e-8]])
+
+    ls = bremer_refarray[:, 0]
+    lambda_arr = np.logspace(1, 7, num=7)
+    xi = -1.0
+    xf = 1.0
+    epss, epshs, ns = [1e-12, 1e-8], [1e-13, 1e-9], [35, 20]
+    for lambda_scalar in lambda_arr:
+        for eps, epsh, n in zip(epss, epshs, ns):
+            ytrue = bremer_refarray[abs(ls - lambda_scalar) < 1e-8, 1]
+            errref = bremer_refarray[abs(ls - lambda_scalar) < 1e-8, 2]
+            w = lambda x: lambda_scalar * np.sqrt(1.0 - x**2 * np.cos(3.0 * x))
+            g = lambda x: np.zeros_like(x)
+            yi = complex(0.0)
+            dyi = complex(lambda_scalar)
+            p = n
+            info = solversetup(w, g, n = n, p = p)
+            xs, ys, dys, ss, ps, stypes, _, _ = solve(info, xi, xf, yi, dyi, eps = eps, epsh = epsh, hard_stop = True)
+            ys = np.array(ys)
+            yerr = np.abs((ytrue - ys[-1]) / ytrue)
+            print("-----NEXT-----")
+            print("lambda_scalar: ", lambda_scalar)
+            print("ns: ", n)
+            print("eps: ", eps)
+            print("epsh: ", epsh)
+            print("ytrue: ", ytrue)
+            print("ys[-1]: ", ys[-1])
+            print("yerr: ", yerr)
+            # See Fig 5 from here https://arxiv.org/pdf/2212.06924
+            if eps == epss[0]:
+                assert yerr < (eps * lambda_scalar * 140)
+            else:
+                assert yerr < (eps * lambda_scalar * 1e-4)
+
 def test_integration():
     n = 16
     a = 3.0
@@ -34,7 +77,7 @@ def test_denseoutput():
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
-    xeval = np.linspace(xi, xf, Neval) 
+    xeval = np.linspace(xi, xf, Neval)
     xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh)
@@ -59,7 +102,7 @@ def test_denseoutput_xbac():
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
-    xeval = np.linspace(xf, xi, Neval) 
+    xeval = np.linspace(xf, xi, Neval)
     xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh)
@@ -82,14 +125,14 @@ def test_denseoutput_warn():
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
-    xeval = np.linspace(xi-10.0, xi, Neval) 
+    xeval = np.linspace(xi-10.0, xi, Neval)
     # Turn on warnings
     warnings.simplefilter("always")
     with warnings.catch_warnings(record = True) as w:
         xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
                                                            xeval = xeval,\
                                                            eps = eps, epsh = epsh, warn = True)
-        assert "outside the integration range" in str(w[0].message) 
+        assert "outside the integration range" in str(w[0].message)
 
 def test_quadwts():
     a = 3.0
@@ -98,7 +141,7 @@ def test_quadwts():
     for i in [16, 32]:
         D, x = cheb(i)
         w = quadwts(i)
-        maxerr = w.dot(df(x)) - (f(1) - f(-1)) 
+        maxerr = w.dot(df(x)) - (f(1) - f(-1))
         assert  maxerr < 1e-8
 
 def test_cheb():
@@ -107,11 +150,11 @@ def test_cheb():
     df = lambda x: a*np.cos(a*x + 1.0)
     for i in [16, 32]:
         D, x = cheb(i)
-        maxerr = max(np.abs(np.matmul(D, f(x)) - df(x))) 
+        maxerr = max(np.abs(np.matmul(D, f(x)) - df(x)))
         assert  maxerr < 1e-8
 
 def test_osc_step():
-    w = lambda x: np.sqrt(x) 
+    w = lambda x: np.sqrt(x)
     g = lambda x: np.zeros_like(x)
     info = solversetup(w, g)
     x0 = 10.0
@@ -129,7 +172,7 @@ def test_osc_step():
     assert y_err < 1e-8 and res < epsres
 
 def test_nonosc_step():
-    w = lambda x: np.sqrt(x) 
+    w = lambda x: np.sqrt(x)
     g = lambda x: np.zeros_like(x)
     info = solversetup(w, g)
     x0 = 1.0
@@ -195,7 +238,7 @@ def test_denseoutput_backwards_xfor():
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
-    xeval = np.linspace(xi, xf, Neval) 
+    xeval = np.linspace(xi, xf, Neval)
     xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh,\
@@ -217,7 +260,7 @@ def test_denseoutput_backwards_xback():
     yi = sp.airy(-xi)[0] + 1j*sp.airy(-xi)[2]
     dyi = -sp.airy(-xi)[1] - 1j*sp.airy(-xi)[3]
     Neval = int(1e2)
-    xeval = np.linspace(xf, xi, Neval) 
+    xeval = np.linspace(xf, xi, Neval)
     xs, ys, dys, ss, ps, stypes, yeval, dyeval = solve(info, xi, xf, yi, dyi,\
                                                        xeval = xeval,\
                                                        eps = eps, epsh = epsh,\
@@ -234,7 +277,7 @@ def test_solve_burst():
     m = int(1e6) # Frequency parameter
     w = lambda x: np.sqrt(m**2 - 1)/(1 + x**2)
     g = lambda x: np.zeros_like(x)
-    bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x))) 
+    bursty = lambda x: np.sqrt(1 + x**2)/m*(np.cos(m*np.arctan(x)) + 1j*np.sin(m*np.arctan(x)))
     burstdy = lambda x: 1/np.sqrt(1 + x**2)/m*((x + 1j*m)*np.cos(m*np.arctan(x))\
             + (-m + 1j*x)*np.sin(m*np.arctan(x)))
     xi = -m
@@ -251,7 +294,7 @@ def test_solve_burst():
     yerr = np.abs((ytrue - ys))/np.abs(ytrue)
     maxerr = max(yerr)
     assert maxerr < 2e-7
-    
+
 def test_osc_evolve():
     w = lambda x: np.sqrt(x)
     g = lambda x: np.zeros_like(x)
@@ -285,7 +328,7 @@ def test_osc_evolve():
     maxerr = max(yerr)
     print("Forward osc evolve max error:", maxerr)
     assert maxerr < 1e-6
-   
+
 def test_nonosc_evolve():
     w = lambda x: np.sqrt(x)
     g = lambda x: np.zeros_like(x)
@@ -353,7 +396,7 @@ def test_osc_evolve_backwards():
     maxerr = max(yerr)
     print("Backwards osc evolve max error:", maxerr)
     assert maxerr < 1e-6
-   
+
 def test_nonosc_evolve_backwards():
     w = lambda x: np.sqrt(x)
     g = lambda x: np.zeros_like(x)
